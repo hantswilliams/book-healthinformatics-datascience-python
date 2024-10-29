@@ -12,7 +12,7 @@
 `quarto preview` will open the browser with the rendered html file.
 
 ### adding live code:
-`quarto add r-wasm/quarto-live` will add the live code feature to the markdown file.
+`quarto add r-wasm/quarto-live` will add the live code feature to the markdown file. This should be performed in the 'book' folder of the project.
 
 - then can change _quarto.yaml to:
 ```yaml
@@ -22,4 +22,12 @@ format:
 
 ### publishing 
 - github pages:
-    - `quarto publish gh-pages` will publish the html file to the gh-pages branch
+    - first time, will need to install (at min.):
+        `quarto install tinytex`
+        - this will install the tinytex package for latex
+    - `quarto publish gh-pages` will publish the html file to the gh-pages branch - from the 'book' folder of the project.
+        - this afterwords, should then give a link to the published book.
+        - should look like:
+            ```bash
+            [✓] Published to https://hantswilliams.github.io/book-healthinformatics-datascience-python/
+            ```
