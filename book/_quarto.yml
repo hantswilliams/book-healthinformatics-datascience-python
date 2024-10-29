@@ -14,7 +14,7 @@ book:
 bibliography: references.bib
 
 format:
-  html:
+  live-html:
     theme: cosmo
   pdf:
     documentclass: scrreprt
