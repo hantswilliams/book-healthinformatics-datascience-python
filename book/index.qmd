@@ -1,0 +1,27 @@
+# Preface {.unnumbered}
+
+## Why?
+
+I started off, and still identify as a nurse, but now find myself somewhere between the  interaction of clinician and technologist. My job as a professor involves teaching, and constantly aquiring new knowledge, abilities, and skills (KSAs) between evidence based medicine (EBM) and technology-focused tools that could be used to help us address these issues. My curiosity and passion for BOTH healthcare and technology has led me to pursue a variety of topics that I try to address in this book. So what does this book cover? 
+
+This book covers python, healthcare data, medical codexes, open source datasets, databases, cloud technologies, inferential statistics and machine learning, visualizations, and related technologies  important to understand as a modern (future) health informaticsts. 
+
+I've created this book as the most important topics to me, and what I have experienced within academic medical hospital systems, private hospitals, consulting, and health tech-startups. So whether you’re a healthcare professional, data scientist, student, or enthusiast, this book will offer you valuable insights and hopefully fun conversation and dialgue related to what can be dry and boring material.
+
+#### What You’ll Find Here:
+
+- **A Broad Foundation**: Rather than in-depth on each topic, this book provides a wide overview, giving you a base to explore further.
+    - An intro to...*Python*
+    - An intro to...*Healthcare Data*
+    - An intro to...*Inferential Statistics*
+    - An intro to...*Ai and Machine Learning*
+    - An intro to...*Supporting Cloud Technologies*
+
+- **Hands-On Learning**: Chapters combine theory and practical examples, allowing you to apply what you learn through Pyodide-powered, interactive Python exercises.
+
+### Think Legos...
+
+Think of each section as a component, or a lego, that when combined together can lead to the creation of something useful. These core technologies: databases, scripts, clouds, code languages, databases, medical codexes...etc that we will be exploring should be viewed as individual lego pieces. It is our job as health informaticists to understand which pieces exist, what they are capability of providing to us, and then how we can put them together to make something unique and useful. Key word  is useful.
+
+![Image of LEGO bricks as a metaphor for learning blocks](lego.png)
+

@@ -1,0 +1,102 @@
+[
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "The Health Informaticist",
+    "section": "",
+    "text": "Preface",
+    "crumbs": [
+      "Preface"
+    ]
+  },
+  {
+    "objectID": "intro.html",
+    "href": "intro.html",
+    "title": "1  Introduction",
+    "section": "",
+    "text": "This is a book created from markdown and executable code.\nSee Knuth (1984) for additional discussion of literate programming.\n\n\n\n\nKnuth, Donald E. 1984. “Literate Programming.” Comput. J. 27 (2): 97–111. https://doi.org/10.1093/comjnl/27.2.97.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>Introduction</span>"
+    ]
+  },
+  {
+    "objectID": "summary.html",
+    "href": "summary.html",
+    "title": "2  Summary",
+    "section": "",
+    "text": "In summary, this book has no content whatsoever.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Summary</span>"
+    ]
+  },
+  {
+    "objectID": "references.html",
+    "href": "references.html",
+    "title": "References",
+    "section": "",
+    "text": "Knuth, Donald E. 1984. “Literate Programming.” Comput.\nJ. 27 (2): 97–111. https://doi.org/10.1093/comjnl/27.2.97.",
+    "crumbs": [
+      "References"
+    ]
+  },
+  {
+    "objectID": "index.html#welcome-to-healthcare-informatics-data-science",
+    "href": "index.html#welcome-to-healthcare-informatics-data-science",
+    "title": "Health Care Data and Analytics",
+    "section": "Welcome to Healthcare Informatics & Data Science",
+    "text": "Welcome to Healthcare Informatics & Data Science\n\nDive into Data’s Power in Healthcare\nThis guide covers how data analytics, machine learning, and related technologies are transforming healthcare. Whether you’re a healthcare professional, data scientist, student, or enthusiast, this book offers valuable insights.\n\nWhat You’ll Find Here:\n\nA Broad Foundation: Rather than in-depth on each topic, this book provides a wide overview, giving you a base to explore further.\nHands-On Learning: Chapters combine theory and practical examples, allowing you to apply what you learn through Pyodide-powered, interactive Python exercises.\n\n\n\nKey Topics:\n\nData Wrangling: Learn to clean and prepare health data.\nPredictive Analytics: Explore how to forecast patient needs using machine learning.\nNLP in Healthcare: Analyze clinical notes for insights.\nTask Automation: Automate routine data tasks efficiently.\n…and More!\n\n\n\n\nBuilding Your Knowledge\nEach chapter introduces core concepts through real-world examples and tasks. Start with basics, like data preprocessing and visualization, before advancing to areas such as time series analysis and NLP for clinical texts.\n\n\n\nImage of LEGO bricks as a metaphor for learning blocks\n\n\nImage Source\n\n\nEngage with the Community\nHealthcare informatics is evolving rapidly. To keep this guide relevant, your contributions are welcomed. Suggest updates, corrections, or new topics.\nTo start, explore GitHub Basics, and for Markdown, see Markdown Guide.\nLet’s shape the future of healthcare informatics together!",
+    "crumbs": [
+      "Preface"
+    ]
+  },
+  {
+    "objectID": "index.html#welcome-to-health-care-data-and-analytics",
+    "href": "index.html#welcome-to-health-care-data-and-analytics",
+    "title": "Health Care Data and Analytics",
+    "section": "Welcome to Health Care Data and Analytics",
+    "text": "Welcome to Health Care Data and Analytics\nThis book covers python, healthcare data, medical codexes, open source datasets, databases, cloud technologies, inferential statistics and machine learning, visualizations, and related technologies important to understand as a modern (future) health informaticsts. So whether you’re a healthcare professional, data scientist, student, or enthusiast, this book will offer you valuable insights and hopefully fun conversation and dialgue related to what can be dry and boring material.\n\nWhat You’ll Find Here:\n\nA Broad Foundation: Rather than in-depth on each topic, this book provides a wide overview, giving you a base to explore further.\n\nAn intro to…Python\nAn intro to…Healthcare Data\nAn intro to…Inferential Statistics\nAn intro to…Ai and Machine Learning\nAn intro to…Supporting Cloud Technologies\n\nHands-On Learning: Chapters combine theory and practical examples, allowing you to apply what you learn through Pyodide-powered, interactive Python exercises.\n\n\n\nBuilding Your Knowledge\nEach chapter introduces core concepts through real-world examples and tasks. Start with basics, like data preprocessing and visualization, before advancing to areas such as time series analysis and NLP for clinical texts.\n\n\n\nImage of LEGO bricks as a metaphor for learning blocks\n\n\nImage Source\n\n\nEngage with the Community\nHealthcare informatics is evolving rapidly. To keep this guide relevant, your contributions are welcomed. Suggest updates, corrections, or new topics.\nTo start, explore GitHub Basics, and for Markdown, see Markdown Guide.\nLet’s shape the future of healthcare informatics together!",
+    "crumbs": [
+      "Preface"
+    ]
+  },
+  {
+    "objectID": "index.html#the-health-informatists",
+    "href": "index.html#the-health-informatists",
+    "title": "Health Care Data and Analytics",
+    "section": "The Health Informatists",
+    "text": "The Health Informatists\nThis book covers python, healthcare data, medical codexes, open source datasets, databases, cloud technologies, inferential statistics and machine learning, visualizations, and related technologies important to understand as a modern (future) health informaticsts. So whether you’re a healthcare professional, data scientist, student, or enthusiast, this book will offer you valuable insights and hopefully fun conversation and dialgue related to what can be dry and boring material.\n\nWhat You’ll Find Here:\n\nA Broad Foundation: Rather than in-depth on each topic, this book provides a wide overview, giving you a base to explore further.\n\nAn intro to…Python\nAn intro to…Healthcare Data\nAn intro to…Inferential Statistics\nAn intro to…Ai and Machine Learning\nAn intro to…Supporting Cloud Technologies\n\nHands-On Learning: Chapters combine theory and practical examples, allowing you to apply what you learn through Pyodide-powered, interactive Python exercises.\n\n\n\nBuilding Your Knowledge\nEach chapter introduces core concepts through real-world examples and tasks. Start with basics, like data preprocessing and visualization, before advancing to areas such as time series analysis and NLP for clinical texts.\n\n\n\nImage of LEGO bricks as a metaphor for learning blocks\n\n\nImage Source\n\n\nEngage with the Community\nHealthcare informatics is evolving rapidly. To keep this guide relevant, your contributions are welcomed. Suggest updates, corrections, or new topics.\nTo start, explore GitHub Basics, and for Markdown, see Markdown Guide.\nLet’s shape the future of healthcare informatics together!",
+    "crumbs": [
+      "Preface"
+    ]
+  },
+  {
+    "objectID": "index.html#the-health-informaticist",
+    "href": "index.html#the-health-informaticist",
+    "title": "Health Care Data and Analytics",
+    "section": "The Health Informaticist",
+    "text": "The Health Informaticist\nThis book covers python, healthcare data, medical codexes, open source datasets, databases, cloud technologies, inferential statistics and machine learning, visualizations, and related technologies important to understand as a modern (future) health informaticsts. So whether you’re a healthcare professional, data scientist, student, or enthusiast, this book will offer you valuable insights and hopefully fun conversation and dialgue related to what can be dry and boring material.\n\nWhat You’ll Find Here:\n\nA Broad Foundation: Rather than in-depth on each topic, this book provides a wide overview, giving you a base to explore further.\n\nAn intro to…Python\nAn intro to…Healthcare Data\nAn intro to…Inferential Statistics\nAn intro to…Ai and Machine Learning\nAn intro to…Supporting Cloud Technologies\n\nHands-On Learning: Chapters combine theory and practical examples, allowing you to apply what you learn through Pyodide-powered, interactive Python exercises.\n\n\n\nBuilding Your Knowledge\nEach chapter introduces core concepts through real-world examples and tasks. Start with basics, like data preprocessing and visualization, before advancing to areas such as time series analysis and NLP for clinical texts.\n\n\n\nImage of LEGO bricks as a metaphor for learning blocks\n\n\nImage Source\n\n\nEngage with the Community\nHealthcare informatics is evolving rapidly. To keep this guide relevant, your contributions are welcomed. Suggest updates, corrections, or new topics.\nTo start, explore GitHub Basics, and for Markdown, see Markdown Guide.\nLet’s shape the future of healthcare informatics together!",
+    "crumbs": [
+      "Preface"
+    ]
+  },
+  {
+    "objectID": "index.html#what-is-this",
+    "href": "index.html#what-is-this",
+    "title": "Health Care Data and Analytics",
+    "section": "What is this?",
+    "text": "What is this?\nThis book covers python, healthcare data, medical codexes, open source datasets, databases, cloud technologies, inferential statistics and machine learning, visualizations, and related technologies important to understand as a modern (future) health informaticsts. So whether you’re a healthcare professional, data scientist, student, or enthusiast, this book will offer you valuable insights and hopefully fun conversation and dialgue related to what can be dry and boring material.\n\nWhat You’ll Find Here:\n\nA Broad Foundation: Rather than in-depth on each topic, this book provides a wide overview, giving you a base to explore further.\n\nAn intro to…Python\nAn intro to…Healthcare Data\nAn intro to…Inferential Statistics\nAn intro to…Ai and Machine Learning\nAn intro to…Supporting Cloud Technologies\n\nHands-On Learning: Chapters combine theory and practical examples, allowing you to apply what you learn through Pyodide-powered, interactive Python exercises.\n\n\n\nBuilding Your Knowledge\nEach chapter introduces core concepts through real-world examples and tasks. Start with basics, like data preprocessing and visualization, before advancing to areas such as time series analysis and NLP for clinical texts.\n\n\n\nImage of LEGO bricks as a metaphor for learning blocks\n\n\nImage Source\n\n\nEngage with the Community\nHealthcare informatics is evolving rapidly. To keep this guide relevant, your contributions are welcomed. Suggest updates, corrections, or new topics.\nTo start, explore GitHub Basics, and for Markdown, see Markdown Guide.\nLet’s shape the future of healthcare informatics together!",
+    "crumbs": [
+      "Preface"
+    ]
+  },
+  {
+    "objectID": "index.html#why",
+    "href": "index.html#why",
+    "title": "The Health Informaticist",
+    "section": "Why?",
+    "text": "Why?\nI started off, and still identify as a nurse, but now find myself somewhere between the interaction of clinician and technologist. My job as a professor involves teaching, and constantly aquiring new knowledge, abilities, and skills (KSAs) between evidence based medicine (EBM) and technology-focused tools that could be used to help us address these issues. My curiosity and passion for BOTH healthcare and technology has led me to pursue a variety of topics that I try to address in this book. So what does this book cover?\nThis book covers python, healthcare data, medical codexes, open source datasets, databases, cloud technologies, inferential statistics and machine learning, visualizations, and related technologies important to understand as a modern (future) health informaticsts.\nI’ve created this book as the most important topics to me, and what I have experienced within academic medical hospital systems, private hospitals, consulting, and health tech-startups. So whether you’re a healthcare professional, data scientist, student, or enthusiast, this book will offer you valuable insights and hopefully fun conversation and dialgue related to what can be dry and boring material.\n\nWhat You’ll Find Here:\n\nA Broad Foundation: Rather than in-depth on each topic, this book provides a wide overview, giving you a base to explore further.\n\nAn intro to…Python\nAn intro to…Healthcare Data\nAn intro to…Inferential Statistics\nAn intro to…Ai and Machine Learning\nAn intro to…Supporting Cloud Technologies\n\nHands-On Learning: Chapters combine theory and practical examples, allowing you to apply what you learn through Pyodide-powered, interactive Python exercises.\n\n\n\nThink Legos…\nThink of each section as a component, or a lego, that when combined together can lead to the creation of something useful. These core technologies: databases, scripts, clouds, code languages, databases, medical codexes…etc that we will be exploring should be viewed as individual lego pieces. It is our job as health informaticists to understand which pieces exist, what they are capability of providing to us, and then how we can put them together to make something unique and useful. Key word is useful.\n\n\n\nImage of LEGO bricks as a metaphor for learning blocks",
+    "crumbs": [
+      "Preface"
+    ]
+  }
+]
