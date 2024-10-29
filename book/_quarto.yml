@@ -8,7 +8,9 @@ book:
   chapters:
     - index.qmd
     - intro.qmd
-    - python.qmd
+    - python_hello_world.qmd
+    - python_flow_variables.qmd
+    - python_types.qmd
     - summary.qmd
     - references.qmd
 

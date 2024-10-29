@@ -30,13 +30,23 @@
     ]
   },
   {
+    "objectID": "python.html",
+    "href": "python.html",
+    "title": "2  Introduction to Python Code",
+    "section": "",
+    "text": "This is a introduction page",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Introduction to Python Code</span>"
+    ]
+  },
+  {
     "objectID": "summary.html",
     "href": "summary.html",
-    "title": "2  Summary",
+    "title": "3  Summary",
     "section": "",
     "text": "In summary, this book has no content whatsoever.",
     "crumbs": [
-      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Summary</span>"
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Summary</span>"
     ]
   },
   {
@@ -50,13 +60,203 @@
     ]
   },
   {
-    "objectID": "python.html",
-    "href": "python.html",
-    "title": "2  Introduction to Python Code",
+    "objectID": "python_hello_world.html",
+    "href": "python_hello_world.html",
+    "title": "2  Python Code - 1 - Hello World",
     "section": "",
-    "text": "This is a introduction page",
+    "text": "2.1 Objectives\nThe aim of this exercise is to learn how to write and execute Python code.",
     "crumbs": [
-      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Introduction to Python Code</span>"
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Python Code - 1 - Hello World</span>"
+    ]
+  },
+  {
+    "objectID": "python_hello_world.html#rationale",
+    "href": "python_hello_world.html#rationale",
+    "title": "2  Python Code - 1 - Hello World",
+    "section": "2.2 Rationale",
+    "text": "2.2 Rationale\nThere are plenty of programing languages, but all of them share some common principles. Computers execute machine code, a binary set of instructions that are carried out by the computer processors, but usually human do not write binary machine code, or even assembly language, the written code directly translatable to machine code.\nMost of the time programers write code in languages that are easier to write and read by us, humans. These codes, in turn, have to be translated to machine code. This process of translation is called compilation. Compilation is a complex process that comprises several steps, and different compilers and programming languages divide theses steps differently. There are compilers, like the C or C++ compiles, that take the code and compile it into a binary executable that can be directly run in a computer, while there are other, like the Python interpreter of the Java compiler, that are capable of running directly the human readable code that create an intermediate representation called bytecode. In these cases we need to install the language interpreter to run the program. For instance, if you want to run a Java or Python program you will need to install Java or Python before.\nPython is an interpreted language, so, once you install Python you will be able to directly run Python code. However, you first need to have Python available in your computer.\nThere are many ways of installing Python like:\n\nDownloading Python from python.org.\nUsing the Windows store or the Linux packages already prepared.\nUsing a Python version manager like uv.\nHaving Python included in your web browser thanks to Pyodide.\n\nIn this exercise we are going to use Pyodide, a Python version that allow us to run Python code directly in a web page without requiring any previous installation.\nThe Notebook document is composed by cells, some are text (in markdown format), and others contain Python code that can be executed. To execute a Python cell:\n\nSelect the cell that you want to execute.\nClick the play symbol on top of the page or press shift + enter.",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Python Code - 1 - Hello World</span>"
+    ]
+  },
+  {
+    "objectID": "python_hello_world.html#print-hello-world",
+    "href": "python_hello_world.html#print-hello-world",
+    "title": "2  Python Code - 1 - Hello World",
+    "section": "2.3 Print Hello world",
+    "text": "2.3 Print Hello world",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Python Code - 1 - Hello World</span>"
+    ]
+  },
+  {
+    "objectID": "python_hello_world.html#print-hello-your-name",
+    "href": "python_hello_world.html#print-hello-your-name",
+    "title": "2  Python Code - 1 - Hello World",
+    "section": "2.4 Print Hello “Your Name”",
+    "text": "2.4 Print Hello “Your Name”\n\n\n\n\n\n\n\n\n\n\n\n\n\nTip\n\n\n\n\n\nprint('Jane')",
+    "crumbs": [
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Python Code - 1 - Hello World</span>"
+    ]
+  },
+  {
+    "objectID": "python_flow_variables.html",
+    "href": "python_flow_variables.html",
+    "title": "3  Python Code - 2 - Flow and Variables",
+    "section": "",
+    "text": "3.1 Resources",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Python Code - 2 - Flow and Variables</span>"
+    ]
+  },
+  {
+    "objectID": "python_flow_variables.html#resources",
+    "href": "python_flow_variables.html#resources",
+    "title": "3  Python Code - 2 - Flow and Variables",
+    "section": "",
+    "text": "Variables in Python in Real Python.\nprint function official documentation.\nA print function tutorial in Real Python.\nVariable unpaking tutorial in Real Python.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Python Code - 2 - Flow and Variables</span>"
+    ]
+  },
+  {
+    "objectID": "python_flow_variables.html#flow",
+    "href": "python_flow_variables.html#flow",
+    "title": "3  Python Code - 2 - Flow and Variables",
+    "section": "3.2 Flow",
+    "text": "3.2 Flow\nThe computer executes the programming code one line (or statement) at a time. The order in which the lines are executed is called flow.\n\n\n\n\n\n\nOrder the lines in the following code, we want the computer to first say Hello, then Your Name, and, finally, an invitation to play.\n\n\n\n\n\n\n\n\n\n\n\n\n\nNote\n\n\n\n\n\nRemember that the lines are executed in order, so change the order of the lines.\n\n\n\n\n\n\n\n\n\n\n\nTip\n\n\n\n\n\nprint(\"Hello\")\nprint(\"John\")\nprint(\"Do you want to play a nice game of chess?\")",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Python Code - 2 - Flow and Variables</span>"
+    ]
+  },
+  {
+    "objectID": "python_flow_variables.html#variables",
+    "href": "python_flow_variables.html#variables",
+    "title": "3  Python Code - 2 - Flow and Variables",
+    "section": "3.3 Variables",
+    "text": "3.3 Variables\nWhen we run programs we store information in the memory of the computer for later use. This is a fundamental idea in computers. You can think about the memory of a computer as a file cabinet in which we can store values like numbers and strings of letters. Internally the memory is divided in small pieces, like the drawers of a filing cabinet, and the computer assings a numeric adress to each of those drawers. So, for instance, we could tell the computer to store the number 42 in the address 00000100, but it would be very cumbersome to use these numeric addresses, so, instead, the we use variables, names that we create, to refer to the memory locations and contents.\nIn different programming languages a variable can refer to the value stored or to the memory address (pointer). In Python a variable will always be a reference to the object stored. You can think of it as a label in the file cabinet drawer or an arrow that points to the drawer.\n\n\n\nValue stored in a variable\n\n\nIn Python we store a variable in memory by using the assigment operator =.\n\n\n\n\n\n\nPython is doing quite a lot of things for us when we write “favorite_number = 42”:\n\nIt reserves a space in the memory to be able to store the object that is going to create.\nIt creates the object 42.\nIt assigns the favorite_number variable as a reference to the created and stored object.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Python Code - 2 - Flow and Variables</span>"
+    ]
+  },
+  {
+    "objectID": "python_flow_variables.html#create-and-print-variables",
+    "href": "python_flow_variables.html#create-and-print-variables",
+    "title": "3  Python Code - 2 - Flow and Variables",
+    "section": "3.4 Create and print variables",
+    "text": "3.4 Create and print variables\nCreate two variables, one with your name, and another one with your surname and print them.\n\n\n\n\n\n\n\n\n\n\n\n\n\nTip\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWrite the name and year of release of any movie using two variables.\n\n\n\n\n\n\n\n\n\n\n\n\n\nTip",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Python Code - 2 - Flow and Variables</span>"
+    ]
+  },
+  {
+    "objectID": "python_flow_variables.html#change-the-value-of-a-variable",
+    "href": "python_flow_variables.html#change-the-value-of-a-variable",
+    "title": "3  Python Code - 2 - Flow and Variables",
+    "section": "3.5 Change the value of a variable",
+    "text": "3.5 Change the value of a variable\nThe variables can be changed to refer to different values/objects. Fix the program to show your real name by changing the value of the variable.\n\n\n\n\n\n\n\n\n\n\n\n\n\nTip\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nGiven the following code, think about the expected output, what will the program print when you execute it?",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Python Code - 2 - Flow and Variables</span>"
+    ]
+  },
+  {
+    "objectID": "python_flow_variables.html#variables-are-not-text-strings",
+    "href": "python_flow_variables.html#variables-are-not-text-strings",
+    "title": "3  Python Code - 2 - Flow and Variables",
+    "section": "3.6 Variables are not text strings",
+    "text": "3.6 Variables are not text strings\nFix the following code to print the correct name of your Pokemons.\n\n\n\n\n\n\n\n\n\n\n\n\n\nNote\n\n\n\n\n\nRemember that variable names are not enclosed by quotes and that if you put something inside a quote Python will consider it a text string.\n\n\n\n\n\n\n\n\n\n\n\nTip\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nIt is very important to understand the difference between variables and text:\n\nvariable names are not enclosed by quotes.\n\n\n\n\n\n\n\nFix the following code:\n\n\n\n\n\n\n\n\n\n\n\n\n\nTip",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Python Code - 2 - Flow and Variables</span>"
+    ]
+  },
+  {
+    "objectID": "python_flow_variables.html#assignment-unpaking",
+    "href": "python_flow_variables.html#assignment-unpaking",
+    "title": "3  Python Code - 2 - Flow and Variables",
+    "section": "3.7 Assignment unpaking",
+    "text": "3.7 Assignment unpaking\nPython allows for several variables to be set at the same time.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Python Code - 2 - Flow and Variables</span>"
+    ]
+  },
+  {
+    "objectID": "python_types.html",
+    "href": "python_types.html",
+    "title": "4  Python Code - 3 - Types",
+    "section": "",
+    "text": "4.1 Resources",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python Code - 3 - Types</span>"
+    ]
+  },
+  {
+    "objectID": "python_types.html#resources",
+    "href": "python_types.html#resources",
+    "title": "4  Python Code - 3 - Types",
+    "section": "",
+    "text": "Real Python tutorial: basic data types\nOfficial documentation: types and operations.\nBasic introduction to type and variables, str and booleans. (In Spanish).\ntype function official documentation.\nReal Python introduction to numbers and bool.\nA discussion about the floating point arithmethic in Python.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python Code - 3 - Types</span>"
+    ]
+  },
+  {
+    "objectID": "python_types.html#types",
+    "href": "python_types.html#types",
+    "title": "4  Python Code - 3 - Types",
+    "section": "4.2 Types",
+    "text": "4.2 Types\nIn a computer language variables have types. For instance, we have already used numbers and text strings.\n\n\n\n\n\n\n\nWe can ask for the type of variable (or object).\n\n\n\n\n\n\nThe type for the number 42 is int and for the text string “My favorite number is” is str. In most computer languages text is called string, or something similar, because, for the computer, a text is a string of characters.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python Code - 3 - Types</span>"
+    ]
+  },
+  {
+    "objectID": "python_types.html#number-types-int-and-float",
+    "href": "python_types.html#number-types-int-and-float",
+    "title": "4  Python Code - 3 - Types",
+    "section": "4.3 Number types: int and float",
+    "text": "4.3 Number types: int and float\nIn the previous example the type for the number was int (integer), but, in Python, and most other languages, we have another very important numeric type: float (floating point number).\n\n\n\n\n\n\nThe main practical difference between the integer and float types is that the arithmetic for integers will be exact, but for float will be only approximate. This is not a Python quirk, but a general feature of the computers.\n\n\n\n\n\n\nAnother practical limitation, besides the inherent error due to the approximation, of the floating point arithmetic is that you have to be careful when you compare floats.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python Code - 3 - Types</span>"
+    ]
+  },
+  {
+    "objectID": "python_types.html#other-types-bool-and-none",
+    "href": "python_types.html#other-types-bool-and-none",
+    "title": "4  Python Code - 3 - Types",
+    "section": "4.4 Other types: bool and None",
+    "text": "4.4 Other types: bool and None\nbool (boolean) is a special type that can only have two values: True or False.\n\n\n\n\n\n\nAnother special type that you will find quite often in Python code is None. This type can only have one value: None. It is usally employed when you want to have a variable that still has no value, it signifies that it is empty.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python Code - 3 - Types</span>"
+    ]
+  },
+  {
+    "objectID": "python_types.html#python-is-dynamic",
+    "href": "python_types.html#python-is-dynamic",
+    "title": "4  Python Code - 3 - Types",
+    "section": "4.5 Python is dynamic",
+    "text": "4.5 Python is dynamic\nIn Python we don’t need to specify the type of a variable before using it, and we can even change the type of object that the variable refers to. That is not the case in other languages, like C or Rust. In those static languages the compiler needs to know the type of the variable beforehand, and the type of a variable can not be changed.\n\n\n\n\n\n\n\nModern Python has the option of specifying the types. This is not a requirement, but you will see some type hints in Python code.\n\n\n\n\n\n\nBe careful because Python does not enforce those type hints. If you wanted to use them for anything else than documentation you would need a type checker like mypy. But if you are starting in programming, just forget about this, the idea to remember is that the objects refered to by the variables have types.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python Code - 3 - Types</span>"
+    ]
+  },
+  {
+    "objectID": "python_types.html#type-casting",
+    "href": "python_types.html#type-casting",
+    "title": "4  Python Code - 3 - Types",
+    "section": "4.6 Type casting",
+    "text": "4.6 Type casting\nType casting or type conversion is the action of changing one type into another. Python has functions to do this type casting.\n\n\n\n\n\n\nWe can also type cast to boolean.\n\n\n\n\n\n\nFind out which int and str values will be True and False when converted to boolean.\n\n\n\n\n\n\n\n\n\n\n\n\n\nNote\n\n\n\n\n\nTry with different int and str values, like 0, 1, 2, 3, “Hello”, ” “,”“.\n\n\n\n\n\n\n\n\n\n\n\nTip\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nTry to convert a boolean to integer.\n\n\n\n\n\n\n\n\n\n\n\n\n\nTip",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python Code - 3 - Types</span>"
+    ]
+  },
+  {
+    "objectID": "python_types.html#why-do-we-need-types",
+    "href": "python_types.html#why-do-we-need-types",
+    "title": "4  Python Code - 3 - Types",
+    "section": "4.7 Why do we need types?",
+    "text": "4.7 Why do we need types?\nFor a programming language using types is unavoidable. Different languages have different types, but they all have types. Why? Because, internally, the only thing that a computer can really stores in memory is a binary number, and the same binary number can be interpreted as different objects depending on its type.\n\n\n\n\n\n\n\n\n\n\n\nflowchart LR\n    subgraph memory\n        0b110100\n    end\n    int[\"as int: 52\"]\n    0b110100 --&gt; int\n    float[\"as float: 7.3e-44\"]\n    0b110100 --&gt; float\n    str[\"as str: '4'\"]\n    0b110100 --&gt; str",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Python Code - 3 - Types</span>"
     ]
   }
 ]
