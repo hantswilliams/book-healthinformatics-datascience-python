@@ -53,8 +53,6 @@ In different programming languages a variable can refer to the value stored or t
 In Python a variable will always be a reference to the object stored.
 You can think of it as a label in the file cabinet drawer or an arrow that points to the drawer.
 
-![Value stored in a variable](../static/memory_and_variables.png "Value stored in a variable")
-
 In Python we store a variable in memory by using the assigment operator **=**.
 
 ```{pyodide}
