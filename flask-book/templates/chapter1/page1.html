@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block content %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python 🐍 Code Learner</title>
+    <script type="module" src="https://cdn.jsdelivr.net/npm/zero-md@3?register"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.41.0/min/vs/loader.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+</head>
+
+<body class="bg-gray-100 p-10">
+
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6 mb-6">
+        <zero-md src="static/docs/chapter1_example1.md"></zero-md>
+    </div>
+
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-6">
+        <h1 class="text-2xl font-bold mb-4">Python 🐍 Code Learner</h1>
+        <p class="text-gray-600 mb-4">Edit the Python code below and click "Run Code" to execute it.</p>
+        <div id="editor" class="h-64 border rounded"></div>
+        <button id="runButton" class="mt-4 bg-blue-500 text-white px-4 py-2 rounded">Run Code</button>
+        <pre id="output" class="mt-4 p-4 bg-gray-200 rounded"></pre>
+    </div>
+    
+    <script>
+            
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.41.0/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            window.editor = monaco.editor.create(document.getElementById('editor'), {
+                value: "",
+                language: "python",
+                theme: "vs-dark",
+                automaticLayout: true
+            });
+
+            // Load Python file content dynamically
+            fetch("/static/python/chapter1_example1.py")
+                .then(response => response.text())
+                .then(data => {
+                    window.editor.setValue(data);
+                })
+                .catch(error => console.error("Error loading Python file:", error));
+        });
+
+        async function loadPyodideAndRun() {
+            let pyodide = await loadPyodide();
+            await pyodide.loadPackage("micropip");
+            pyodide.globals.set("input", (promptText) => prompt(promptText)); // Replace input() with JS prompt()
+            return pyodide;
+        }
+        
+        let pyodideReady = loadPyodideAndRun();
+
+        async function runPythonCode() {
+            let pyodide = await pyodideReady;
+            const code = window.editor.getValue();
+            try {
+                let output = await pyodide.runPythonAsync(code);
+                document.getElementById("output").textContent = output;
+            } catch (err) {
+                document.getElementById("output").textContent = "Error: " + err;
+            }
+        }
+
+        document.getElementById("runButton").addEventListener("click", runPythonCode);
+        
+        document.addEventListener("keydown", function (event) {
+            if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+                event.preventDefault();
+                runPythonCode();
+            }
+        });
+    </script>
+</body>
+
+{% endblock %}

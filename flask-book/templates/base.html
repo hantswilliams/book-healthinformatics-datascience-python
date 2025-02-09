@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}🐍 Python Learning for Healthcare{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="flex h-screen">
+    <!-- Vertical Menu Bar -->
+    <div class="w-1/6 bg-gray-800 text-white p-4">
+        <ul>
+            <li class="mb-4"><a href="/chapter1" class="hover:text-gray-400">Chapter 1</a></li>
+            <li class="mb-4"><a href="#" class="hover:text-gray-400">Chapter 2</a></li>
+            <li class="mb-4"><a href="#" class="hover:text-gray-400">Chapter 3</a></li>
+            <li class="mb-4"><a href="#" class="hover:text-gray-400">Chapter 4</a></li>
+        </ul>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col">
+        <!-- Horizontal Menu Bar -->
+        <div class="bg-gray-700 text-white p-4">
+            <ul class="flex space-x-4">
+                <li><a href="/" class="hover:text-gray-400">Welcome</a></li>
+                <li><a href="#" class="hover:text-gray-400">Your Profile</a></li>
+                <li><a href="#" class="hover:text-gray-400">Settings</a></li>
+                <li><a href="#" class="hover:text-gray-400">Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="p-4">
+            {% block content %}
+            <!-- Page specific content goes here -->
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>
