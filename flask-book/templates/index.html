@@ -1,8 +1,52 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="landing-page">
-        <h1>Welcome to Our Health Informatics and Data Science Platform</h1>
-        <p>Your one-stop solution for all health informatics and data science needs.</p>
+    <div class="max-w-4xl mx-auto">
+        <div class="text-center mb-12">
+            <h1 class="text-4xl font-bold text-gray-900 mb-4">Welcome to Health Informatics & Data Science</h1>
+            <p class="text-xl text-gray-600">Master Python programming in the context of healthcare data analysis</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                <div class="flex items-center mb-4">
+                    <span class="text-2xl mr-3">🚀</span>
+                    <h2 class="text-xl font-semibold text-gray-900">Getting Started</h2>
+                </div>
+                <p class="text-gray-600">Begin your journey with Python basics and healthcare data fundamentals.</p>
+                <a href="/chapter1" class="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-500">
+                    Start Learning
+                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                <div class="flex items-center mb-4">
+                    <span class="text-2xl mr-3">📊</span>
+                    <h2 class="text-xl font-semibold text-gray-900">Your Progress</h2>
+                </div>
+                <p class="text-gray-600">Track your learning journey and see your achievements.</p>
+                <a href="#" class="mt-4 inline-flex items-center text-indigo-600 hover:text-indigo-500">
+                    View Progress
+                    <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-indigo-50 rounded-xl p-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-indigo-900">Ready to continue?</h3>
+                    <p class="text-indigo-700 mt-1">Pick up where you left off in your learning journey.</p>
+                </div>
+                <button class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-500 transition-colors duration-200">
+                    Resume Learning
+                </button>
+            </div>
+        </div>
     </div>
 {% endblock %}
