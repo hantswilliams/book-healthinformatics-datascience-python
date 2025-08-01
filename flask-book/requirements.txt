@@ -1,2 +1,12 @@
 flask
+flask-login
+flask-wtf
+sqlalchemy
+pymysql
+python-dotenv
+werkzeug
+email-validator
 markdown-exec[ansi]
+pytest
+pytest-flask
+pydantic
