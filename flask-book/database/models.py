@@ -34,6 +34,8 @@ class User(Base):
     
     # Relationship with roles (many-to-many)
     roles = relationship('Role', secondary=user_roles, back_populates='users')
+    # Relationship with progress tracking
+    progress = relationship('UserProgress', uselist=False, back_populates='user')
     
     def __init__(self, username, email, password, first_name=None, last_name=None):
         self.username = username

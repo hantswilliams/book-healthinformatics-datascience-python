@@ -4,6 +4,9 @@ from config import get_config
 from database import init_db
 from auth import auth_bp, login_required, load_logged_in_user
 from rbac import init_rbac, permission_required
+from progress import progress_bp
+from datetime import datetime, timedelta
+import glob
 
 def create_app(config_class=None):
     """
@@ -20,6 +23,7 @@ def create_app(config_class=None):
     
     # Register blueprints
     app.register_blueprint(auth_bp)
+    app.register_blueprint(progress_bp)
     
     # Initialize database
     init_db(app)
@@ -32,15 +36,75 @@ def create_app(config_class=None):
     def inject_user():
         return {'user': g.user if hasattr(g, 'user') else None}
     
+    @app.context_processor
+    def inject_date_utils():
+        return {
+            'now': datetime.utcnow(),
+            'timedelta': timedelta
+        }
+    
+    @app.context_processor
+    def inject_chapters():
+        """
+        Get all available chapters from the templates/chapters directory
+        and make them available to all templates
+        """
+        chapters = []
+        chapter_dirs = glob.glob(os.path.join(app.root_path, 'templates/chapters/*'))
+        
+        for chapter_dir in sorted(chapter_dirs):
+            if os.path.isdir(chapter_dir):
+                chapter_id = os.path.basename(chapter_dir)
+                # Customize the chapter title and emoji based on the ID
+                emoji = "📚"  # Default emoji
+                if "chapter1" in chapter_id:
+                    title = "Getting Started"
+                else:
+                    # Generate title from the chapter ID (e.g., "chapter1" -> "Chapter 1")
+                    title = chapter_id.replace('chapter', 'Chapter ')
+                
+                chapters.append({
+                    'id': chapter_id,
+                    'title': title,
+                    'emoji': emoji
+                })
+        
+        return {'chapters': chapters}
+    
     # Define routes
     @app.route('/')
     def index():
         return render_template('index.html')
     
+    @app.route('/chapter/<chapter_id>')
+    @login_required
+    def chapter(chapter_id):
+        """
+        Generic route for any chapter
+        """
+        chapter_path = os.path.join(app.root_path, f'templates/chapters/{chapter_id}')
+        
+        if not os.path.exists(chapter_path):
+            flash(f'Chapter {chapter_id} not found', 'error')
+            return redirect(url_for('index'))
+        
+        # Get chapter title from context processor
+        chapter_title = f"Chapter {chapter_id.replace('chapter', '')}"
+        for chapter in g.get('chapters', []):
+            if chapter['id'] == chapter_id:
+                chapter_title = f"Chapter {chapter_id.replace('chapter', '')}: {chapter['title']}"
+                break
+        
+        return render_template(f'chapters/{chapter_id}/index.html', 
+                            chapter_id=chapter_id, 
+                            page_id="index",
+                            page_title=chapter_title)
+    
     @app.route('/chapter1')
     @login_required
     def chapter1():
-        return render_template('chapter1/page1.html')
+        """Legacy route - redirects to new chapter route"""
+        return redirect(url_for('chapter', chapter_id='chapter1'))
     
     @app.route('/admin')
     @login_required

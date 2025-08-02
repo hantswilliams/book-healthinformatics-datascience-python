@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+
+{% block title %}My Progress - {{ super() }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">My Learning Progress</h1>
+        <p class="text-gray-600">Track your journey through the Health Informatics course</p>
+    </div>
+    
+    <!-- Progress Overview -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h2 class="text-lg font-medium text-gray-900 mb-1">Overall Progress</h2>
+                <p class="text-gray-500 text-sm">Your progress across all chapters and exercises</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex items-center">
+                <div class="w-16 h-16 rounded-full bg-indigo-100 flex items-center justify-center mr-4">
+                    <span class="text-xl font-bold text-indigo-600">{{ progress.overall_progress_percent|round|int }}%</span>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Last activity: {{ progress.last_activity_at.strftime('%B %d, %Y') }}</p>
+                    <p class="text-sm text-gray-500">Chapters completed: {{ progress.total_chapters_completed }} of 1</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="mt-6">
+            <div class="w-full bg-gray-200 rounded-full h-4">
+                <div class="bg-indigo-600 h-4 rounded-full" style="width: {{ progress.overall_progress_percent }}%;"></div>
+            </div>
+            <div class="flex justify-between mt-2">
+                <span class="text-xs font-medium text-gray-500">Getting Started</span>
+                <span class="text-xs font-medium text-gray-500">Halfway There</span>
+                <span class="text-xs font-medium text-gray-500">Advanced Topics</span>
+            </div>
+        </div>
+        
+        <!-- Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="font-medium text-gray-500 text-sm">Chapters Viewed</div>
+                <div class="text-2xl font-bold text-gray-900">{{ progress.total_chapters_viewed }}</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="font-medium text-gray-500 text-sm">Chapters Completed</div>
+                <div class="text-2xl font-bold text-gray-900">{{ progress.total_chapters_completed }}</div>
+            </div>
+            <div class="bg-gray-50 rounded-lg p-4">
+                <div class="font-medium text-gray-500 text-sm">Exercises Completed</div>
+                <div class="text-2xl font-bold text-gray-900">{{ progress.total_exercises_completed }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chapter Completion Chart -->
+    <div class="bg-white rounded-xl shadow-sm p-6 mb-8">
+        <h2 class="text-lg font-medium text-gray-900 mb-4">Chapter Completion</h2>
+        <div class="w-full" style="height: 300px;">
+            <canvas id="chapterCompletionChart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Chapter Progress -->
+    <h2 class="text-xl font-bold text-gray-900 mb-4">Chapter Progress</h2>
+    
+    <div class="space-y-6">
+        {% for chapter in chapters %}
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+            <div class="px-6 py-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-lg font-medium text-gray-900">{{ chapter.title }}</h3>
+                <div class="text-sm">
+                    <span class="font-medium text-indigo-600">{{ chapter.completed_pages }} / {{ chapter.total_pages }}</span> pages completed
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <!-- Chapter Progress Bar -->
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-6">
+                    {% set chapter_percent = (chapter.completed_pages / chapter.total_pages * 100) if chapter.total_pages > 0 else 0 %}
+                    <div class="bg-indigo-600 h-2.5 rounded-full" style="width: {{ chapter_percent }}%;"></div>
+                </div>
+                
+                <!-- Pages List -->
+                <div class="space-y-4">
+                    {% for page in chapter.pages %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            {% if page.completed %}
+                            <svg class="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {% else %}
+                            <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            {% endif %}
+                            <span class="text-gray-700">{{ page.title }}</span>
+                        </div>
+                        <div class="flex items-center">
+                            <span class="text-sm text-gray-500 mr-4">{{ page.completion_percent|round|int }}% viewed</span>
+                            <a href="{{ url_for('chapter', chapter_id=chapter.id) }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+                                {% if page.completed %}Review{% else %}Continue{% endif %}
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <!-- Exercises -->
+                {% if chapter.exercises %}
+                <div class="mt-8">
+                    <h4 class="text-md font-medium text-gray-800 mb-4">Exercises</h4>
+                    <div class="space-y-3">
+                        {% for exercise in chapter.exercises %}
+                        <div class="flex items-center justify-between bg-gray-50 p-3 rounded-md">
+                            <div class="flex items-center">
+                                {% if exercise.completed %}
+                                <svg class="w-5 h-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                {% else %}
+                                <svg class="w-5 h-5 text-gray-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                                </svg>
+                                {% endif %}
+                                <span class="text-gray-700">{{ exercise.title }}</span>
+                            </div>
+                            <div class="flex items-center">
+                                <span class="text-sm text-gray-500 mr-4">{{ exercise.attempts }} attempts</span>
+                                {% if exercise.score is not none %}
+                                <span class="text-sm font-medium {% if exercise.score >= 80 %}text-green-600{% elif exercise.score >= 60 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                    {{ exercise.score }}%
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not chapters %}
+        <div class="bg-white rounded-lg shadow-sm p-6 text-center">
+            <p class="text-gray-500">You haven't started any chapters yet. Begin your learning journey!</p>
+            <a href="/chapter1" class="mt-4 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                Start Learning
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Chart.js for potential visualizations -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Chapter completion chart
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('chapterCompletionChart');
+        if (ctx) {
+            const chapterLabels = [{% for chapter in chapters %}'{{ chapter.title }}'{% if not loop.last %}, {% endif %}{% endfor %}];
+            const completionData = [{% for chapter in chapters %}{{ (chapter.completed_pages / chapter.total_pages * 100) if chapter.total_pages > 0 else 0 }}{% if not loop.last %}, {% endif %}{% endfor %}];
+            
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: chapterLabels,
+                    datasets: [{
+                        label: 'Chapter Completion (%)',
+                        data: completionData,
+                        backgroundColor: 'rgba(79, 70, 229, 0.6)',
+                        borderColor: 'rgba(79, 70, 229, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Completion Percentage'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        title: {
+                            display: true,
+                            text: 'Your Chapter Progress'
+                        }
+                    }
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

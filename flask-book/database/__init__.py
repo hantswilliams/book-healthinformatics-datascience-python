@@ -46,6 +46,7 @@ def init_db(app):
         
         # Import all models to ensure they're registered with Base
         from . import models
+        from . import progress_models
         
         # Create tables
         Base.metadata.create_all(bind=engine)
