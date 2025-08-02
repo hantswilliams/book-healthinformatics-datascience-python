@@ -3,7 +3,7 @@
 {% block title %}Admin Analytics - {{ super() }}{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto">
+<div class="max-w-4xl mx-auto">
     <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin Analytics Dashboard</h1>
         <p class="text-gray-600">Monitor user engagement and content performance</p>
@@ -139,7 +139,7 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             {% for chapter in chapters %}
                             <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ chapter.title }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ chapter.emoji }} {{ chapter.id.replace('chapter', 'Chapter ') }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ chapter.total_views }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ chapter.unique_users }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap">
@@ -174,7 +174,7 @@
         new Chart(ctx, {
             type: 'bar',
             data: {
-                labels: [{% for chapter in chapters %}'{{ chapter.title }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+                labels: [{% for chapter in chapters %}'{{ chapter.emoji }} {{ chapter.id.replace('chapter', 'Chapter ') }}'{% if not loop.last %}, {% endif %}{% endfor %}],
                 datasets: [
                     {
                         label: 'Completion Rate (%)',

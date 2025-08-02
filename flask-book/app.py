@@ -55,13 +55,9 @@ def create_app(config_class=None):
         for chapter_dir in sorted(chapter_dirs):
             if os.path.isdir(chapter_dir):
                 chapter_id = os.path.basename(chapter_dir)
-                # Customize the chapter title and emoji based on the ID
+                # Simplified title - just use "Chapter X" format
                 emoji = "📚"  # Default emoji
-                if "chapter1" in chapter_id:
-                    title = "Getting Started"
-                else:
-                    # Generate title from the chapter ID (e.g., "chapter1" -> "Chapter 1")
-                    title = chapter_id.replace('chapter', 'Chapter ')
+                title = chapter_id.replace('chapter', 'Chapter ')
                 
                 chapters.append({
                     'id': chapter_id,
@@ -88,12 +84,8 @@ def create_app(config_class=None):
             flash(f'Chapter {chapter_id} not found', 'error')
             return redirect(url_for('index'))
         
-        # Get chapter title from context processor
+        # Get chapter title - simplified to just "Chapter X"
         chapter_title = f"Chapter {chapter_id.replace('chapter', '')}"
-        for chapter in g.get('chapters', []):
-            if chapter['id'] == chapter_id:
-                chapter_title = f"Chapter {chapter_id.replace('chapter', '')}: {chapter['title']}"
-                break
         
         return render_template(f'chapters/{chapter_id}/index.html', 
                             chapter_id=chapter_id, 
@@ -105,6 +97,11 @@ def create_app(config_class=None):
     def chapter1():
         """Legacy route - redirects to new chapter route"""
         return redirect(url_for('chapter', chapter_id='chapter1'))
+    
+    @app.route('/resources')
+    def resources():
+        """Resources page with links to helpful Python learning materials"""
+        return render_template('resources.html')
     
     @app.route('/admin')
     @login_required

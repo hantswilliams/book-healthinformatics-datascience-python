@@ -100,14 +100,24 @@ def track_progress():
             if scroll_percent > page_view.completion_percent:
                 page_view.completion_percent = scroll_percent
             
-            # Mark as completed if scrolled to near bottom (90%)
+            # Check if this chapter is already marked as completed to avoid double counting
+            chapter_already_completed = db_session.query(UserPageView).filter(
+                UserPageView.user_id == user_id,
+                UserPageView.chapter_id == chapter_id,
+                UserPageView.is_completed == True
+            ).first() is not None
+            
+            # Mark as completed if scrolled to near bottom (90%) and not already completed
             if scroll_percent >= 90 and not page_view.is_completed:
                 page_view.is_completed = True
-                # Since each chapter is a single page, mark the chapter as completed too
-                user_progress.total_chapters_completed = UserPageView.query.filter_by(
-                    user_id=user_id,
-                    is_completed=True
-                ).count()
+                
+                # Only increment chapter count if this is the first time completing this chapter
+                if not chapter_already_completed:
+                    # Since each chapter is a single page, mark the chapter as completed too
+                    user_progress.total_chapters_completed = UserPageView.query.filter_by(
+                        user_id=user_id,
+                        is_completed=True
+                    ).distinct(UserPageView.chapter_id).count()
             
             # Record scroll interaction
             interaction = UserInteraction(
@@ -149,11 +159,12 @@ def track_progress():
                 exercise.code_submitted = data.get('code', '')
                 
                 if data.get('is_correct', False):
-                    exercise.is_completed = True
-                    exercise.completed_at = datetime.utcnow()
-                    
-                    # Update total exercises completed if this is the first completion
+                    # Only update if the exercise was not previously completed
                     if not exercise.is_completed:
+                        exercise.is_completed = True
+                        exercise.completed_at = datetime.utcnow()
+                        
+                        # Update total exercises completed
                         user_progress.total_exercises_completed += 1
                     
                     # Check if all exercises for this chapter are completed
@@ -164,14 +175,26 @@ def track_progress():
                     
                     all_completed = all(ex.is_completed for ex in all_chapter_exercises) if all_chapter_exercises else True
                     
+                    # Check if this chapter is already marked as completed to avoid double counting
+                    chapter_already_completed = db_session.query(UserPageView).filter(
+                        UserPageView.user_id == user_id,
+                        UserPageView.chapter_id == chapter_id,
+                        UserPageView.is_completed == True
+                    ).first() is not None
+                    
                     # If all exercises are completed and the user has scrolled to 90%, mark chapter as fully completed
-                    if all_completed and page_view.completion_percent >= 90:
+                    if all_completed and page_view.completion_percent >= 90 and not page_view.is_completed:
                         page_view.is_completed = True
-                        # Update chapter completion count
-                        user_progress.total_chapters_completed = UserPageView.query.filter_by(
-                            user_id=user_id,
-                            is_completed=True
-                        ).count()
+                        
+                        # Only increment chapter count if this is the first time completing this chapter
+                        if not chapter_already_completed:
+                            # Update chapter completion count - count distinct chapters
+                            completed_chapters = db_session.query(UserPageView.chapter_id).filter(
+                                UserPageView.user_id == user_id,
+                                UserPageView.is_completed == True
+                            ).distinct().count()
+                            
+                            user_progress.total_chapters_completed = completed_chapters
                 
                 # Record exercise interaction
                 interaction = UserInteraction(
@@ -188,6 +211,13 @@ def track_progress():
         
         elif event_type == 'chapter_completed':
             # User explicitly marked the chapter as completed
+            # First, check if this chapter is already marked as completed to avoid double counting
+            chapter_already_completed = db_session.query(UserPageView).filter(
+                UserPageView.user_id == user_id,
+                UserPageView.chapter_id == chapter_id,
+                UserPageView.is_completed == True
+            ).first() is not None
+            
             # Mark all related page views as completed
             chapter_views = UserPageView.query.filter_by(
                 user_id=user_id,
@@ -198,13 +228,15 @@ def track_progress():
                 page_view.is_completed = True
                 page_view.completion_percent = 100
             
-            # Update chapter completion count - count distinct chapters
-            completed_chapters = db_session.query(UserPageView.chapter_id).filter(
-                UserPageView.user_id == user_id,
-                UserPageView.is_completed == True
-            ).distinct().count()
-            
-            user_progress.total_chapters_completed = completed_chapters
+            # Only increment chapter count if this is the first time completing this chapter
+            if not chapter_already_completed:
+                # Update chapter completion count - count distinct chapters
+                completed_chapters = db_session.query(UserPageView.chapter_id).filter(
+                    UserPageView.user_id == user_id,
+                    UserPageView.is_completed == True
+                ).distinct().count()
+                
+                user_progress.total_chapters_completed = completed_chapters
             
             # Record the completion interaction
             interaction = UserInteraction(
@@ -282,9 +314,13 @@ def user_dashboard():
     chapters = {}
     for view in page_views:
         if view.chapter_id not in chapters:
+            # Use the same chapter title formatting as the main app, but simpler now
+            title = view.chapter_id.replace('chapter', 'Chapter ')
+            
             chapters[view.chapter_id] = {
                 'id': view.chapter_id,
-                'title': view.chapter_id.replace('_', ' ').title(),
+                'title': title,
+                'emoji': "📚",  # Add emoji to match main app
                 'pages': [],
                 'completed_pages': 0,
                 'total_pages': 0,
@@ -364,9 +400,13 @@ def admin_dashboard():
     for view in page_views:
         chapter_id = view.chapter_id
         if chapter_id not in chapter_stats:
+            # Use the same chapter title formatting as the main app, but simpler now
+            title = chapter_id.replace('chapter', 'Chapter ')
+                
             chapter_stats[chapter_id] = {
                 'id': chapter_id,
-                'title': chapter_id.replace('_', ' ').title(),
+                'title': title,
+                'emoji': "📚",  # Add emoji to match main app
                 'total_views': 0,
                 'completions': 0,
                 'unique_users': set()
