@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Code Executor</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CodeMirror CSS and JS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="bg-white shadow-lg rounded-lg p-6 w-full max-w-lg">
+    <h1 class="text-2xl font-bold text-gray-800 text-center mb-4">Python Code Executor</h1>
+    <p class="text-gray-600 text-center mb-6">
+      Enter your Python code below and click "Run" to execute it.
+    </p>
+    <div class="mb-4">
+      <label for="code-editor" class="block text-gray-600 font-medium mb-2">Python Code:</label>
+      <textarea id="code-editor" class="hidden">sum([1, 2, 3, 4, 5])</textarea>
+      <div id="editor-container" class="border rounded-lg"></div>
+    </div>
+    <div class="flex justify-between mb-6">
+      <button onclick="evaluatePython()" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+        Run
+      </button>
+      <button onclick="clearOutput()" class="bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+        Clear
+      </button>
+    </div>
+    <div>
+      <label for="output" class="block text-gray-600 font-medium mb-2">Output:</label>
+      <textarea id="output" class="w-full border rounded-lg p-2 text-gray-800 bg-gray-100 focus:outline-none" rows="6" disabled>Initializing...</textarea>
+    </div>
+  </div>
+
+  <script>
+    const output = document.getElementById("output");
+    const codeTextarea = document.getElementById("code-editor");
+
+    // Initialize CodeMirror editor
+    const codeMirrorEditor = CodeMirror(document.getElementById("editor-container"), {
+      value: codeTextarea.value,
+      mode: "python",
+      lineNumbers: true,
+      theme: "default"
+    });
+
+    function addToOutput(s) {
+      output.value += s + "\n";
+    }
+
+    output.value = "Initializing...\n";
+
+    // Initialize Pyodide
+    async function main() {
+      let pyodide = await loadPyodide();
+      output.value += "Ready!\n";
+      return pyodide;
+    }
+    let pyodideReadyPromise = main();
+
+    // Evaluate Python Code
+    async function evaluatePython() {
+      let pyodide = await pyodideReadyPromise;
+      try {
+        const code = codeMirrorEditor.getValue(); // Get code from CodeMirror editor
+        let result = pyodide.runPython(code);
+        if (result === undefined) {
+          addToOutput(">>> Code executed successfully. (No output to display)");
+        } else {
+          addToOutput(">>> " + result);
+        }
+      } catch (err) {
+        addToOutput("Error: " + err);
+      }
+    }
+
+    // Clear Output
+    function clearOutput() {
+      output.value = "";
+    }
+  </script>
+</body>
+</html>

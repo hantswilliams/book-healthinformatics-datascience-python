@@ -1,0 +1,250 @@
+# For
+
+## Resources
+
+- [for](https://docs.python.org/3/tutorial/controlflow.html#for-statements) statement in the official documentation.
+- [for loops](https://realpython.com/python-for-loop/) in Real Python.
+
+## for
+
+for allows us to execute a [block](block.qmd) of code for each item.
+The variable defined after the for keyword will take the value of each item, one at a time, one for each [iteration](https://en.wikipedia.org/wiki/Iteration#Computing).
+
+```{pyodide}
+salutations = ["Hello", "hi", "Ciao"]
+
+for salutation in salutations:
+    # The variable salutation will have each of the strings,
+    # one at a time, until the given list of saluations runs
+    # out of strings.
+    print(salutation)
+print("for loop done!")
+```
+
+What would happen if we executed the following code? How would you fix it?
+
+```{pyodide}
+#| exercise: for_block
+salutations = ["Hello", "hi", "Ciao"]
+
+for salutation in salutations:
+    print(salutation)
+    print("for loop done!")
+```
+::: { .solution exercise="for_block" }
+::: { .callout-tip collapse="false"}
+```{pyodide}
+for salutation in salutations:
+    print(salutation)
+print("for loop done!")
+```
+:::
+:::
+
+Internally the for loop works by calling the [next](https://docs.python.org/3/library/functions.html#next) on an [iterator](https://docs.python.org/3/glossary.html#term-iterator) from the given [iterable](https://docs.python.org/3/glossary.html#term-iterable).
+An iterator is an object that, when given to the [next](https://docs.python.org/3/library/functions.html#next) function, supports the generation of one item at a time, until it runs out of items.
+So the previous for loop would be, more or less, equivalent running the following code.
+
+```{pyodide}
+salutations = iter(["Hello", "hi", "Ciao"])
+
+# This for is equivalent of doing
+salutation = next(salutations)
+print(salutation)
+salutation = next(salutations)
+print(salutation)
+salutation = next(salutations)
+print(salutation)
+salutation = next(salutations)
+print(salutation)
+```
+
+
+Python has another way of doing loops, the [while](https://docs.python.org/3/reference/compound_stmts.html#the-while-statement) statement.
+
+## break
+
+At any iteration the loop could be completely stopped, broken, by using the [break](https://docs.python.org/3/reference/simple_stmts.html#break) statement.
+
+```{pyodide}
+for i in [1, 2, 3]:
+    print(i)
+    break # only the first number will be printed
+    print("This line won't be printed")
+print("All done!")
+```
+
+## continue
+
+The continue statement allows us to move to the next iteration without running the rest of the code in the block.
+
+```{pyodide}
+
+for i in [1, 2, 3, 4]:
+    print(i)
+    continue
+    print("This line will never be printed.")
+print("All done!")
+
+```
+
+```{pyodide}
+
+for i in [1, 2, 3, 4]:
+    if i % 2:
+        continue
+    print("Only the even numbers will be printed: ", i)
+print("All done!")
+
+```
+
+## range
+
+This kind of for loop, the one implemented in Python, in other languages is known as a [foreach](https://en.wikipedia.org/wiki/Foreach_loop) loop.
+To have the functionallity available in other programming languages, in which the for statement just iterates over some numbers, you could combine a for loop with the [range](https://docs.python.org/3/library/functions.html#func-range) function.
+
+Write a for loop that prints the first 10 natural numbers.
+
+```{pyodide}
+#| exercise: for_numbers
+
+# expected result
+# 0
+# 1
+# 2
+# 3
+# 4
+# 5
+# 6
+# 7
+# 8
+# 9
+# Done!
+```
+
+::: { .hint exercise="for_numbers"}
+::: { .callout-note collapse="false"}
+
+You can use a list or the [range](https://docs.python.org/3/library/functions.html#func-range) function.
+
+:::
+:::
+
+::: { .solution exercise="for_numbers"}
+::: { .callout-note collapse="false"}
+
+With a list.
+
+```{pyodide}
+numbers = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+for i in numbers:
+    print(i)
+print("Done!")
+```
+
+With the range function.
+
+```{pyodide}
+
+for i in range(10):
+    print(i)
+print("Done!")
+```
+
+:::
+:::
+
+Create a program that writes the following:
+
+```{pyodide}
+#| exercise: number_lists
+1 
+1 2 
+1 2 3 
+1 2 3 4 
+1 2 3 4 5
+```
+
+::: { .solution exercise="number_lists"}
+::: { .callout-note collapse="false"}
+
+There are many ways of solving this exercise, here you have some.
+
+
+```{pyodide}
+numbers = []
+for i in [1, 2, 3, 4, 5]:
+    numbers.append(str(i))
+    print(' '.join(numbers))
+```
+
+```{pyodide}
+for i in range(1, 6):
+    numbers = list(range(1, i + 1))
+    number_strs = []
+    for number in numbers:
+        number_strs.append(str(number))
+    print(' '.join(number_strs))
+```
+
+Using [map](https://docs.python.org/3/library/functions.html#map) and [range](https://docs.python.org/3/library/functions.html#func-range).
+
+```{pyodide}
+for i in range(1, 6):
+    numbers = map(str, range(1, i + 1))
+    print(' '.join(numbers))
+```
+
+Using a [list comprenhension](https://realpython.com/list-comprehension-python/).
+
+```{pyodide}
+for i in range(1, 6):
+    numbers = [str(number) for number in range(1, i + 1)]
+    print(' '.join(numbers))
+```
+
+:::
+:::
+
+## enumerate
+
+It is quite common to require both the item and its index. We could do it like:
+
+```{pyodide}
+i = 0
+for word in ["resistance", "is", "futile"]:
+    print(f"This is the word number: {i} - word")
+    i += 1
+
+```
+
+However, this pattern is so common that Python have solved it using the function [enumerate](https://docs.python.org/3/library/functions.html#enumerate).
+
+```{pyodide}
+for i, word in enumerate(["Live", "long", "and", "prosper"]):
+    print(f"This is the word number: {i} - word")
+
+```
+
+Enumerate works by creating an iterator of tuples with two elements: the index, and the original item.
+
+```{pyodide}
+words = ["Beam", "me", "up", "Scotty"]
+enumerate_tuples = list(enumerate(words))
+print(enumerate_tuples)
+```
+
+And since Python supports mutiple assigment what we are doing in the for loop is equivalente to:
+
+```{pyodide}
+words = ["Highly", "illogical"]
+tuples = enumerate(words)
+tuple_ = next(tuples)
+print(tuple_)
+i, word = tuple_
+print(i, word)
+tuple_ = next(tuples)
+print(tuple_)
+i, word = tuple_
+print(i, word)
+```

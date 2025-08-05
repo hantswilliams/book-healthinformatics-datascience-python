@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Make default text colors darker for better readability using zinc colors */
+.text-gray-600 {
+  color: rgb(24 24 27) !important; /* zinc-900 equivalent */
+}
+
+.text-gray-500 {
+  color: rgb(39 39 42) !important; /* zinc-800 equivalent */
+}
+
+.text-gray-700 {
+  color: rgb(24 24 27) !important; /* zinc-900 equivalent */
+}
+
+.text-gray-400 {
+  color: rgb(63 63 70) !important; /* zinc-700 equivalent */
+}
+
+/* Prose styling for markdown content */
+.prose {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+.prose p {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+.prose li {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+.prose blockquote {
+  color: rgb(39 39 42) !important; /* zinc-800 */
+}

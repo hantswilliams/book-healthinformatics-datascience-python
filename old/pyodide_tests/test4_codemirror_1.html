@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Code Executor</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- CodeMirror CSS and JS -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/mode/python/python.min.js"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="bg-white shadow-lg rounded-lg p-6 w-full max-w-4xl">
+    <h1 class="text-2xl font-bold text-gray-800 text-center mb-4">Python Code Executor</h1>
+    <p class="text-gray-600 text-center mb-6">
+      Enter your Python code below and click "Run" to execute it.
+    </p>
+    <div class="flex justify-between mb-4">
+      <button onclick="loadExampleFunction()" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400">
+        Load Example Function
+      </button>
+      <button onclick="loadExampleMath()" class="bg-indigo-500 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+        Load Example Math
+      </button>
+      <button onclick="loadExampleRequests()" class="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 focus:outline-none focus:ring-2 focus:ring-yellow-400">
+        Load Example Requests
+      </button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Code Editor -->
+      <div class="relative">
+        <label for="code-editor" class="block text-gray-600 font-medium mb-2">Python Code:</label>
+        <textarea id="code-editor" class="hidden"></textarea>
+        <div id="editor-container" class="border rounded-lg h-64 overflow-hidden"></div>
+        <button onclick="evaluatePython()" class="mt-4 w-full bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+          Run
+        </button>
+      </div>
+      <!-- Output Editor -->
+      <div class="relative">
+        <label for="output" class="block text-gray-600 font-medium mb-2">Output:</label>
+        <div id="output-container" class="border rounded-lg h-64 overflow-auto bg-gray-100"></div>
+        <button onclick="clearOutput()" class="mt-4 w-full bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const codeTextarea = document.getElementById("code-editor");
+    const outputContainer = document.getElementById("output-container");
+
+    // Initialize CodeMirror editor for input
+    const codeMirrorEditor = CodeMirror(document.getElementById("editor-container"), {
+      value: "",
+      mode: "python",
+      lineNumbers: true,
+      theme: "default"
+    });
+
+    // Initialize CodeMirror editor for output
+    const outputEditor = CodeMirror(outputContainer, {
+      value: "Initializing...\n",
+      mode: "text/plain",
+      lineNumbers: false,
+      readOnly: true,
+      theme: "default"
+    });
+
+    // Add to Output
+    function addToOutput(s) {
+      const currentValue = outputEditor.getValue();
+      outputEditor.setValue(currentValue + s + "\n");
+    }
+
+    // Initialize Pyodide
+    async function main() {
+      let pyodide = await loadPyodide();
+      addToOutput("Ready!");
+      return pyodide;
+    }
+    let pyodideReadyPromise = main();
+
+    async function evaluatePython() {
+        let pyodide = await pyodideReadyPromise;
+        try {
+            // Install `requests` dynamically using micropip
+            await pyodide.loadPackage("micropip");
+            await pyodide.runPythonAsync(`
+        import micropip
+        await micropip.install("requests")
+            `);
+
+            // Redirect Python's print() to a custom output stream
+            pyodide.runPython(`
+        import sys
+        from io import StringIO
+
+        # Redirect stdout to capture print() statements
+        sys.stdout = StringIO()
+            `);
+
+            // Get the code from the editor and strip trailing blank lines
+            let code = codeMirrorEditor.getValue().trimEnd();
+
+            // Run the user's code
+            pyodide.runPython(code);
+
+            // Retrieve the printed output from sys.stdout
+            const printedOutput = pyodide.runPython("sys.stdout.getvalue()");
+
+            // Add the printed output to the editor
+            if (printedOutput.trim() !== "") {
+            addToOutput(printedOutput);
+            }
+
+            // Attempt to evaluate the last expression, if valid
+            if (code.trim() !== "") {
+            const result = pyodide.runPython("eval('''" + code.split("\n").pop() + "''')");
+            if (result !== undefined) {
+                addToOutput(">>> " + result);
+            }
+            }
+        } catch (err) {
+            addToOutput("Error: " + err);
+        } finally {
+            // Reset stdout to default
+            pyodide.runPython("sys.stdout = sys.__stdout__");
+        }
+        }
+
+
+
+    // Clear Output
+    function clearOutput() {
+      outputEditor.setValue("");
+    }
+
+    // Load Example Function
+    function loadExampleFunction() {
+      const exampleCode = `def greet(name):
+    return f"Hello, {name}!"
+
+# Test the function
+greet("World")
+`;
+      codeMirrorEditor.setValue(exampleCode);
+    }
+
+    // Load Example Math
+    function loadExampleMath() {
+      const exampleCode = `import math
+
+# Calculate the square root of a number
+math.sqrt(16)
+`;
+      codeMirrorEditor.setValue(exampleCode);
+    }
+
+
+    function loadExampleRequests() {
+        const exampleCode = `import requests
+
+# Make a GET request to a URL
+response = requests.get("https://api.github.com")
+
+# Print the response status code
+print(response.status_code)
+`;
+        codeMirrorEditor.setValue(exampleCode);
+        }
+
+
+  </script>
+</body>
+</html>

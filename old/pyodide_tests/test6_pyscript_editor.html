@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DuckDB with PyScript</title>
+  <script defer type="module" src="https://pyscript.net/releases/2024.8.2/core.js"></script>
+  <link rel="stylesheet" href="https://pyscript.net/releases/2024.8.2/themes/py-dark.css">
+</head>
+<body>
+  <h1>DuckDB with PyScript Example</h1>
+  <div id="output" style="font-family: monospace; background: #f3f3f3; padding: 1rem; border-radius: 8px;">
+    <!-- Output will be displayed here -->
+  </div>
+
+  <script type="py-editor" config='{"packages":["duckdb"]}'>
+import duckdb
+
+# Perform a SQL query
+result = duckdb.sql("SELECT '42 in an editor' AS s").fetchall()
+
+# Convert the result to a string
+output_text = str(result)
+
+# Use PyScript's DOM API to display the result in the "output" div
+from pyscript import Element
+Element("output").write(output_text)
+  </script>
+</body>
+</html>

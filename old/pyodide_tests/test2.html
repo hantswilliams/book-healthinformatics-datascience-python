@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python in Browser</title>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.23.4/full/pyodide.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.38.0/min/vs/loader.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #python-editor, #python-output-editor {
+            height: 300px;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        #loading-indicator {
+            display: none;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <h1>Python</h1>
+
+    <div id="loading-indicator">Loading Pyodide, please wait...</div>
+
+    <h2>Python Command</h2>
+    <div id="python-editor"></div>
+    <button id="run-button" onclick="runPython()" disabled>Run Python</button>
+
+    <h2>Python Output</h2>
+    <div id="python-output-editor"></div>
+
+    <script>
+        let pythonEditor, pythonOutputEditor;
+
+        async function loadPyodideAndPackages() {
+            document.getElementById("loading-indicator").style.display = "block";
+            try {
+                window.pyodide = await loadPyodide();
+                document.getElementById("loading-indicator").style.display = "none";
+                document.getElementById("run-button").disabled = false;
+                console.log("Pyodide loaded successfully!");
+            } catch (err) {
+                console.error("Failed to load Pyodide:", err);
+            }
+        }
+
+        async function runPython() {
+            const pythonInput = pythonEditor.getValue();
+            try {
+                const result = await pyodide.runPythonAsync(pythonInput);
+                pythonOutputEditor.setValue(result || "Execution completed without output.");
+            } catch (err) {
+                pythonOutputEditor.setValue(`Error: ${err}`);
+            }
+        }
+
+        function setupMonacoEditor() {
+            require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.38.0/min/vs' } });
+            require(['vs/editor/editor.main'], function () {
+                // Input Editor
+                pythonEditor = monaco.editor.create(document.getElementById('python-editor'), {
+                    value: "# Type your Python code here\nprint('Hello, World!')",
+                    language: 'python',
+                    theme: 'vs-light'
+                });
+
+                // Output Editor
+                pythonOutputEditor = monaco.editor.create(document.getElementById('python-output-editor'), {
+                    value: "Python Output will appear here...",
+                    language: 'plaintext',
+                    theme: 'vs-light',
+                    readOnly: true
+                });
+            });
+        }
+
+        // Initialize Pyodide and Monaco Editor
+        setupMonacoEditor();
+        loadPyodideAndPackages();
+    </script>
+</body>
+</html>

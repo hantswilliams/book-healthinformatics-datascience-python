@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Python Code Executor</title>
+  <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.13/codemirror.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+  <div class="bg-white shadow-lg rounded-lg p-6 w-full max-w-4xl">
+    <h1 class="text-2xl font-bold text-gray-800 text-center mb-4">Python Code Executor</h1>
+    <p class="text-gray-600 text-center mb-6">
+      Enter your Python code below and click "Run" to execute it.
+    </p>
+    <div class="flex justify-between mb-4">
+      <button onclick="loadExamplePandas()" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400">
+        Load Example Pandas Dataframe
+      </button>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- Code Editor -->
+      <div class="relative">
+        <label for="code-editor" class="block text-gray-600 font-medium mb-2">Python Code:</label>
+        <div id="editor-container" class="border rounded-lg h-64 overflow-hidden"></div>
+        <button onclick="evaluatePython()" class="mt-4 w-full bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-400">
+          Run
+        </button>
+      </div>
+      <!-- Output Editor -->
+      <div class="relative">
+        <label for="output" class="block text-gray-600 font-medium mb-2">Output:</label>
+        <div id="output-container" class="border rounded-lg h-64 overflow-auto bg-gray-100"></div>
+        <button onclick="clearOutput()" class="mt-4 w-full bg-red-500 text-white px-4 py-2 rounded-lg shadow hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400">
+          Clear
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const outputContainer = document.getElementById("output-container");
+
+    const codeMirrorEditor = CodeMirror(document.getElementById("editor-container"), {
+      value: "",
+      mode: "python",
+      lineNumbers: true,
+      theme: "default"
+    });
+
+    async function main() {
+      const pyodide = await loadPyodide();
+      // import pandas and requests
+      await pyodide.loadPackage("pandas");
+      return pyodide;
+    }
+
+    const pyodideReadyPromise = main();
+
+    async function evaluatePython() {
+      const pyodide = await pyodideReadyPromise;
+
+      try {
+        // Dynamically install pyodide-http
+        await pyodide.loadPackage("micropip");
+        await pyodide.runPythonAsync(`
+import micropip
+await micropip.install("pyodide-http")
+        `);
+
+        const code = codeMirrorEditor.getValue();
+        const output = await pyodide.runPythonAsync(code);
+        addToOutput(output || "Code executed successfully.");
+      } catch (err) {
+        addToOutput("Error: " + err.message);
+      }
+    }
+
+    function addToOutput(output) {
+      const pre = document.createElement("pre");
+      pre.textContent = output;
+      outputContainer.appendChild(pre);
+    }
+
+    function clearOutput() {
+      outputContainer.innerHTML = "";
+    }
+
+    function loadExamplePandas() {
+      const exampleCode = `
+import pandas as pd
+import pyodide
+
+# Use pyodide-http to fetch CSV data directly
+df = pd.read_csv(pyodide.http.open_url('https://raw.githubusercontent.com/codeforamerica/ohana-api/refs/heads/master/data/sample-csv/addresses.csv'))
+
+# Display the first few rows
+df.head()
+`;
+      codeMirrorEditor.setValue(exampleCode);
+    }
+  </script>
+</body>
+</html>
