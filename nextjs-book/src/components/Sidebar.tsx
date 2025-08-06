@@ -2,16 +2,55 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import type { Chapter } from '@/types';
+import { useState, useEffect } from 'react';
+import type { Chapter, User } from '@/types';
+
+interface Book {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  difficulty: string;
+  isPublished: boolean;
+  order: number;
+  accessType: string;
+  chapters: Chapter[];
+}
 
 interface SidebarProps {
-  chapters: Chapter[];
+  books: Book[];
+  user?: User | null;
+  loading?: boolean;
   className?: string;
   onClose?: () => void;
 }
 
-export default function Sidebar({ chapters, className = '', onClose }: SidebarProps) {
+export default function Sidebar({ books, user, loading, className = '', onClose }: SidebarProps) {
   const pathname = usePathname();
+  const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
+
+  // Auto-expand book that contains current chapter
+  useEffect(() => {
+    if (books.length > 0 && pathname.startsWith('/chapter/')) {
+      const currentChapterId = pathname.split('/').pop();
+      const bookWithCurrentChapter = books.find(book => 
+        book.chapters.some(chapter => chapter.id === currentChapterId)
+      );
+      if (bookWithCurrentChapter) {
+        setExpandedBooks(new Set([bookWithCurrentChapter.id]));
+      }
+    }
+  }, [books, pathname]);
+
+  const toggleBook = (bookId: string) => {
+    const newExpanded = new Set(expandedBooks);
+    if (newExpanded.has(bookId)) {
+      newExpanded.delete(bookId);
+    } else {
+      newExpanded.add(bookId);
+    }
+    setExpandedBooks(newExpanded);
+  };
 
   return (
     <div className={`w-64 bg-white shadow-lg ${className}`}>
@@ -63,40 +102,101 @@ export default function Sidebar({ chapters, className = '', onClose }: SidebarPr
             </svg>
             <span className="font-medium">Resources</span>
           </Link>
+          {user?.role === 'ADMIN' && (
+            <Link
+              href="/admin"
+              onClick={onClose}
+              className="flex items-center px-4 py-3 mt-2 text-orange-700 hover:bg-orange-50 hover:text-orange-800 rounded-lg transition-colors duration-200"
+            >
+              <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <span className="font-medium">Admin Panel</span>
+            </Link>
+          )}
         </div>
         
-        {/* Chapter navigation */}
+        {/* Books and Chapters navigation */}
         <div className="px-4 pt-4 lg:pt-0">
-          {chapters.map((chapter) => {
-            const href = `/chapter/${chapter.id}`;
-            const isActive = pathname === href;
-            
-            return (
-              <Link
-                key={chapter.id}
-                href={href}
-                onClick={onClose}
-                className={`flex items-center px-4 py-3 mt-2 text-gray-700 rounded-lg transition-colors duration-200 ${
-                  isActive
-                    ? 'bg-indigo-50 text-indigo-600 border-r-2 border-indigo-600'
-                    : 'hover:bg-indigo-50 hover:text-indigo-600'
-                }`}
-              >
-                <span className="text-lg mr-3">{chapter.emoji}</span>
-                <span className="font-medium">{chapter.title}</span>
-              </Link>
-            );
-          })}
-          
-          {chapters.length === 0 && (
-            <Link
-              href="/chapter/chapter1"
-              onClick={onClose}
-              className="flex items-center px-4 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 rounded-lg transition-colors duration-200"
-            >
-              <span className="text-lg mr-3">📚</span>
-              <span className="font-medium">Chapter 1</span>
-            </Link>
+          {loading ? (
+            <div className="space-y-3">
+              {[1, 2].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-10 bg-gray-200 rounded mb-2"></div>
+                  <div className="ml-4 space-y-2">
+                    <div className="h-8 bg-gray-100 rounded"></div>
+                    <div className="h-8 bg-gray-100 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : books.length > 0 ? (
+            <div className="space-y-2">
+              {books.map((book) => {
+                const isExpanded = expandedBooks.has(book.id);
+                
+                return (
+                  <div key={book.id} className="mb-4">
+                    {/* Book Header */}
+                    <button
+                      onClick={() => toggleBook(book.id)}
+                      className="w-full flex items-center justify-between px-3 py-2 text-left rounded-lg hover:bg-gray-50 transition-colors duration-200"
+                    >
+                      <div className="flex items-center">
+                        <span className="text-lg mr-2">📚</span>
+                        <div>
+                          <div className="font-semibold text-gray-900 text-sm">{book.title}</div>
+                          <div className="text-xs text-gray-500">{book.chapters.length} chapters</div>
+                        </div>
+                      </div>
+                      <svg
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${
+                          isExpanded ? 'rotate-90' : ''
+                        }`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+
+                    {/* Chapters */}
+                    {isExpanded && (
+                      <div className="ml-6 mt-2 space-y-1">
+                        {book.chapters.map((chapter) => {
+                          const href = `/chapter/${chapter.id}`;
+                          const isActive = pathname === href;
+                          
+                          return (
+                            <Link
+                              key={chapter.id}
+                              href={href}
+                              onClick={onClose}
+                              className={`flex items-center px-2 py-2 rounded-md text-sm transition-colors duration-200 ${
+                                isActive
+                                  ? 'bg-indigo-100 text-indigo-700 font-medium'
+                                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                              }`}
+                            >
+                              <span className="text-base mr-2">{chapter.emoji}</span>
+                              <span className="truncate">{chapter.title}</span>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-gray-400 text-4xl mb-2">📚</div>
+              <p className="text-gray-500 text-sm">No books available</p>
+              <p className="text-gray-400 text-xs mt-1">Contact your administrator</p>
+            </div>
           )}
         </div>
       </nav>

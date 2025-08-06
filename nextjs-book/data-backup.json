@@ -1,0 +1,153 @@
+{
+  "users": [
+    {
+      "id": "cmdxslte40000t9qp1ku4ewnx",
+      "username": "admin",
+      "email": "admin@healthinformatics.com",
+      "firstName": "Admin",
+      "lastName": "User",
+      "password": "$2b$12$Rb23wHRDV//mnS0IxNLH/ukLR9ge9quCQQcc0HcsvI87xbfkyS/k.",
+      "role": "ADMIN",
+      "createdAt": "2025-08-05T00:20:11.405Z",
+      "updatedAt": "2025-08-05T00:20:11.405Z"
+    },
+    {
+      "id": "cmdxslte60001t9qpb4vo1d7n",
+      "username": "instructor",
+      "email": "instructor@healthinformatics.com",
+      "firstName": "Dr. Jane",
+      "lastName": "Smith",
+      "password": "$2b$12$Rb23wHRDV//mnS0IxNLH/ukLR9ge9quCQQcc0HcsvI87xbfkyS/k.",
+      "role": "INSTRUCTOR",
+      "createdAt": "2025-08-05T00:20:11.407Z",
+      "updatedAt": "2025-08-05T00:20:11.407Z"
+    },
+    {
+      "id": "cmdxslte70002t9qpmrvo9o10",
+      "username": "student1",
+      "email": "student1@healthinformatics.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "password": "$2b$12$Rb23wHRDV//mnS0IxNLH/ukLR9ge9quCQQcc0HcsvI87xbfkyS/k.",
+      "role": "STUDENT",
+      "createdAt": "2025-08-05T00:20:11.408Z",
+      "updatedAt": "2025-08-05T00:20:11.408Z"
+    },
+    {
+      "id": "cmdxslte80003t9qpfp8us1to",
+      "username": "student2",
+      "email": "student2@healthinformatics.com",
+      "firstName": "Jane",
+      "lastName": "Wilson",
+      "password": "$2b$12$Rb23wHRDV//mnS0IxNLH/ukLR9ge9quCQQcc0HcsvI87xbfkyS/k.",
+      "role": "STUDENT",
+      "createdAt": "2025-08-05T00:20:11.409Z",
+      "updatedAt": "2025-08-05T00:20:11.409Z"
+    },
+    {
+      "id": "cmdygwa740000t9vp525d0sgr",
+      "username": "hants",
+      "email": "hants@hants.com",
+      "firstName": "hants",
+      "lastName": "williams",
+      "password": "$2b$12$oqfZ5hhUQOsn/ckD5JRsde6ch02Y2Igt2NW/iObMrSG6is6/0na1G",
+      "role": "STUDENT",
+      "createdAt": "2025-08-05T11:40:10.528Z",
+      "updatedAt": "2025-08-05T11:40:10.528Z"
+    }
+  ],
+  "chapters": [
+    {
+      "id": "chapter1",
+      "title": "Chapter 1 - Python Basics",
+      "emoji": "📚",
+      "order": 1,
+      "markdownUrl": "/docs/chapter1_example1.md",
+      "pythonUrl": "/python/chapter1_example1.py",
+      "createdAt": "2025-08-05T00:20:11.116Z",
+      "updatedAt": "2025-08-05T00:20:11.116Z"
+    },
+    {
+      "id": "chapter2",
+      "title": "Chapter 2 - Data Analysis with Pandas",
+      "emoji": "🐼",
+      "order": 2,
+      "markdownUrl": "/docs/chapter2_pandas.md",
+      "pythonUrl": "/python/chapter2_pandas_examples.py",
+      "createdAt": "2025-08-05T00:20:11.120Z",
+      "updatedAt": "2025-08-05T00:20:11.120Z"
+    }
+  ],
+  "progress": [
+    {
+      "id": "cmdxslteb0005t9qpj5uzgsyo",
+      "userId": "cmdxslte70002t9qpmrvo9o10",
+      "chapterId": "chapter1",
+      "completed": true,
+      "completedAt": "2025-08-05T00:20:11.410Z",
+      "createdAt": "2025-08-05T00:20:11.411Z",
+      "updatedAt": "2025-08-05T00:20:11.411Z"
+    },
+    {
+      "id": "cmdxsltec0007t9qpw5u8f6gm",
+      "userId": "cmdxslte70002t9qpmrvo9o10",
+      "chapterId": "chapter2",
+      "completed": false,
+      "completedAt": null,
+      "createdAt": "2025-08-05T00:20:11.412Z",
+      "updatedAt": "2025-08-05T00:20:11.412Z"
+    },
+    {
+      "id": "cmdxslted0009t9qpqd9ggqey",
+      "userId": "cmdxslte80003t9qpfp8us1to",
+      "chapterId": "chapter1",
+      "completed": false,
+      "completedAt": null,
+      "createdAt": "2025-08-05T00:20:11.413Z",
+      "updatedAt": "2025-08-05T00:20:11.413Z"
+    },
+    {
+      "id": "cmdyh4rjv0001t9gxsqe294q6",
+      "userId": "cmdygwa740000t9vp525d0sgr",
+      "chapterId": "chapter1",
+      "completed": true,
+      "completedAt": "2025-08-05T11:46:46.265Z",
+      "createdAt": "2025-08-05T11:46:46.267Z",
+      "updatedAt": "2025-08-05T11:46:46.267Z"
+    },
+    {
+      "id": "cmdyh510u0003t9gxk4g698kn",
+      "userId": "cmdygwa740000t9vp525d0sgr",
+      "chapterId": "chapter2",
+      "completed": true,
+      "completedAt": "2025-08-05T11:46:58.541Z",
+      "createdAt": "2025-08-05T11:46:58.542Z",
+      "updatedAt": "2025-08-05T11:46:58.542Z"
+    }
+  ],
+  "exercises": [
+    {
+      "id": "cmdxsltee000bt9qpjxjw6dli",
+      "userId": "cmdxslte70002t9qpmrvo9o10",
+      "chapterId": "chapter1",
+      "title": "Hello World Exercise",
+      "code": "print(\"Hello, Healthcare World!\")",
+      "isCorrect": true,
+      "attempts": 1,
+      "createdAt": "2025-08-05T00:20:11.414Z",
+      "updatedAt": "2025-08-05T00:20:11.414Z"
+    },
+    {
+      "id": "cmdxsltee000dt9qp0xfnag1t",
+      "userId": "cmdxslte70002t9qpmrvo9o10",
+      "chapterId": "chapter1",
+      "title": "Variables Exercise",
+      "code": "patient_name = \"John Doe\"\nprint(f\"Patient: {patient_name}\")",
+      "isCorrect": true,
+      "attempts": 2,
+      "createdAt": "2025-08-05T00:20:11.415Z",
+      "updatedAt": "2025-08-05T00:20:11.415Z"
+    }
+  ],
+  "timestamp": "2025-08-05T13:54:20.828Z"
+}

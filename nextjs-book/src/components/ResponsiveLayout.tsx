@@ -1,9 +1,21 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import type { User, Chapter } from '@/types';
+
+interface Book {
+  id: string;
+  slug: string;
+  title: string;
+  description?: string;
+  difficulty: string;
+  isPublished: boolean;
+  order: number;
+  accessType: string;
+  chapters: Chapter[];
+}
 
 interface ResponsiveLayoutProps {
   user?: User | null;
@@ -13,6 +25,8 @@ interface ResponsiveLayoutProps {
 
 export default function ResponsiveLayout({ user, chapters, children }: ResponsiveLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [books, setBooks] = useState<Book[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -20,6 +34,28 @@ export default function ResponsiveLayout({ user, chapters, children }: Responsiv
 
   const closeSidebar = () => {
     setIsSidebarOpen(false);
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchUserBooks();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
+
+  const fetchUserBooks = async () => {
+    try {
+      const response = await fetch('/api/user-books');
+      if (response.ok) {
+        const data = await response.json();
+        setBooks(data.books || []);
+      }
+    } catch (error) {
+      console.error('Error fetching user books:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,7 +74,9 @@ export default function ResponsiveLayout({ user, chapters, children }: Responsiv
           <div className="flex h-screen">
             {/* Sidebar */}
             <Sidebar 
-              chapters={chapters} 
+              books={books}
+              user={user}
+              loading={loading}
               className={`
                 fixed inset-y-0 left-0 z-50 lg:static lg:translate-x-0 lg:z-auto
                 transform transition-transform duration-300 ease-in-out
