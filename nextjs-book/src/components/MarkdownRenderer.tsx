@@ -67,14 +67,14 @@ export default function MarkdownRenderer({ src, className = '' }: MarkdownRender
             const isInline = !className;
             return isInline ? (
               <code
-                className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm font-mono"
+                className="bg-gray-100 text-zinc-800 px-1 py-0.5 rounded text-sm font-mono"
                 {...props}
               >
                 {children}
               </code>
             ) : (
               <code
-                className="block bg-gray-900 text-gray-100 p-4 rounded-md overflow-x-auto text-sm font-mono"
+                className="block bg-gray-900 text-zinc-100 p-4 rounded-md overflow-x-auto text-sm font-mono"
                 {...props}
               >
                 {children}
@@ -83,17 +83,17 @@ export default function MarkdownRenderer({ src, className = '' }: MarkdownRender
           },
           // Custom styling for headings
           h1: ({ children }) => (
-            <h1 className="text-3xl font-bold text-gray-900 mb-6 border-b border-gray-200 pb-2">
+            <h1 className="text-3xl font-bold text-zinc-900 mb-6 border-b border-gray-200 pb-2">
               {children}
             </h1>
           ),
           h2: ({ children }) => (
-            <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">
+            <h2 className="text-2xl font-semibold text-zinc-900 mt-8 mb-4">
               {children}
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-xl font-semibold text-gray-900 mt-6 mb-3">
+            <h3 className="text-xl font-semibold text-zinc-900 mt-6 mb-3">
               {children}
             </h3>
           ),

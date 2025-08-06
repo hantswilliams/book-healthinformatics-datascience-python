@@ -15,9 +15,9 @@ interface ChapterPageProps {
 export default function ChapterPage({ params }: ChapterPageProps) {
   const { data: session } = useSession();
   const [chapter, setChapter] = useState<Chapter | null>(null);
-  const [initialCode, setInitialCode] = useState<string>('');
   const [chapterId, setChapterId] = useState<string>('');
   const [isCompleting, setIsCompleting] = useState<boolean>(false);
+  const [sectionCodes, setSectionCodes] = useState<{[key: string]: string}>({});
 
   useEffect(() => {
     const loadChapter = async () => {
@@ -32,16 +32,22 @@ export default function ChapterPage({ params }: ChapterPageProps) {
       setChapter(foundChapter);
       setChapterId(resolvedParams.chapterId);
 
-      // Load initial Python code
-      try {
-        const response = await fetch(foundChapter.pythonUrl);
-        if (response.ok) {
-          const code = await response.text();
-          setInitialCode(code);
+      // Load Python code for all sections
+      const codes: {[key: string]: string} = {};
+      for (const section of foundChapter.sections) {
+        if (section.type === 'python') {
+          try {
+            const response = await fetch(section.url);
+            if (response.ok) {
+              const code = await response.text();
+              codes[section.url] = code;
+            }
+          } catch (error) {
+            console.error('Error loading Python code:', error);
+          }
         }
-      } catch (error) {
-        console.error('Error loading Python code:', error);
       }
+      setSectionCodes(codes);
     };
 
     loadChapter();
@@ -107,21 +113,28 @@ export default function ChapterPage({ params }: ChapterPageProps) {
 
   return (
     <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-12 xl:px-12 space-y-8">
-      {/* Learning Content */}
-      <div className="bg-white shadow-sm rounded-xl overflow-hidden">
-        <div className="border-b border-gray-100 bg-white p-6">
-          <h2 className="text-lg font-semibold text-gray-900">{chapter.title}</h2>
+      {/* Chapter Sections */}
+      {chapter.sections.map((section, index) => (
+        <div key={index} className="bg-white shadow-sm rounded-xl overflow-hidden">
+          {section.title && (
+            <div className="border-b border-gray-100 bg-white p-6">
+              <h2 className="text-lg font-semibold text-gray-900">
+                {section.title}
+              </h2>
+            </div>
+          )}
+          <div className="p-6">
+            {section.type === 'markdown' ? (
+              <MarkdownRenderer src={section.url} />
+            ) : (
+              <PythonEditor
+                initialCode={sectionCodes[section.url] || '# Loading...'}
+                onCodeRun={handleCodeRun}
+              />
+            )}
+          </div>
         </div>
-        <div className="p-6">
-          <MarkdownRenderer src={chapter.markdownUrl} />
-        </div>
-      </div>
-
-      {/* Interactive Code Editor */}
-      <PythonEditor
-        initialCode={initialCode}
-        onCodeRun={handleCodeRun}
-      />
+      ))}
 
       {/* Mark as Completed Button */}
       <div className="text-center">

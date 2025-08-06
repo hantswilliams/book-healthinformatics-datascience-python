@@ -18,6 +18,7 @@ export const usePyodide = () => {
           script.onload = async () => {
             const pyodideInstance = await window.loadPyodide();
             await pyodideInstance.loadPackage('micropip');
+            await pyodideInstance.loadPackage(['pandas', 'matplotlib', 'numpy']);
             
             // Replace input() with JS prompt()
             pyodideInstance.globals.set('input', (promptText: string) => 
@@ -35,6 +36,7 @@ export const usePyodide = () => {
         } else {
           const pyodideInstance = await window.loadPyodide();
           await pyodideInstance.loadPackage('micropip');
+          await pyodideInstance.loadPackage(['pandas', 'matplotlib', 'numpy']);
           
           pyodideInstance.globals.set('input', (promptText: string) => 
             prompt(promptText) || ''

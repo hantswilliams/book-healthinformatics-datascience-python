@@ -14,8 +14,11 @@ export interface Chapter {
   title: string;
   emoji: string;
   order: number;
-  markdownUrl: string;
-  pythonUrl: string;
+  sections: Array<{
+    type: 'markdown' | 'python';
+    url: string;
+    title?: string;
+  }>;
 }
 
 export interface Exercise {

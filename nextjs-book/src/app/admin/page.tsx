@@ -3,6 +3,9 @@
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import FileBrowser from '@/components/FileBrowser';
+import ChapterBuilder from '@/components/ChapterBuilder';
+import FileTemplateManager from '@/components/FileTemplateManager';
 
 interface User {
   id: string;
@@ -57,7 +60,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [bookAccess, setBookAccess] = useState<BookAccess[]>([]);
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'books' | 'access'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'books' | 'access' | 'content'>('overview');
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
     totalStudents: 0,
@@ -218,8 +221,8 @@ export default function AdminPage() {
   if (!session) {
     return (
       <div className="max-w-6xl mx-auto text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Please Sign In</h1>
-        <p className="text-gray-600 mb-6">You need to be signed in to access the admin panel.</p>
+        <h1 className="text-2xl font-bold text-zinc-900 mb-4">Please Sign In</h1>
+        <p className="text-zinc-600 mb-6">You need to be signed in to access the admin panel.</p>
         <Link
           href="/login"
           className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
@@ -233,8 +236,8 @@ export default function AdminPage() {
   if (session.user.role !== 'ADMIN') {
     return (
       <div className="max-w-6xl mx-auto text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h1>
-        <p className="text-gray-600 mb-6">You don&apos;t have permission to access the admin panel.</p>
+        <h1 className="text-2xl font-bold text-zinc-900 mb-4">Access Denied</h1>
+        <p className="text-zinc-600 mb-6">You don&apos;t have permission to access the admin panel.</p>
         <Link
           href="/"
           className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
@@ -262,15 +265,15 @@ export default function AdminPage() {
       case 'STUDENT':
         return 'bg-green-100 text-green-800';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-zinc-800';
     }
   };
 
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-        <p className="text-gray-600">Manage users, books, and access control</p>
+        <h1 className="text-3xl font-bold text-zinc-900 mb-2">Admin Dashboard</h1>
+        <p className="text-zinc-600">Manage users, books, and access control</p>
       </div>
 
       {/* Tab Navigation */}
@@ -280,7 +283,8 @@ export default function AdminPage() {
             { id: 'overview', label: 'Overview', icon: '📊' },
             { id: 'users', label: 'User Management', icon: '👥' },
             { id: 'books', label: 'Books', icon: '📚' },
-            { id: 'access', label: 'Access Control', icon: '🔐' }
+            { id: 'access', label: 'Access Control', icon: '🔐' },
+            { id: 'content', label: 'Content Management', icon: '📝' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -288,7 +292,7 @@ export default function AdminPage() {
               className={`py-2 px-1 border-b-2 font-medium text-sm ${
                 activeTab === tab.id
                   ? 'border-indigo-500 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  : 'border-transparent text-zinc-500 hover:text-zinc-700 hover:border-gray-300'
               }`}
             >
               <span className="mr-2">{tab.icon}</span>
@@ -308,8 +312,8 @@ export default function AdminPage() {
                   <span className="text-2xl">👥</span>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{stats.totalUsers}</h3>
-                  <p className="text-sm text-gray-600">Total Users</p>
+                  <h3 className="text-2xl font-bold text-zinc-900">{stats.totalUsers}</h3>
+                  <p className="text-sm text-zinc-600">Total Users</p>
                 </div>
               </div>
             </div>
@@ -320,8 +324,8 @@ export default function AdminPage() {
                   <span className="text-2xl">🎓</span>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{stats.totalStudents}</h3>
-                  <p className="text-sm text-gray-600">Students</p>
+                  <h3 className="text-2xl font-bold text-zinc-900">{stats.totalStudents}</h3>
+                  <p className="text-sm text-zinc-600">Students</p>
                 </div>
               </div>
             </div>
@@ -332,8 +336,8 @@ export default function AdminPage() {
                   <span className="text-2xl">📚</span>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{stats.totalBooks}</h3>
-                  <p className="text-sm text-gray-600">Total Books</p>
+                  <h3 className="text-2xl font-bold text-zinc-900">{stats.totalBooks}</h3>
+                  <p className="text-sm text-zinc-600">Total Books</p>
                 </div>
               </div>
             </div>
@@ -344,8 +348,8 @@ export default function AdminPage() {
                   <span className="text-2xl">📄</span>
                 </div>
                 <div className="ml-4">
-                  <h3 className="text-2xl font-bold text-gray-900">{stats.totalChapters}</h3>
-                  <p className="text-sm text-gray-600">Total Chapters</p>
+                  <h3 className="text-2xl font-bold text-zinc-900">{stats.totalChapters}</h3>
+                  <p className="text-sm text-zinc-600">Total Chapters</p>
                 </div>
               </div>
             </div>
@@ -353,7 +357,7 @@ export default function AdminPage() {
 
           {/* Quick Actions */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Quick Actions</h2>
+            <h2 className="text-xl font-bold text-zinc-900 mb-4">Quick Actions</h2>
             <div className="grid md:grid-cols-3 gap-4">
               <Link
                 href="/test-db"
@@ -361,24 +365,24 @@ export default function AdminPage() {
               >
                 <span className="text-2xl mr-3">🗄️</span>
                 <div>
-                  <h3 className="font-medium text-gray-900">Database Test</h3>
-                  <p className="text-sm text-gray-600">Test database connectivity</p>
+                  <h3 className="font-medium text-zinc-900">Database Test</h3>
+                  <p className="text-sm text-zinc-600">Test database connectivity</p>
                 </div>
               </Link>
               
               <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors">
                 <span className="text-2xl mr-3">📊</span>
                 <div>
-                  <h3 className="font-medium text-gray-900">Export Data</h3>
-                  <p className="text-sm text-gray-600">Download user and progress data</p>
+                  <h3 className="font-medium text-zinc-900">Export Data</h3>
+                  <p className="text-sm text-zinc-600">Download user and progress data</p>
                 </div>
               </button>
               
               <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors">
                 <span className="text-2xl mr-3">🔄</span>
                 <div>
-                  <h3 className="font-medium text-gray-900">Reset Database</h3>
-                  <p className="text-sm text-gray-600">Reset and reseed database</p>
+                  <h3 className="font-medium text-zinc-900">Reset Database</h3>
+                  <p className="text-sm text-zinc-600">Reset and reseed database</p>
                 </div>
               </button>
             </div>
@@ -389,29 +393,29 @@ export default function AdminPage() {
       {activeTab === 'users' && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="p-6 border-b border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900">User Management</h2>
-            <p className="text-sm text-gray-600 mt-1">View and manage all platform users</p>
+            <h2 className="text-xl font-bold text-zinc-900">User Management</h2>
+            <p className="text-sm text-zinc-600 mt-1">View and manage all platform users</p>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                     User
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                     Email
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                     Book Access
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                     Joined
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
@@ -429,18 +433,18 @@ export default function AdminPage() {
                             </span>
                           </div>
                           <div className="ml-4">
-                            <div className="text-sm font-medium text-gray-900">
+                            <div className="text-sm font-medium text-zinc-900">
                               {user.firstName && user.lastName 
                                 ? `${user.firstName} ${user.lastName}`
                                 : user.username
                               }
                             </div>
-                            <div className="text-sm text-gray-500">@{user.username}</div>
+                            <div className="text-sm text-zinc-500">@{user.username}</div>
                           </div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{user.email}</div>
+                        <div className="text-sm text-zinc-900">{user.email}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
@@ -449,7 +453,7 @@ export default function AdminPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <span className="text-sm text-gray-900 mr-2">{userBooks.length} books</span>
+                          <span className="text-sm text-zinc-900 mr-2">{userBooks.length} books</span>
                           {userBooks.length > 0 && (
                             <div className="flex -space-x-1">
                               {userBooks.slice(0, 3).map((book) => (
@@ -463,14 +467,14 @@ export default function AdminPage() {
                               ))}
                               {userBooks.length > 3 && (
                                 <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center border-2 border-white">
-                                  <span className="text-xs text-gray-600">+{userBooks.length - 3}</span>
+                                  <span className="text-xs text-zinc-600">+{userBooks.length - 3}</span>
                                 </div>
                               )}
                             </div>
                           )}
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-500">
                         {formatDate(user.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -496,8 +500,8 @@ export default function AdminPage() {
       {activeTab === 'books' && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100">
           <div className="p-6 border-b border-gray-100">
-            <h2 className="text-xl font-bold text-gray-900">Book Management</h2>
-            <p className="text-sm text-gray-600 mt-1">Manage learning paths and course materials</p>
+            <h2 className="text-xl font-bold text-zinc-900">Book Management</h2>
+            <p className="text-sm text-zinc-600 mt-1">Manage learning paths and course materials</p>
           </div>
           <div className="p-6">
             <div className="grid gap-6">
@@ -507,8 +511,8 @@ export default function AdminPage() {
                     <div className="flex items-center">
                       <span className="text-2xl mr-3">📚</span>
                       <div>
-                        <h3 className="font-semibold text-gray-900">{book.title}</h3>
-                        <p className="text-sm text-gray-600">{book.description}</p>
+                        <h3 className="font-semibold text-zinc-900">{book.title}</h3>
+                        <p className="text-sm text-zinc-600">{book.description}</p>
                         <div className="flex items-center space-x-2 mt-1">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             book.difficulty === 'BEGINNER' ? 'bg-green-100 text-green-800' :
@@ -517,10 +521,10 @@ export default function AdminPage() {
                           }`}>
                             {book.difficulty}
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-zinc-500">
                             {book.chapters.length} chapters
                           </span>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-zinc-500">
                             {book._count.bookAccess} users have access
                           </span>
                         </div>
@@ -528,7 +532,7 @@ export default function AdminPage() {
                     </div>
                     <div className="flex items-center space-x-2">
                       <span className={`px-2 py-1 text-xs font-medium rounded ${
-                        book.isPublished ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        book.isPublished ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-zinc-800'
                       }`}>
                         {book.isPublished ? 'Published' : 'Draft'}
                       </span>
@@ -545,8 +549,8 @@ export default function AdminPage() {
         <div className="space-y-6">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100">
             <div className="p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">Access Control Center</h2>
-              <p className="text-sm text-gray-600 mt-1">Control which users can access specific learning paths</p>
+              <h2 className="text-xl font-bold text-zinc-900">Access Control Center</h2>
+              <p className="text-sm text-zinc-600 mt-1">Control which users can access specific learning paths</p>
             </div>
             <div className="p-6">
               <div className="space-y-6">
@@ -566,13 +570,13 @@ export default function AdminPage() {
                               </span>
                             </div>
                             <div className="ml-3">
-                              <div className="text-sm font-medium text-gray-900">
+                              <div className="text-sm font-medium text-zinc-900">
                                 {user.firstName && user.lastName 
                                   ? `${user.firstName} ${user.lastName}`
                                   : user.username
                                 }
                               </div>
-                              <div className="text-sm text-gray-500">{user.email}</div>
+                              <div className="text-sm text-zinc-500">{user.email}</div>
                             </div>
                             <span className={`ml-4 px-2 py-1 text-xs font-semibold rounded-full ${getRoleColor(user.role)}`}>
                               {user.role.charAt(0) + user.role.slice(1).toLowerCase()}
@@ -580,12 +584,12 @@ export default function AdminPage() {
                           </div>
                           <div className="flex items-center space-x-4">
                             <div className="text-right">
-                              <div className="text-sm font-medium text-gray-900">{userBooks.length} of {books.length} books</div>
-                              <div className="text-xs text-gray-500">Access granted</div>
+                              <div className="text-sm font-medium text-zinc-900">{userBooks.length} of {books.length} books</div>
+                              <div className="text-xs text-zinc-500">Access granted</div>
                             </div>
                             <button
                               onClick={() => setSelectedUser(isExpanded ? '' : user.id)}
-                              className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                              className="p-2 text-zinc-400 hover:text-zinc-600 transition-colors"
                             >
                               <svg className={`w-5 h-5 transform transition-transform ${
                                 isExpanded ? 'rotate-90' : ''
@@ -614,8 +618,8 @@ export default function AdminPage() {
                                     <div className="flex items-center flex-1">
                                       <span className="text-lg mr-2">📚</span>
                                       <div className="flex-1">
-                                        <div className="text-sm font-medium text-gray-900">{book.title}</div>
-                                        <div className="text-xs text-gray-500">
+                                        <div className="text-sm font-medium text-zinc-900">{book.title}</div>
+                                        <div className="text-xs text-zinc-500">
                                           {book.difficulty} • {book.chapters.length} chapters
                                         </div>
                                       </div>
@@ -656,7 +660,7 @@ export default function AdminPage() {
                           {/* Bulk Actions */}
                           <div className="mt-4 pt-4 border-t border-gray-200">
                             <div className="flex items-center justify-between">
-                              <span className="text-sm text-gray-600">Bulk Actions:</span>
+                              <span className="text-sm text-zinc-600">Bulk Actions:</span>
                               <div className="space-x-2">
                                 <button
                                   onClick={() => {
@@ -691,6 +695,101 @@ export default function AdminPage() {
                   );
                 })}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'content' && (
+        <div className="space-y-8">
+          {/* Chapter Builder Section */}
+          <ChapterBuilder 
+            onChapterUpdate={(chapter) => {
+              console.log('Chapter updated:', chapter);
+              // In a real app, you'd save this to your chapters data
+            }}
+          />
+
+          {/* File Template Manager */}
+          <FileTemplateManager
+            onCreateFromTemplate={async (template, filename) => {
+              try {
+                // Create the file using the template content
+                const response = await fetch('/api/admin/files/content', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    path: `${template.type === 'markdown' ? 'docs' : 'python'}/${filename}`,
+                    content: template.content
+                  })
+                });
+
+                if (response.ok) {
+                  alert(`File '${filename}' created successfully from template!`);
+                } else {
+                  alert('Error creating file from template');
+                }
+              } catch (error) {
+                console.error('Error creating file:', error);
+                alert('Error creating file from template');
+              }
+            }}
+          />
+
+          {/* File Browser */}
+          <div>
+            <div className="mb-4">
+              <h2 className="text-xl font-bold text-zinc-900 mb-2">File Browser</h2>
+              <p className="text-sm text-zinc-600">
+                Browse and edit your content files directly. Changes are saved immediately.
+              </p>
+            </div>
+            <FileBrowser
+              onFileSelect={(file) => {
+                console.log('File selected:', file);
+              }}
+              onFileEdit={(file, content) => {
+                console.log('File edited:', file.name, content.length, 'characters');
+              }}
+              allowEdit={true}
+            />
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 className="text-lg font-semibold text-zinc-900 mb-4">Quick Actions</h3>
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors">
+                <span className="text-2xl mr-3">📝</span>
+                <div className="text-left">
+                  <h4 className="font-medium text-zinc-900">New Chapter</h4>
+                  <p className="text-sm text-zinc-600">Create a new chapter with sections</p>
+                </div>
+              </button>
+              
+              <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                <span className="text-2xl mr-3">🔄</span>
+                <div className="text-left">
+                  <h4 className="font-medium text-zinc-900">Sync Files</h4>
+                  <p className="text-sm text-zinc-600">Sync with chapter structure</p>
+                </div>
+              </button>
+              
+              <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-purple-300 hover:bg-purple-50 transition-colors">
+                <span className="text-2xl mr-3">📊</span>
+                <div className="text-left">
+                  <h4 className="font-medium text-zinc-900">Content Stats</h4>
+                  <p className="text-sm text-zinc-600">View content analytics</p>
+                </div>
+              </button>
+              
+              <button className="flex items-center p-4 border border-gray-200 rounded-lg hover:border-orange-300 hover:bg-orange-50 transition-colors">
+                <span className="text-2xl mr-3">💾</span>
+                <div className="text-left">
+                  <h4 className="font-medium text-zinc-900">Backup Content</h4>
+                  <p className="text-sm text-zinc-600">Export all content files</p>
+                </div>
+              </button>
             </div>
           </div>
         </div>

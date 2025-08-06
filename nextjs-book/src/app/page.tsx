@@ -47,10 +47,10 @@ export default function Home() {
     <div className="max-w-4xl mx-auto">
       {/* Hero Section */}
       <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
+        <h1 className="text-4xl font-bold text-zinc-900 mb-4">
           🐍 Python Learning for Healthcare
         </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+        <p className="text-xl text-zinc-600 max-w-2xl mx-auto">
           Master Python programming for healthcare data analysis with interactive lessons, 
           real-world examples, and hands-on coding exercises.
         </p>
@@ -62,8 +62,8 @@ export default function Home() {
           <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
             <span className="text-2xl">🖥️</span>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Interactive Editor</h3>
-          <p className="text-gray-600">
+          <h3 className="text-lg font-semibold text-zinc-900 mb-2">Interactive Editor</h3>
+          <p className="text-zinc-600">
             Write and execute Python code directly in your browser with Monaco Editor and Pyodide.
           </p>
         </div>
@@ -72,8 +72,8 @@ export default function Home() {
           <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
             <span className="text-2xl">🏥</span>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Healthcare Focus</h3>
-          <p className="text-gray-600">
+          <h3 className="text-lg font-semibold text-zinc-900 mb-2">Healthcare Focus</h3>
+          <p className="text-zinc-600">
             Learn Python specifically for healthcare data analysis, medical informatics, and clinical research.
           </p>
         </div>
@@ -82,8 +82,8 @@ export default function Home() {
           <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
             <span className="text-2xl">📊</span>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Real Examples</h3>
-          <p className="text-gray-600">
+          <h3 className="text-lg font-semibold text-zinc-900 mb-2">Real Examples</h3>
+          <p className="text-zinc-600">
             Work with real healthcare datasets and learn industry-standard libraries like Pandas.
           </p>
         </div>
@@ -91,7 +91,7 @@ export default function Home() {
 
       {/* Learning Path Section */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Learning Path</h2>
+        <h2 className="text-2xl font-bold text-zinc-900 mb-6">Learning Path</h2>
         
         {session?.user ? (
           // Show books for logged-in users
@@ -119,8 +119,8 @@ export default function Home() {
                       <div className="flex items-center">
                         <span className="text-2xl mr-3">📚</span>
                         <div>
-                          <h3 className="font-bold text-gray-900">{book.title}</h3>
-                          <p className="text-sm text-gray-600 mt-1">{book.description}</p>
+                          <h3 className="font-bold text-zinc-900">{book.title}</h3>
+                          <p className="text-sm text-zinc-600 mt-1">{book.description}</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -131,7 +131,7 @@ export default function Home() {
                         }`}>
                           {book.difficulty}
                         </span>
-                        <span className="text-sm text-gray-500">{book.chapters.length} chapters</span>
+                        <span className="text-sm text-zinc-500">{book.chapters.length} chapters</span>
                       </div>
                     </div>
                   </div>
@@ -146,9 +146,9 @@ export default function Home() {
                           className="flex items-center p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200"
                         >
                           <span className="text-lg mr-3">{chapter.emoji}</span>
-                          <span className="font-medium text-gray-900">{chapter.title}</span>
+                          <span className="font-medium text-zinc-900">{chapter.title}</span>
                           <svg
-                            className="ml-auto w-4 h-4 text-gray-400"
+                            className="ml-auto w-4 h-4 text-zinc-400"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -159,7 +159,7 @@ export default function Home() {
                       ))}
                       {book.chapters.length > 3 && (
                         <div className="text-center py-2">
-                          <span className="text-sm text-gray-500">
+                          <span className="text-sm text-zinc-500">
                             +{book.chapters.length - 3} more chapters
                           </span>
                         </div>
@@ -170,9 +170,9 @@ export default function Home() {
               ))
             ) : (
               <div className="text-center py-8">
-                <div className="text-gray-400 text-4xl mb-2">📚</div>
-                <p className="text-gray-500">No books available</p>
-                <p className="text-gray-400 text-sm mt-1">Contact your administrator for access</p>
+                <div className="text-zinc-400 text-4xl mb-2">📚</div>
+                <p className="text-zinc-500">No books available</p>
+                <p className="text-zinc-400 text-sm mt-1">Contact your administrator for access</p>
               </div>
             )}
           </div>
@@ -187,8 +187,8 @@ export default function Home() {
               >
                 <span className="text-2xl mr-4">{chapter.emoji}</span>
                 <div>
-                  <h3 className="font-semibold text-gray-900">{chapter.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <h3 className="font-semibold text-zinc-900">{chapter.title}</h3>
+                  <p className="text-sm text-zinc-600 mt-1">
                     {chapter.id === 'chapter1' 
                       ? 'Learn Python basics with healthcare examples'
                       : 'Analyze healthcare data with Pandas and Python'
@@ -198,7 +198,7 @@ export default function Home() {
                 <div className="ml-auto flex items-center">
                   <span className="text-sm text-indigo-600 mr-2">Sign in to access</span>
                   <svg
-                    className="w-5 h-5 text-gray-400"
+                    className="w-5 h-5 text-zinc-400"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -214,7 +214,7 @@ export default function Home() {
 
       {/* Get Started Section */}
       <div className="text-center mt-12">
-        <p className="text-gray-600 mb-6">Ready to start your healthcare data science journey?</p>
+        <p className="text-zinc-600 mb-6">Ready to start your healthcare data science journey?</p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <Link
             href="/register"
@@ -248,19 +248,19 @@ export default function Home() {
           <h3 className="text-lg font-medium text-blue-900 mb-3">Try Demo Accounts</h3>
           <div className="grid md:grid-cols-4 gap-4 text-sm">
             <div className="bg-white p-3 rounded border">
-              <p className="font-medium text-gray-900">Student Account</p>
-              <p className="text-gray-600">Email: student1@healthinformatics.com</p>
-              <p className="text-gray-600">Password: password123</p>
+              <p className="font-medium text-zinc-900">Student Account</p>
+              <p className="text-zinc-600">Email: student1@healthinformatics.com</p>
+              <p className="text-zinc-600">Password: password123</p>
             </div>
             <div className="bg-white p-3 rounded border">
-              <p className="font-medium text-gray-900">Instructor Account</p>
-              <p className="text-gray-600">Email: instructor@healthinformatics.com</p>
-              <p className="text-gray-600">Password: password123</p>
+              <p className="font-medium text-zinc-900">Instructor Account</p>
+              <p className="text-zinc-600">Email: instructor@healthinformatics.com</p>
+              <p className="text-zinc-600">Password: password123</p>
             </div>
             <div className="bg-white p-3 rounded border">
-              <p className="font-medium text-gray-900">Admin Account</p>
-              <p className="text-gray-600">Email: admin@admin.com</p>
-              <p className="text-gray-600">Password: 123456</p>
+              <p className="font-medium text-zinc-900">Admin Account</p>
+              <p className="text-zinc-600">Email: admin@admin.com</p>
+              <p className="text-zinc-600">Password: 123456</p>
             </div>
             <div className="bg-white p-3 rounded border border-orange-200 bg-orange-50">
               <p className="font-medium text-orange-900">Super Admin</p>

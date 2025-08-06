@@ -26,19 +26,19 @@ body {
 }
 
 /* Make default text colors darker for better readability using zinc colors */
-.text-gray-600 {
+.text-zinc-600 {
   color: rgb(24 24 27) !important; /* zinc-900 equivalent */
 }
 
-.text-gray-500 {
+.text-zinc-500 {
   color: rgb(39 39 42) !important; /* zinc-800 equivalent */
 }
 
-.text-gray-700 {
+.text-zinc-700 {
   color: rgb(24 24 27) !important; /* zinc-900 equivalent */
 }
 
-.text-gray-400 {
+.text-zinc-400 {
   color: rgb(63 63 70) !important; /* zinc-700 equivalent */
 }
 
