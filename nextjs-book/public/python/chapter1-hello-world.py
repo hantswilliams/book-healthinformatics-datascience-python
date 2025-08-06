@@ -15,4 +15,4 @@ print("I'm excited to learn Python for healthcare data analysis!")
 
 # Challenge: Add your own print statements below
 # - Print your favorite healthcare topic
-# - Print why you want to learn Python
+# - Print why you want to learn Python!
