@@ -24,7 +24,7 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
               <div className="flex items-center space-x-4">
                 <button
                   onClick={onToggleSidebar}
-                  className="lg:hidden p-2 rounded-md text-gray-700 hover:text-indigo-600 hover:bg-gray-100"
+                  className="lg:hidden p-2 rounded-md text-zinc-700 hover:text-indigo-600 hover:bg-gray-100"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {isSidebarOpen ? (
@@ -38,33 +38,27 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
                 {/* Menu links only visible for signed-in users on desktop */}
                 <div className="hidden lg:flex items-center space-x-8">
                   <Link
-                    href="/"
-                    className="text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
-                  >
-                    Home
-                  </Link>
-                  <Link
                     href="/progress"
-                    className="text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
+                    className="text-zinc-700 hover:text-indigo-600 font-medium transition-colors duration-200"
                   >
                     Progress
                   </Link>
                   <Link
                     href="/resources"
-                    className="text-gray-700 hover:text-indigo-600 font-medium transition-colors duration-200"
+                    className="text-zinc-700 hover:text-indigo-600 font-medium transition-colors duration-200"
                   >
                     Resources
                   </Link>
-                  {user.role === 'ADMIN' && (
+                  {(['OWNER', 'ADMIN'].includes(user.role)) && (
                     <Link
-                      href="/admin"
+                      href="/dashboard"
                       className="text-orange-600 hover:text-orange-700 font-medium transition-colors duration-200 flex items-center"
                     >
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
-                      Admin
+                      Dashboard
                     </Link>
                   )}
                 </div>
@@ -72,7 +66,7 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
               
               <div className="flex items-center space-x-2 sm:space-x-4">
                 {/* Notifications button - hidden on very small screens */}
-                <button className="hidden sm:block text-gray-700 hover:text-indigo-600">
+                <button className="hidden sm:block text-zinc-700 hover:text-indigo-600">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -108,7 +102,7 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
                       <div className="py-1">
                         <Link
                           href="/account"
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          className="block px-4 py-2 text-sm text-zinc-700 hover:bg-gray-100"
                           onClick={() => setIsDropdownOpen(false)}
                         >
                           Account Settings
@@ -116,7 +110,7 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
                         {user.role === 'admin' && (
                           <Link
                             href="/admin"
-                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            className="block px-4 py-2 text-sm text-zinc-700 hover:bg-gray-100"
                             onClick={() => setIsDropdownOpen(false)}
                           >
                             Admin Panel
@@ -144,7 +138,7 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
               {/* For non-signed-in users, show only the brand name and sign in button */}
               <div>
                 <Link href="/" className="text-xl font-bold text-indigo-600">
-                  Health Informatics
+                  Interactive Coding
                 </Link>
               </div>
               <div>

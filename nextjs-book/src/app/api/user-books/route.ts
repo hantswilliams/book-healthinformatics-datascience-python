@@ -14,10 +14,23 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get books that the user has access to
-    const userBooks = await prisma.bookAccess.findMany({
+    // Get user's organization
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { organizationId: true }
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      );
+    }
+
+    // Get books that the user's organization has access to
+    const orgBooks = await prisma.bookAccess.findMany({
       where: {
-        userId: session.user.id
+        organizationId: user.organizationId
       },
       include: {
         book: {
@@ -37,12 +50,47 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Transform the data to a more convenient format
-    const books = userBooks.map(({ book, accessType }) => ({
-      ...book,
-      accessType,
-      chapters: book.chapters
-    }));
+    // Also get books created by this organization
+    const orgCreatedBooks = await prisma.book.findMany({
+      where: {
+        organizationId: user.organizationId
+      },
+      include: {
+        chapters: {
+          orderBy: {
+            order: 'asc'
+          }
+        }
+      },
+      orderBy: {
+        order: 'asc'
+      }
+    });
+
+    // Combine and deduplicate books
+    const bookMap = new Map();
+    
+    // Add books from BookAccess
+    orgBooks.forEach(({ book, accessType }) => {
+      bookMap.set(book.id, {
+        ...book,
+        accessType,
+        chapters: book.chapters
+      });
+    });
+
+    // Add organization-created books (they have full access)
+    orgCreatedBooks.forEach(book => {
+      if (!bookMap.has(book.id)) {
+        bookMap.set(book.id, {
+          ...book,
+          accessType: 'ADMIN',
+          chapters: book.chapters
+        });
+      }
+    });
+
+    const books = Array.from(bookMap.values());
 
     return NextResponse.json({ books });
   } catch (error) {

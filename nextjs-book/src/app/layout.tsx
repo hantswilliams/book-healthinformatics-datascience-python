@@ -13,8 +13,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "🐍 Python Learning for Healthcare",
-  description: "Interactive Python learning platform for healthcare data analysis",
+  title: "🐍 Interactive Coding Platform",
+  description: "Interactive Python learning platform for professionals across healthcare, finance, data science, and more",
 };
 
 export default async function RootLayout({

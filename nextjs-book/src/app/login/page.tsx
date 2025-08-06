@@ -47,7 +47,7 @@ export default function LoginPage() {
       } else {
         const session = await getSession();
         if (session) {
-          router.push('/');
+          router.push('/progress');
           router.refresh();
         }
       }
@@ -63,7 +63,7 @@ export default function LoginPage() {
       <div className="bg-white shadow-sm rounded-xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Sign In</h1>
-          <p className="text-gray-600 mt-2">Access your healthcare data science learning platform</p>
+          <p className="text-gray-600 mt-2">Access your interactive Python training platform</p>
         </div>
 
         {message && (
@@ -80,7 +80,7 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="email" className="block text-sm font-medium text-zinc-700 mb-2">
               Email Address
             </label>
             <input
@@ -96,7 +96,7 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="password" className="block text-sm font-medium text-zinc-700 mb-2">
               Password
             </label>
             <input
@@ -119,7 +119,7 @@ export default function LoginPage() {
                 type="checkbox"
                 className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-zinc-700">
                 Remember me
               </label>
             </div>

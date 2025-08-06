@@ -95,7 +95,7 @@ export default function PythonEditor({
           <div className="flex items-center space-x-3">
             <button
               onClick={clearConsole}
-              className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-sm font-medium rounded-md text-zinc-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               disabled={isRunning}
             >
               Clear Console

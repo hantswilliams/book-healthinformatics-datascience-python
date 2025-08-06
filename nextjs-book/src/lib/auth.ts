@@ -18,10 +18,18 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const user = await prisma.user.findUnique({
-            where: { email: credentials.email }
+            where: { email: credentials.email },
+            include: {
+              organization: true
+            }
           });
 
           if (!user) {
+            return null;
+          }
+
+          // Check if user is active
+          if (!user.isActive) {
             return null;
           }
 
@@ -38,6 +46,9 @@ export const authOptions: NextAuthOptions = {
             firstName: user.firstName,
             lastName: user.lastName,
             role: user.role,
+            organizationId: user.organizationId,
+            organizationSlug: user.organization.slug,
+            organizationName: user.organization.name,
           };
         } catch (error) {
           console.error('Authentication error:', error);
@@ -57,6 +68,9 @@ export const authOptions: NextAuthOptions = {
         token.firstName = user.firstName;
         token.lastName = user.lastName;
         token.role = user.role;
+        token.organizationId = user.organizationId;
+        token.organizationSlug = user.organizationSlug;
+        token.organizationName = user.organizationName;
       }
       return token;
     },
@@ -67,6 +81,9 @@ export const authOptions: NextAuthOptions = {
         session.user.firstName = token.firstName as string;
         session.user.lastName = token.lastName as string;
         session.user.role = token.role as string;
+        session.user.organizationId = token.organizationId as string;
+        session.user.organizationSlug = token.organizationSlug as string;
+        session.user.organizationName = token.organizationName as string;
       }
       return session;
     },

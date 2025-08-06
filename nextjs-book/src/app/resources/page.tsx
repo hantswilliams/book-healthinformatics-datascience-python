@@ -131,7 +131,7 @@ export default function ResourcesPage() {
           Apply what you&apos;ve learned with our interactive Python exercises
         </p>
         <Link
-          href="/chapter/chapter1"
+          href="/progress"
           className="inline-flex items-center px-6 py-3 bg-white text-indigo-600 font-medium rounded-lg hover:bg-gray-100 transition-colors duration-200"
         >
           Start Learning

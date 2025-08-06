@@ -49,10 +49,10 @@ export default function ProgressPage() {
   }, [session]);
 
   const fetchProgress = async () => {
-    if (!session?.user?.id) return;
+    if (!session?.user) return;
     
     try {
-      const response = await fetch(`/api/progress?userId=${session.user.id}`);
+      const response = await fetch('/api/progress');
       if (response.ok) {
         const data = await response.json();
         setProgress(data.progress || []);

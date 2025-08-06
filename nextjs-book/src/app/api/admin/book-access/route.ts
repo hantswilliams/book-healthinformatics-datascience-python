@@ -7,14 +7,18 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['OWNER', 'ADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
+    // Get all book access for the user's organization
     const bookAccess = await prisma.bookAccess.findMany({
+      where: {
+        organizationId: session.user.organizationId
+      },
       include: {
         user: {
           select: {
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['OWNER', 'ADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -69,10 +73,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Verify the user belongs to the same organization
+    const targetUser = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        organizationId: session.user.organizationId
+      }
+    });
+
+    if (!targetUser) {
+      return NextResponse.json(
+        { error: 'User not found in your organization' },
+        { status: 404 }
+      );
+    }
+
+    // Verify the book belongs to the organization
+    const book = await prisma.book.findFirst({
+      where: {
+        id: bookId,
+        organizationId: session.user.organizationId
+      }
+    });
+
+    if (!book) {
+      return NextResponse.json(
+        { error: 'Book not found in your organization' },
+        { status: 404 }
+      );
+    }
+
     const access = await prisma.bookAccess.upsert({
       where: {
-        userId_bookId: {
-          userId,
+        organizationId_bookId: {
+          organizationId: session.user.organizationId,
           bookId
         }
       },
@@ -82,6 +116,7 @@ export async function POST(request: NextRequest) {
         grantedBy: session.user.id,
       },
       create: {
+        organizationId: session.user.organizationId,
         userId,
         bookId,
         accessType: accessType || 'READ',
@@ -122,7 +157,7 @@ export async function DELETE(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user || session.user.role !== 'ADMIN') {
+    if (!session?.user || !['OWNER', 'ADMIN'].includes(session.user.role)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

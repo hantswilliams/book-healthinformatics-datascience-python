@@ -1,24 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
       return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
+        { error: 'Unauthorized' },
+        { status: 401 }
       );
     }
 
     const progress = await prisma.progress.findMany({
       where: {
-        userId: userId
+        userId: session.user.id
       },
       include: {
-        chapter: true
+        chapter: {
+          include: {
+            book: true
+          }
+        }
       },
       orderBy: {
         chapter: {
@@ -39,20 +44,66 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { userId, chapterId, completed } = body;
-
-    if (!userId || !chapterId) {
+    const session = await getServerSession(authOptions);
+    
+    if (!session?.user) {
       return NextResponse.json(
-        { error: 'User ID and Chapter ID are required' },
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { chapterId, completed } = body;
+
+    if (!chapterId) {
+      return NextResponse.json(
+        { error: 'Chapter ID is required' },
         { status: 400 }
       );
     }
 
+    // Verify the chapter exists and user has access to it
+    const chapter = await prisma.chapter.findFirst({
+      where: {
+        id: chapterId
+      },
+      include: {
+        book: {
+          include: {
+            bookAccess: {
+              where: {
+                userId: session.user.id
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!chapter) {
+      return NextResponse.json(
+        { error: 'Chapter not found' },
+        { status: 404 }
+      );
+    }
+
+    // Check if user has access to this book (either through bookAccess or organization)
+    const hasAccess = chapter.book.bookAccess.length > 0 || 
+                     (chapter.book.organizationId && chapter.book.organizationId === session.user.organizationId);
+
+    if (!hasAccess) {
+      return NextResponse.json(
+        { error: 'Access denied to this chapter' },
+        { status: 403 }
+      );
+    }
+
+    // Update or create progress
     const progress = await prisma.progress.upsert({
       where: {
         userId_chapterId: {
-          userId,
+          userId: session.user.id,
           chapterId
         }
       },
@@ -61,14 +112,38 @@ export async function POST(request: NextRequest) {
         completedAt: completed ? new Date() : null
       },
       create: {
-        userId,
-        chapterId,
+        user: {
+          connect: {
+            id: session.user.id
+          }
+        },
+        book: {
+          connect: {
+            id: chapter.book.id
+          }
+        },
+        chapter: {
+          connect: {
+            id: chapterId
+          }
+        },
         completed: completed ?? true,
         completedAt: completed ? new Date() : null
+      },
+      include: {
+        chapter: {
+          include: {
+            book: true
+          }
+        }
       }
     });
 
-    return NextResponse.json({ progress });
+    return NextResponse.json({ 
+      success: true, 
+      progress,
+      message: `Chapter "${chapter.title}" marked as ${completed ? 'completed' : 'incomplete'}`
+    });
   } catch (error) {
     console.error('Error updating progress:', error);
     return NextResponse.json(

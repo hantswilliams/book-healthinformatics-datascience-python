@@ -9,6 +9,9 @@ declare module 'next-auth' {
       firstName?: string;
       lastName: string;
       role: string;
+      organizationId: string;
+      organizationSlug: string;
+      organizationName: string;
     };
   }
 
@@ -19,6 +22,9 @@ declare module 'next-auth' {
     firstName?: string;
     lastName: string;
     role: string;
+    organizationId: string;
+    organizationSlug: string;
+    organizationName: string;
   }
 }
 
@@ -29,5 +35,8 @@ declare module 'next-auth/jwt' {
     firstName?: string;
     lastName: string;
     role: string;
+    organizationId: string;
+    organizationSlug: string;
+    organizationName: string;
   }
 }

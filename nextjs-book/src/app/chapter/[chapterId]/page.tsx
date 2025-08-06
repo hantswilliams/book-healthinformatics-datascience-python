@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import MarkdownRenderer from '@/components/MarkdownRenderer';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import PythonEditor from '@/components/PythonEditor';
-import { getChapterById } from '@/data/chapters';
 import type { Chapter } from '@/types';
 
 interface ChapterPageProps {
@@ -17,37 +17,39 @@ export default function ChapterPage({ params }: ChapterPageProps) {
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [chapterId, setChapterId] = useState<string>('');
   const [isCompleting, setIsCompleting] = useState<boolean>(false);
-  const [sectionCodes, setSectionCodes] = useState<{[key: string]: string}>({});
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
 
   useEffect(() => {
     const loadChapter = async () => {
-      const resolvedParams = await params;
-      const foundChapter = getChapterById(resolvedParams.chapterId);
-      
-      if (!foundChapter) {
-        notFound();
-        return;
-      }
-
-      setChapter(foundChapter);
-      setChapterId(resolvedParams.chapterId);
-
-      // Load Python code for all sections
-      const codes: {[key: string]: string} = {};
-      for (const section of foundChapter.sections) {
-        if (section.type === 'python') {
-          try {
-            const response = await fetch(section.url);
-            if (response.ok) {
-              const code = await response.text();
-              codes[section.url] = code;
-            }
-          } catch (error) {
-            console.error('Error loading Python code:', error);
+      try {
+        setLoading(true);
+        setError('');
+        
+        const resolvedParams = await params;
+        const chapterIdValue = resolvedParams.chapterId;
+        setChapterId(chapterIdValue);
+        
+        const response = await fetch(`/api/chapters/${chapterIdValue}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            notFound();
+            return;
           }
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to load chapter');
         }
+        
+        const data = await response.json();
+        setChapter(data.chapter);
+        
+      } catch (err) {
+        console.error('Error loading chapter:', err);
+        setError(err instanceof Error ? err.message : 'Failed to load chapter');
+      } finally {
+        setLoading(false);
       }
-      setSectionCodes(codes);
     };
 
     loadChapter();
@@ -64,7 +66,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
   };
 
   const handleMarkCompleted = async () => {
-    if (!session?.user?.id || !chapterId || isCompleting) return;
+    if (!session?.user || !chapterId || isCompleting) return;
     
     setIsCompleting(true);
     
@@ -75,18 +77,18 @@ export default function ChapterPage({ params }: ChapterPageProps) {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          userId: session.user.id,
           chapterId,
           completed: true
         })
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        alert('Congratulations! This chapter has been marked as completed.');
+        alert(`Congratulations! ${result.message || 'This chapter has been marked as completed.'}`);
       } else {
-        const error = await response.json();
-        console.error('Error marking chapter as completed:', error);
-        alert('There was an error marking the chapter as completed. Please try again.');
+        console.error('Error marking chapter as completed:', result);
+        alert(result.error || 'There was an error marking the chapter as completed. Please try again.');
       }
     } catch (error) {
       console.error('Error marking chapter as completed:', error);
@@ -96,7 +98,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
     }
   };
 
-  if (!chapter) {
+  if (loading) {
     return (
       <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-12 xl:px-12">
         <div className="animate-pulse">
@@ -111,24 +113,111 @@ export default function ChapterPage({ params }: ChapterPageProps) {
     );
   }
 
+  if (error) {
+    return (
+      <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-12 xl:px-12">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-6">
+          <div className="flex items-center">
+            <svg className="h-5 w-5 text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.502 0L4.32 15.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <h3 className="text-sm font-medium text-red-800">
+              Unable to load chapter
+            </h3>
+          </div>
+          <div className="mt-2">
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!chapter) {
+    return (
+      <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-12 xl:px-12">
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
+          <p className="text-gray-600">Chapter not found</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-12 xl:px-12 space-y-8">
+      {/* Chapter Header */}
+      <div className="bg-white shadow-sm rounded-xl p-6">
+        <div className="flex items-center space-x-2 mb-2">
+          <span className="text-2xl">{chapter.emoji}</span>
+          <h1 className="text-2xl font-bold text-gray-900">{chapter.title}</h1>
+        </div>
+        {chapter.bookTitle && (
+          <p className="text-sm text-gray-600">From: {chapter.bookTitle}</p>
+        )}
+        {chapter.estimatedMinutes && (
+          <p className="text-sm text-gray-500">
+            Estimated time: {chapter.estimatedMinutes} minutes
+          </p>
+        )}
+      </div>
+
       {/* Chapter Sections */}
       {chapter.sections.map((section, index) => (
-        <div key={index} className="bg-white shadow-sm rounded-xl overflow-hidden">
+        <div key={section.id} className="bg-white shadow-sm rounded-xl overflow-hidden">
           {section.title && (
             <div className="border-b border-gray-100 bg-white p-6">
-              <h2 className="text-lg font-semibold text-gray-900">
+              <h2 className="text-lg font-semibold text-zinc-900">
                 {section.title}
               </h2>
             </div>
           )}
           <div className="p-6">
             {section.type === 'markdown' ? (
-              <MarkdownRenderer src={section.url} />
+              <div className="prose prose-zinc max-w-none">
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    code: ({ className, children, ...props }) => {
+                      const isInline = !className;
+                      return isInline ? (
+                        <code
+                          className="bg-gray-100 text-zinc-800 px-1 py-0.5 rounded text-sm font-mono"
+                          {...props}
+                        >
+                          {children}
+                        </code>
+                      ) : (
+                        <code
+                          className="block bg-gray-900 text-zinc-100 p-4 rounded-md overflow-x-auto text-sm font-mono"
+                          {...props}
+                        >
+                          {children}
+                        </code>
+                      );
+                    },
+                    h1: ({ children }) => (
+                      <h1 className="text-3xl font-bold text-zinc-900 mb-6 border-b border-gray-200 pb-2">
+                        {children}
+                      </h1>
+                    ),
+                    h2: ({ children }) => (
+                      <h2 className="text-2xl font-semibold text-zinc-900 mt-8 mb-4">
+                        {children}
+                      </h2>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 className="text-xl font-semibold text-zinc-900 mt-6 mb-3">
+                        {children}
+                      </h3>
+                    )
+                  }}
+                >
+                  {section.content}
+                </ReactMarkdown>
+              </div>
             ) : (
               <PythonEditor
-                initialCode={sectionCodes[section.url] || '# Loading...'}
+                initialCode={section.content || '# No code provided'}
                 onCodeRun={handleCodeRun}
               />
             )}
