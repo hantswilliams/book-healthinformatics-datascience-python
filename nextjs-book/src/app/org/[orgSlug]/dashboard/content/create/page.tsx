@@ -25,7 +25,7 @@ interface Chapter {
   sections: UploadedFile[];
 }
 
-interface BookForm {
+interface BookForm { // backend model remains 'book'
   title: string;
   description: string;
   difficulty: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
@@ -34,12 +34,12 @@ interface BookForm {
   tags: string;
 }
 
-export default function CreateBook() {
+export default function CreateBook() { // component name kept; UI text will say Course
   const { data: session } = useSession();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   
-  const [step, setStep] = useState(1); // 1: Book Info, 2: Upload Files, 3: Organize Chapters, 4: Review
+  const [step, setStep] = useState(1); // 1: Course Info, 2: Upload Files, 3: Organize Chapters, 4: Review
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -243,7 +243,7 @@ export default function CreateBook() {
       setError('');
 
       if (!bookForm.title || chapters.length === 0) {
-        setError('Please provide a book title and create at least one chapter');
+        setError('Please provide a course title and create at least one chapter');
         return;
       }
 
@@ -286,12 +286,12 @@ export default function CreateBook() {
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to create book');
+  throw new Error(result.error || 'Failed to create course');
       }
 
       router.push('/dashboard/content');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create book');
+  setError(err instanceof Error ? err.message : 'Failed to create course');
     } finally {
       setIsLoading(false);
     }
@@ -345,14 +345,14 @@ export default function CreateBook() {
                       <svg className="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>
-                      <span className="ml-1 text-gray-500">Create Book</span>
+                      <span className="ml-1 text-gray-500">Create Course</span>
                     </div>
                   </li>
                 </ol>
               </nav>
-              <h1 className="mt-2 text-3xl font-bold text-gray-900">Create New Book</h1>
+              <h1 className="mt-2 text-3xl font-bold text-gray-900">Create New Course</h1>
               <p className="mt-1 text-sm text-gray-600">
-                Step {step} of 4: {step === 1 ? 'Book Information' : step === 2 ? 'Upload Files' : step === 3 ? 'Organize Chapters' : 'Review & Create'}
+                Step {step} of 4: {step === 1 ? 'Course Information' : step === 2 ? 'Upload Files' : step === 3 ? 'Organize Chapters' : 'Review & Create'}
               </p>
             </div>
           </div>
@@ -366,17 +366,17 @@ export default function CreateBook() {
           </div>
         )}
 
-        {/* Step 1: Book Information */}
+  {/* Step 1: Course Information */}
         {step === 1 && (
           <div className="bg-white shadow rounded-lg">
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Book Information</h3>
+              <h3 className="text-lg font-medium text-gray-900">Course Information</h3>
             </div>
             <div className="px-6 py-4">
               <div className="grid grid-cols-1 gap-6">
                 <div>
                   <label htmlFor="title" className="block text-sm font-medium text-zinc-700">
-                    Book Title *
+                    Course Title *
                   </label>
                   <input
                     type="text"
@@ -384,7 +384,7 @@ export default function CreateBook() {
                     value={bookForm.title}
                     onChange={(e) => setBookForm(prev => ({ ...prev, title: e.target.value }))}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Enter book title"
+                    placeholder="Enter course title"
                   />
                 </div>
 
@@ -398,7 +398,7 @@ export default function CreateBook() {
                     value={bookForm.description}
                     onChange={(e) => setBookForm(prev => ({ ...prev, description: e.target.value }))}
                     className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Brief description of the book"
+                    placeholder="Brief description of the course"
                   />
                 </div>
 
@@ -748,13 +748,13 @@ export default function CreateBook() {
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-medium text-gray-900">Review & Create</h3>
               <p className="text-sm text-gray-600 mt-1">
-                Review your book structure before creating
+                Review your course structure before creating
               </p>
             </div>
             <div className="px-6 py-4">
               {/* Book Summary */}
               <div className="mb-6">
-                <h4 className="text-sm font-medium text-gray-900 mb-3">Book Details</h4>
+                <h4 className="text-sm font-medium text-gray-900 mb-3">Course Details</h4>
                 <div className="bg-gray-50 p-4 rounded-md">
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div><strong>Title:</strong> {bookForm.title}</div>
@@ -818,10 +818,10 @@ export default function CreateBook() {
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
-                      Creating Book...
+                      Creating Course...
                     </>
                   ) : (
-                    'Create Book'
+                    'Create Course'
                   )}
                 </button>
               </div>

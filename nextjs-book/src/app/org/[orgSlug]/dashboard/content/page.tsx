@@ -238,7 +238,7 @@ export default function ContentManagement() {
               </nav>
               <h1 className="mt-2 text-3xl font-bold text-gray-900">Content Management</h1>
               <p className="mt-1 text-sm text-gray-600">
-                Manage your organization's learning content and access to marketplace books
+                Manage your organization's learning content and access to marketplace courses
               </p>
             </div>
             {['OWNER', 'ADMIN'].includes(session?.user.role || '') && (
@@ -246,7 +246,7 @@ export default function ContentManagement() {
                 href={`/org/${orgSlug}/dashboard/content/create`}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                Create New Book
+                Create New Course
               </Link>
             )}
           </div>
@@ -264,15 +264,15 @@ export default function ContentManagement() {
         <div className="mb-6 grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-blue-600">{books.length}</div>
-            <div className="text-sm text-gray-600">Total Books</div>
+            <div className="text-sm text-gray-600">Total Courses</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-green-600">{organizationBooks.length}</div>
-            <div className="text-sm text-gray-600">Organization Books</div>
+            <div className="text-sm text-gray-600">Organization Courses</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-purple-600">{marketplaceBooks.length}</div>
-            <div className="text-sm text-gray-600">Marketplace Books</div>
+            <div className="text-sm text-gray-600">Marketplace Courses</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-orange-600">
@@ -294,7 +294,7 @@ export default function ContentManagement() {
                     : 'border-transparent text-gray-500 hover:text-zinc-700 hover:border-gray-300'
                 }`}
               >
-                All Books ({books.length})
+                All Courses ({books.length})
               </button>
               <button
                 onClick={() => setFilter('organization')}
@@ -304,7 +304,7 @@ export default function ContentManagement() {
                     : 'border-transparent text-gray-500 hover:text-zinc-700 hover:border-gray-300'
                 }`}
               >
-                Organization Content ({organizationBooks.length})
+                Organization Courses ({organizationBooks.length})
               </button>
               <button
                 onClick={() => setFilter('marketplace')}
@@ -314,7 +314,7 @@ export default function ContentManagement() {
                     : 'border-transparent text-gray-500 hover:text-zinc-700 hover:border-gray-300'
                 }`}
               >
-                Marketplace Access ({marketplaceBooks.length})
+                Marketplace Courses ({marketplaceBooks.length})
               </button>
             </nav>
           </div>
@@ -326,11 +326,11 @@ export default function ContentManagement() {
             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No books available</h3>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No courses available</h3>
             <p className="mt-1 text-sm text-gray-500">
               {filter === 'organization' 
-                ? 'Create your first organization book or get access to marketplace content.'
-                : 'No books found for the selected filter.'
+                ? 'Create your first organization course or get access to marketplace content.'
+                : 'No courses found for the selected filter.'
               }
             </p>
           </div>
@@ -528,7 +528,7 @@ export default function ContentManagement() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
               </div>
-              <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">Delete Book</h3>
+              <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">Delete Course</h3>
               <div className="mt-2 px-7 py-3">
                 <p className="text-sm text-gray-500">
                   Are you sure you want to delete "<span className="font-semibold">{showDeleteConfirm.title}</span>"? 

@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
+import { Card, Badge } from '@/components/ui/Card';
 
 interface TeamMember {
   id: string;
@@ -263,23 +264,23 @@ export default function TeamManagement() {
     setMemberBookAccess(null);
   };
 
-  const getRoleColor = (role: string) => {
+  const roleBadgeTone = (role: string): any => {
     switch (role) {
-      case 'OWNER': return 'bg-red-100 text-red-800';
-      case 'ADMIN': return 'bg-purple-100 text-purple-800';
-      case 'INSTRUCTOR': return 'bg-blue-100 text-blue-800';
-      case 'LEARNER': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'OWNER': return 'purple';
+      case 'ADMIN': return 'indigo';
+      case 'INSTRUCTOR': return 'info';
+      case 'LEARNER': return 'neutral';
+      default: return 'neutral';
     }
   };
 
-  const getDifficultyColor = (difficulty: string) => {
+  const difficultyBadge = (difficulty: string) => {
     switch (difficulty) {
-      case 'BEGINNER': return 'bg-green-100 text-green-800';
-      case 'INTERMEDIATE': return 'bg-yellow-100 text-yellow-800';
-      case 'ADVANCED': return 'bg-orange-100 text-orange-800';
-      case 'EXPERT': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'BEGINNER': return <Badge tone="success">Beginner</Badge>;
+      case 'INTERMEDIATE': return <Badge tone="info">Intermediate</Badge>;
+      case 'ADVANCED': return <Badge tone="warning">Advanced</Badge>;
+      case 'EXPERT': return <Badge tone="danger">Expert</Badge>;
+      default: return <Badge tone="neutral">{difficulty}</Badge>;
     }
   };
 
@@ -297,44 +298,42 @@ export default function TeamManagement() {
   const canInviteMore = orgInfo && orgInfo.currentSeats + invitations.length < orgInfo.maxSeats;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f7f8fa]">
       {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
+      <div className="border-b border-zinc-200 bg-white/60 backdrop-blur supports-[backdrop-filter]:bg-white/50">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-start justify-between py-6">
             <div>
               <nav className="flex" aria-label="Breadcrumb">
                 <ol className="inline-flex items-center space-x-1 md:space-x-3">
                   <li className="inline-flex items-center">
-                    <Link href={`/org/${orgSlug}/dashboard`} className="text-gray-500 hover:text-zinc-700">
-                      Dashboard
+                    <Link href={`/org/${orgSlug}/dashboard`} className="text-sm font-medium text-zinc-500 hover:text-indigo-600">
+                      Admin
                     </Link>
                   </li>
                   <li>
                     <div className="flex items-center">
-                      <svg className="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="h-5 w-5 flex-shrink-0 text-zinc-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>
-                      <span className="ml-1 text-gray-500">Team</span>
+                      <span className="ml-1 text-sm font-medium text-zinc-600">Team</span>
                     </div>
                   </li>
                 </ol>
               </nav>
-              <h1 className="mt-2 text-3xl font-bold text-gray-900">Team Management</h1>
-              <p className="mt-1 text-sm text-gray-600">
-                Manage your team members and invitations
-              </p>
+              <h1 className="mt-3 text-2xl font-semibold tracking-tight text-zinc-900">Team Management</h1>
+              <p className="mt-1 text-sm text-zinc-600">Manage team members and invitations</p>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4">
               {orgInfo && (
-                <span className="text-sm text-gray-500">
-                  {orgInfo.currentSeats} / {orgInfo.maxSeats} seats used
-                </span>
+                <Badge tone="indigo" subtle className="font-medium">
+                  {orgInfo.currentSeats} / {orgInfo.maxSeats} seats
+                </Badge>
               )}
               {canInviteMore && (
                 <button
                   onClick={() => setShowInviteModal(true)}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
                 >
                   Invite Member
                 </button>
@@ -344,308 +343,211 @@ export default function TeamManagement() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-md p-4">
-            <div className="text-sm text-red-800">{error}</div>
-          </div>
+          <Card padding="sm" className="mb-8 border-rose-200 bg-rose-50 text-rose-700">
+            <div className="text-sm">{error}</div>
+          </Card>
         )}
 
         {!canInviteMore && orgInfo && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-md p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-yellow-800">Seat Limit Reached</h3>
-                <p className="mt-1 text-sm text-yellow-700">
-                  You've reached your {orgInfo.subscriptionTier} plan limit of {orgInfo.maxSeats} seats. 
-                  Upgrade your plan to invite more members.
-                </p>
+          <Card padding="md" className="mb-8 border-amber-200 bg-amber-50">
+            <div className="flex items-start gap-3">
+              <svg className="h-5 w-5 flex-shrink-0 text-amber-500" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+              <div>
+                <h3 className="text-sm font-semibold text-amber-900">Seat limit reached</h3>
+                <p className="mt-1 text-sm text-amber-800">You've reached your {orgInfo.subscriptionTier} plan limit of {orgInfo.maxSeats} seats. Upgrade to invite more members.</p>
               </div>
             </div>
-          </div>
+          </Card>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* Team Members */}
-          <div className="lg:col-span-2">
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  Team Members ({teamMembers.length})
-                </h3>
-                
-                {teamMembers.length === 0 ? (
-                  <div className="text-center py-6">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                    </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No team members</h3>
-                    <p className="mt-1 text-sm text-gray-500">Get started by inviting your first team member.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {teamMembers.map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-                        <div className="flex items-center space-x-4">
-                          <div className="flex-shrink-0">
-                            <div className="h-10 w-10 bg-gray-300 rounded-full flex items-center justify-center">
-                              <span className="text-sm font-medium text-zinc-700">
-                                {member.firstName?.[0] || member.email[0].toUpperCase()}
-                                {member.lastName[0].toUpperCase()}
-                              </span>
-                            </div>
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {member.firstName} {member.lastName}
-                            </p>
-                            <p className="text-sm text-gray-500">{member.email}</p>
-                            <p className="text-xs text-gray-400">
-                              Joined {new Date(member.joinedAt).toLocaleDateString()}
-                              {member.lastLoginAt && ` • Last active ${new Date(member.lastLoginAt).toLocaleDateString()}`}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex items-center space-x-2">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleColor(member.role)}`}>
-                            {member.role}
+          <div className="lg:col-span-2 space-y-6">
+            <Card padding="lg">
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-600">Team Members <span className="font-normal text-zinc-400">({teamMembers.length})</span></h3>
+                {canInviteMore && (
+                  <button onClick={() => setShowInviteModal(true)} className="hidden rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-700 md:inline-flex">Invite</button>
+                )}
+              </div>
+              {teamMembers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <svg className="h-12 w-12 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
+                  <h4 className="mt-4 text-sm font-medium text-zinc-900">No team members yet</h4>
+                  <p className="mt-1 text-sm text-zinc-500">Invite your first team member to get started.</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-zinc-200">
+                  {teamMembers.map(member => (
+                    <li key={member.id} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-sm">
+                          <span className="text-sm font-semibold">
+                            {(member.firstName?.[0] || member.email[0]).toUpperCase()}
+                            {member.lastName?.[0]?.toUpperCase()}
                           </span>
-                          
-                          {!member.isActive && (
-                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                              Inactive
-                            </span>
-                          )}
-                          
-                          <button
-                            onClick={() => openBookAccessModal(member.id)}
-                            className="text-blue-600 hover:text-blue-800 text-sm"
-                          >
-                            Manage Books
-                          </button>
-                          
-                          {session?.user.role === 'OWNER' && member.role !== 'OWNER' && member.isActive && (
-                            <button
-                              onClick={() => handleDeactivateUser(member.id)}
-                              className="text-red-600 hover:text-red-800 text-sm"
-                            >
-                              Deactivate
-                            </button>
-                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-zinc-900">{member.firstName} {member.lastName}</p>
+                          <p className="truncate text-xs text-zinc-500">{member.email}</p>
+                          <p className="mt-1 text-[11px] text-zinc-400">Joined {new Date(member.joinedAt).toLocaleDateString()}{member.lastLoginAt && ` • Active ${new Date(member.lastLoginAt).toLocaleDateString()}`}</p>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
+                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                        <Badge tone={roleBadgeTone(member.role)}>{member.role}</Badge>
+                        {!member.isActive && <Badge tone="danger">Inactive</Badge>}
+                        <button onClick={() => openBookAccessModal(member.id)} className="text-xs font-medium text-indigo-600 hover:text-indigo-700">Courses</button>
+                        {session?.user.role === 'OWNER' && member.role !== 'OWNER' && member.isActive && (
+                          <button onClick={() => handleDeactivateUser(member.id)} className="text-xs font-medium text-rose-600 hover:text-rose-700">Deactivate</button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
           </div>
-
           {/* Pending Invitations */}
-          <div>
-            <div className="bg-white shadow rounded-lg">
-              <div className="px-4 py-5 sm:p-6">
-                <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-                  Pending Invitations ({invitations.length})
-                </h3>
-                
-                {invitations.length === 0 ? (
-                  <div className="text-center py-6">
-                    <svg className="mx-auto h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <p className="mt-2 text-sm text-gray-500">No pending invitations</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {invitations.map((invitation) => (
-                      <div key={invitation.id} className="p-3 border border-gray-200 rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium text-gray-900 truncate">
-                            {invitation.email}
-                          </p>
-                          <div className="flex items-center space-x-2">
-                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getRoleColor(invitation.role)}`}>
-                              {invitation.role}
-                            </span>
-                            <button
-                              onClick={() => handleRemoveInvitation(invitation.id)}
-                              className="text-red-600 hover:text-red-800 text-xs"
-                              title="Remove invitation"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-500">
-                          Invited by {invitation.invitedBy.firstName} {invitation.invitedBy.lastName}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Expires {new Date(invitation.expiresAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+          <div className="space-y-6">
+            <Card padding="lg">
+              <div className="mb-6 flex items-center justify-between">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-600">Pending Invitations <span className="font-normal text-zinc-400">({invitations.length})</span></h3>
               </div>
-            </div>
+              {invitations.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <svg className="h-10 w-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+                  <p className="mt-3 text-sm text-zinc-500">No pending invitations</p>
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {invitations.map(invitation => (
+                    <li key={invitation.id} className="rounded-lg border border-zinc-200 bg-white/60 p-4 backdrop-blur-sm">
+                      <div className="mb-2 flex items-center justify-between gap-4">
+                        <p className="truncate text-sm font-medium text-zinc-900" title={invitation.email}>{invitation.email}</p>
+                        <div className="flex items-center gap-2">
+                          <Badge tone={roleBadgeTone(invitation.role)}>{invitation.role}</Badge>
+                          <button
+                            onClick={() => handleRemoveInvitation(invitation.id)}
+                            className="text-[11px] font-medium text-rose-600 hover:text-rose-700"
+                            title="Remove invitation"
+                          >Remove</button>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-zinc-500">Invited by {invitation.invitedBy.firstName} {invitation.invitedBy.lastName}</p>
+                      <p className="text-[11px] text-zinc-500">Expires {new Date(invitation.expiresAt).toLocaleDateString()}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Card>
           </div>
         </div>
       </div>
 
       {/* Invite Modal */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Invite Team Member</h3>
-            
-            <form onSubmit={handleInvite} className="space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowInviteModal(false)} />
+          <Card className="relative w-full max-w-md" padding="lg">
+            <h3 className="text-base font-semibold text-zinc-900">Invite Team Member</h3>
+            <p className="mt-1 text-sm text-zinc-500">Send an invitation email to add a new member.</p>
+            <form onSubmit={handleInvite} className="mt-6 space-y-5">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
-                  Email Address
-                </label>
+                <label htmlFor="email" className="block text-xs font-medium uppercase tracking-wide text-zinc-600">Email</label>
                 <input
                   type="email"
                   id="email"
                   required
                   value={inviteForm.email}
                   onChange={(e) => setInviteForm(prev => ({ ...prev, email: e.target.value }))}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-2 w-full rounded-md border border-zinc-300 bg-white/70 px-3 py-2 text-sm text-zinc-900 shadow-sm placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                   placeholder="colleague@company.com"
                 />
               </div>
-              
               <div>
-                <label htmlFor="role" className="block text-sm font-medium text-zinc-700">
-                  Role
-                </label>
+                <label htmlFor="role" className="block text-xs font-medium uppercase tracking-wide text-zinc-600">Role</label>
                 <select
                   id="role"
                   value={inviteForm.role}
                   onChange={(e) => setInviteForm(prev => ({ ...prev, role: e.target.value }))}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-2 w-full rounded-md border border-zinc-300 bg-white/70 px-3 py-2 text-sm text-zinc-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 >
                   <option value="LEARNER">Learner</option>
                   <option value="INSTRUCTOR">Instructor</option>
-                  {session?.user.role === 'OWNER' && (
-                    <option value="ADMIN">Admin</option>
-                  )}
+                  {session?.user.role === 'OWNER' && <option value="ADMIN">Admin</option>}
                 </select>
               </div>
-              
-              <div className="flex justify-end space-x-3">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setShowInviteModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-zinc-700 hover:bg-gray-50"
+                  className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50"
                   disabled={inviteLoading}
-                >
-                  Cancel
-                </button>
+                >Cancel</button>
                 <button
                   type="submit"
                   disabled={inviteLoading}
-                  className="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  {inviteLoading ? 'Sending...' : 'Send Invitation'}
-                </button>
+                  className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 disabled:opacity-50"
+                >{inviteLoading ? 'Sending…' : 'Send Invitation'}</button>
               </div>
             </form>
-          </div>
+          </Card>
         </div>
       )}
 
-      {/* Book Access Modal */}
+  {/* Course Access Modal (backend still refers to books) */}
       {selectedMember && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[80vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={closeBookAccessModal} />
+          <Card className="relative w-full max-w-4xl max-h-[80vh] overflow-y-auto" padding="lg">
+            <div className="mb-6 flex items-start justify-between gap-6">
               <div>
-                <h3 className="text-lg font-medium text-gray-900">
-                  Book Access for {memberBookAccess?.user.firstName} {memberBookAccess?.user.lastName}
-                </h3>
-                <p className="text-sm text-gray-500">
-                  Manage which books this team member can access
-                </p>
+                <h3 className="text-base font-semibold text-zinc-900">Course Access</h3>
+                <p className="mt-1 text-sm text-zinc-500">Manage which courses this member can access.</p>
               </div>
-              <button
-                onClick={closeBookAccessModal}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+              <button onClick={closeBookAccessModal} className="rounded-md p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-600">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
-            
             {accessLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span className="ml-3 text-gray-600">Loading books...</span>
+              <div className="flex items-center justify-center py-12 text-sm text-zinc-600">
+                <div className="mr-3 h-5 w-5 animate-spin rounded-full border-b-2 border-indigo-600" /> Loading courses…
               </div>
             ) : memberBookAccess ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {memberBookAccess.books.length === 0 ? (
-                  <div className="text-center py-8">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No books available</h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Create some organization books first to assign access.
-                    </p>
+                  <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <svg className="h-12 w-12 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+                    <h4 className="mt-4 text-sm font-medium text-zinc-900">No courses available</h4>
+                    <p className="mt-1 text-sm text-zinc-500">Create organization courses first to assign access.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {memberBookAccess.books.map((book) => (
-                      <div key={book.id} className={`border rounded-lg p-4 ${
-                        book.hasAccess ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-white'
-                      }`}>
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="flex-1">
-                            <h4 className="text-sm font-medium text-gray-900 mb-1">
-                              {book.title}
-                            </h4>
-                            <div className="flex flex-wrap gap-1 mb-2">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                getDifficultyColor(book.difficulty)
-                              }`}>
-                                {book.difficulty}
-                              </span>
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                {book.category.replace('_', ' ')}
-                              </span>
-                              {book.estimatedHours && (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                  {book.estimatedHours}h
-                                </span>
-                              )}
+                  <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    {memberBookAccess.books.map(book => (
+                      <div key={book.id} className={['rounded-lg border p-4 transition', book.hasAccess ? 'border-indigo-300 bg-indigo-50/50' : 'border-zinc-200 bg-white/70'].join(' ')}>
+                        <div className="mb-4 flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <h4 className="truncate text-sm font-medium text-zinc-900">{book.title}</h4>
+                            <div className="mt-2 flex flex-wrap gap-2">
+                              {difficultyBadge(book.difficulty)}
+                              <Badge tone="neutral">{book.category.replace('_', ' ')}</Badge>
+                              {book.estimatedHours && <Badge tone="indigo">{book.estimatedHours}h</Badge>}
                             </div>
                             {book.hasAccess && book.grantedAt && (
-                              <p className="text-xs text-gray-500">
-                                Access granted {new Date(book.grantedAt).toLocaleDateString()}
-                              </p>
+                              <p className="mt-2 text-[11px] text-zinc-500">Granted {new Date(book.grantedAt).toLocaleDateString()}</p>
                             )}
                           </div>
-                          <div className="ml-4">
-                            <label className="flex items-center">
-                              <input
-                                type="checkbox"
-                                checked={book.hasAccess}
-                                onChange={(e) => toggleBookAccess(book.id, e.target.checked)}
-                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                              />
-                              <span className="ml-2 text-sm text-zinc-700">
-                                {book.hasAccess ? 'Has Access' : 'No Access'}
-                              </span>
-                            </label>
-                          </div>
+                          <label className="mt-1 inline-flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              checked={book.hasAccess}
+                              onChange={e => toggleBookAccess(book.id, e.target.checked)}
+                              className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
+                            />
+                            <span className="text-xs font-medium text-zinc-700">{book.hasAccess ? 'Access' : 'No Access'}</span>
+                          </label>
                         </div>
                       </div>
                     ))}
@@ -653,16 +555,10 @@ export default function TeamManagement() {
                 )}
               </div>
             ) : null}
-            
-            <div className="mt-6 flex justify-end">
-              <button
-                onClick={closeBookAccessModal}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-zinc-700 hover:bg-gray-50"
-              >
-                Close
-              </button>
+            <div className="mt-8 flex justify-end">
+              <button onClick={closeBookAccessModal} className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">Close</button>
             </div>
-          </div>
+          </Card>
         </div>
       )}
     </div>

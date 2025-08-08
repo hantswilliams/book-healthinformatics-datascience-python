@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useOrgSlug } from '@/lib/useOrgSlug';
+import LogoMark from '@/components/LogoMark';
 import type { Chapter, User } from '@/types';
 
 interface Book {
@@ -57,8 +58,11 @@ export default function Sidebar({ books, user, loading, className = '', onClose 
   return (
     <div className={`w-64 bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white border-r border-zinc-200 ${className}`}>
       <div className="p-6 bg-gradient-to-br from-indigo-600 to-indigo-700 relative text-white">
-        <h2 className="text-xl font-semibold tracking-tight">Health Informatics</h2>
-        <p className="text-indigo-200 text-xs mt-1">Interactive Learning Platform</p>
+        <div className="flex items-center gap-2">
+          <LogoMark variant="brackets" className="h-6 w-6" />
+          <h2 className="text-lg font-semibold tracking-tight">Interactive Learning</h2>
+        </div>
+        <p className="text-indigo-200 text-[11px] mt-1">Practice • Build • Master</p>
         
         {/* Close button for mobile */}
         <button
@@ -196,7 +200,7 @@ export default function Sidebar({ books, user, loading, className = '', onClose 
           ) : (
             <div className="text-center py-8">
               <div className="text-zinc-400 text-4xl mb-2">📚</div>
-              <p className="text-zinc-500 text-sm">No books available</p>
+              <p className="text-zinc-500 text-sm">No courses available</p>
               <p className="text-zinc-400 text-xs mt-1">Contact your administrator</p>
             </div>
           )}
