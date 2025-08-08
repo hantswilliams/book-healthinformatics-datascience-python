@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
+import LogoMark from './LogoMark';
 import { useState } from 'react';
 import { signOut } from 'next-auth/react';
+import { useOrgSlug } from '@/lib/useOrgSlug';
 import type { User } from '@/types';
 
 interface HeaderProps {
@@ -13,18 +15,19 @@ interface HeaderProps {
 
 export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const orgSlug = useOrgSlug();
 
   return (
-    <div className="bg-white shadow-sm">
+    <div className="sticky top-0 z-50 border-b border-zinc-200/70 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center px-4 sm:px-6 lg:px-8 py-3">
+        <div className="flex justify-between items-center px-4 sm:px-6 lg:px-8 h-14">
           {user ? (
             <>
               {/* Hamburger menu button for mobile and desktop menu links */}
               <div className="flex items-center space-x-4">
                 <button
                   onClick={onToggleSidebar}
-                  className="lg:hidden p-2 rounded-md text-zinc-700 hover:text-indigo-600 hover:bg-gray-100"
+                  className="lg:hidden inline-flex items-center justify-center h-9 w-9 rounded-lg text-zinc-700 hover:text-indigo-600 hover:bg-zinc-100 transition"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {isSidebarOpen ? (
@@ -36,23 +39,23 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
                 </button>
                 
                 {/* Menu links only visible for signed-in users on desktop */}
-                <div className="hidden lg:flex items-center space-x-8">
+                <div className="hidden lg:flex items-center space-x-2">
                   <Link
-                    href="/progress"
-                    className="text-zinc-700 hover:text-indigo-600 font-medium transition-colors duration-200"
+                    href={orgSlug ? `/org/${orgSlug}/progress` : '/progress'}
+                    className="px-3 py-2 text-sm font-medium text-zinc-700 hover:text-indigo-600 hover:bg-zinc-100 rounded-md transition"
                   >
                     Progress
                   </Link>
                   <Link
-                    href="/resources"
-                    className="text-zinc-700 hover:text-indigo-600 font-medium transition-colors duration-200"
+                    href={orgSlug ? `/org/${orgSlug}/resources` : '/resources'}
+                    className="px-3 py-2 text-sm font-medium text-zinc-700 hover:text-indigo-600 hover:bg-zinc-100 rounded-md transition"
                   >
                     Resources
                   </Link>
                   {(['OWNER', 'ADMIN'].includes(user.role)) && (
                     <Link
-                      href="/dashboard"
-                      className="text-orange-600 hover:text-orange-700 font-medium transition-colors duration-200 flex items-center"
+                      href={orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard'}
+                      className="px-3 py-2 text-sm font-medium text-orange-700 hover:text-orange-800 hover:bg-orange-50 rounded-md transition flex items-center"
                     >
                       <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -66,7 +69,7 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
               
               <div className="flex items-center space-x-2 sm:space-x-4">
                 {/* Notifications button - hidden on very small screens */}
-                <button className="hidden sm:block text-zinc-700 hover:text-indigo-600">
+                <button className="hidden sm:block text-zinc-600 hover:text-indigo-600 transition">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -81,7 +84,7 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
                 <div className="relative">
                   <button
                     onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                    className="inline-flex items-center justify-center rounded-full h-8 w-8 bg-indigo-100 text-indigo-600 hover:bg-indigo-200 transition-colors duration-200"
+                    className="inline-flex items-center justify-center rounded-full h-9 w-9 bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition"
                   >
                     <span className="text-sm font-medium">
                       {user.username.substring(0, 2).toUpperCase()}
@@ -89,28 +92,28 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
                   </button>
                   
                   {isDropdownOpen && (
-                    <div className="absolute right-0 w-48 mt-2 origin-top-right bg-white divide-y divide-gray-100 rounded-md shadow-lg z-50">
+                    <div className="absolute right-0 w-56 mt-2 origin-top-right bg-white/95 backdrop-blur divide-y divide-zinc-100 rounded-xl shadow-lg ring-1 ring-zinc-200 z-50">
                       <div className="px-4 py-3">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-semibold text-zinc-900 truncate">
                           {user.firstName && user.lastName 
                             ? `${user.firstName} ${user.lastName}`
                             : user.username
                           }
                         </p>
-                        <p className="text-sm text-gray-500 truncate">{user.email}</p>
+                        <p className="text-xs text-zinc-500 truncate">{user.email}</p>
                       </div>
                       <div className="py-1">
                         <Link
-                          href="/account"
-                          className="block px-4 py-2 text-sm text-zinc-700 hover:bg-gray-100"
+                          href={orgSlug ? `/org/${orgSlug}/account` : '/account'}
+                          className="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
                           onClick={() => setIsDropdownOpen(false)}
                         >
                           Account Settings
                         </Link>
                         {user.role === 'admin' && (
                           <Link
-                            href="/admin"
-                            className="block px-4 py-2 text-sm text-zinc-700 hover:bg-gray-100"
+                            href={orgSlug ? `/org/${orgSlug}/admin` : '/admin'}
+                            className="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
                             onClick={() => setIsDropdownOpen(false)}
                           >
                             Admin Panel
@@ -123,7 +126,7 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
                             setIsDropdownOpen(false);
                             signOut({ callbackUrl: '/' });
                           }}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                         >
                           Sign out
                         </button>
@@ -135,18 +138,19 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
             </>
           ) : (
             <>
-              {/* For non-signed-in users, show only the brand name and sign in button */}
-              <div>
-                <Link href="/" className="text-xl font-bold text-indigo-600">
-                  Interactive Coding
+        {/* Public navbar: brand + sign in only */}
+        <div className="flex items-center gap-3 sm:gap-6">
+                <Link href="/" className="inline-flex items-center gap-2 group">
+                  <LogoMark className="h-7 w-7 transition-transform group-hover:scale-105" variant="brackets" />
+                  <span className="text-base sm:text-lg font-semibold text-zinc-900 tracking-tight">Interactive Coding</span>
                 </Link>
               </div>
-              <div>
+              <div className="flex items-center gap-2">
                 <Link
                   href="/login"
-                  className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 text-sm"
+          className="inline-flex items-center h-9 px-4 rounded-md text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition"
                 >
-                  Sign In
+          Sign in
                 </Link>
               </div>
             </>

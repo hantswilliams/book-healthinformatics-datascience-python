@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useOrgSlug } from '@/lib/useOrgSlug';
 import { formatPrice, SUBSCRIPTION_TIERS } from '@/lib/stripe';
 
 interface BillingEvent {
@@ -44,6 +45,7 @@ interface SubscriptionDetails {
 export default function BillingOverview() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const orgSlug = useOrgSlug();
   const [subscriptionDetails, setSubscriptionDetails] = useState<SubscriptionDetails | null>(null);
   const [billingEvents, setBillingEvents] = useState<BillingEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -221,6 +223,19 @@ export default function BillingOverview() {
 
   const { organization } = subscriptionDetails;
   const currentTier = SUBSCRIPTION_TIERS[organization.subscriptionTier as keyof typeof SUBSCRIPTION_TIERS];
+  
+  // Fallback if tier is not found (shouldn't happen but better safe)
+  if (!currentTier) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900">Configuration Error</h2>
+          <p className="mt-2 text-gray-600">Unknown subscription tier: {organization.subscriptionTier}</p>
+          <p className="mt-1 text-sm text-gray-500">Please contact support.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -232,7 +247,7 @@ export default function BillingOverview() {
               <nav className="flex" aria-label="Breadcrumb">
                 <ol className="inline-flex items-center space-x-1 md:space-x-3">
                   <li className="inline-flex items-center">
-                    <Link href="/dashboard" className="text-gray-500 hover:text-zinc-700">
+                    <Link href={`/org/${orgSlug}/dashboard`} className="text-gray-500 hover:text-zinc-700">
                       Dashboard
                     </Link>
                   </li>

@@ -11,35 +11,33 @@ export const getStripe = () => {
 
 // Subscription tier pricing configuration (client-safe)
 export const SUBSCRIPTION_TIERS = {
-  TEAM: {
-    id: 'TEAM',
-    name: 'Team',
-    amount: 3900, // $39.00 in cents
-    annualAmount: 2300, // $23.00 in cents (41% savings)
+  STARTER: {
+    id: 'STARTER',
+    name: 'Starter',
+    amount: 2900, // $29.00 in cents
+    annualAmount: 1900, // $19.00 in cents (34% savings)
+    seats: 5,
+    features: [
+      'Up to 5 team members',
+      'Interactive Python courses',
+      'Live code execution environment',
+      'Progress tracking',
+      'Basic support'
+    ]
+  },
+  PRO: {
+    id: 'PRO',
+    name: 'Pro',
+    amount: 9900, // $99.00 in cents
+    annualAmount: 5900, // $59.00 in cents (40% savings)
     seats: 25,
     features: [
       'Up to 25 team members',
-      'Interactive Python courses',
-      'Live code execution environment',
-      'Progress tracking & analytics',
-      'Upload your own content',
-      'Email support'
-    ]
-  },
-  ORGANIZATION: {
-    id: 'ORGANIZATION',
-    name: 'Organization',
-    amount: 12900, // $129.00 in cents
-    annualAmount: 7900, // $79.00 in cents (39% savings)
-    seats: 500,
-    features: [
-      'Up to 500 team members',
-      'All Team features',
+      'All Starter features',
       'Advanced analytics & reporting',
-      'Custom branding',
-      'SSO integration',
+      'Custom content upload',
       'Priority support',
-      'Custom integrations'
+      'Team collaboration tools'
     ]
   },
   ENTERPRISE: {

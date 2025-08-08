@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useOrgSlug } from '@/lib/useOrgSlug';
 
 interface UploadedFile {
   id: string;
@@ -36,6 +37,7 @@ interface BookForm {
 export default function CreateBook() {
   const { data: session } = useSession();
   const router = useRouter();
+  const orgSlug = useOrgSlug();
   
   const [step, setStep] = useState(1); // 1: Book Info, 2: Upload Files, 3: Organize Chapters, 4: Review
   const [isLoading, setIsLoading] = useState(false);
@@ -324,7 +326,7 @@ export default function CreateBook() {
               <nav className="flex" aria-label="Breadcrumb">
                 <ol className="inline-flex items-center space-x-1 md:space-x-3">
                   <li className="inline-flex items-center">
-                    <Link href="/dashboard" className="text-gray-500 hover:text-zinc-700">
+                    <Link href={`/org/${orgSlug}/dashboard`} className="text-gray-500 hover:text-zinc-700">
                       Dashboard
                     </Link>
                   </li>
@@ -333,7 +335,7 @@ export default function CreateBook() {
                       <svg className="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>
-                      <Link href="/dashboard/content" className="ml-1 text-gray-500 hover:text-zinc-700">
+                      <Link href={`/org/${orgSlug}/dashboard/content`} className="ml-1 text-gray-500 hover:text-zinc-700">
                         Content
                       </Link>
                     </div>

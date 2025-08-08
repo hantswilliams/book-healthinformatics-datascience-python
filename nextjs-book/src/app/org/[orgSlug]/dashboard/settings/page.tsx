@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useOrgSlug } from '@/lib/useOrgSlug';
 
 interface Organization {
   id: string;
@@ -32,6 +33,7 @@ interface User {
 export default function OrganizationSettings() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const orgSlug = useOrgSlug();
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -228,7 +230,7 @@ export default function OrganizationSettings() {
               <nav className="flex" aria-label="Breadcrumb">
                 <ol className="inline-flex items-center space-x-1 md:space-x-3">
                   <li className="inline-flex items-center">
-                    <Link href="/dashboard" className="text-gray-500 hover:text-zinc-700">
+                    <Link href={`/org/${orgSlug}/dashboard`} className="text-gray-500 hover:text-zinc-700">
                       Dashboard
                     </Link>
                   </li>
@@ -432,7 +434,7 @@ export default function OrganizationSettings() {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
                 <div className="space-y-3">
                   <Link
-                    href="/dashboard/team"
+                    href={`/org/${orgSlug}/dashboard/team`}
                     className="w-full text-left px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm flex items-center"
                   >
                     <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -441,7 +443,7 @@ export default function OrganizationSettings() {
                     Manage Team
                   </Link>
                   <Link
-                    href="/dashboard/billing"
+                    href={`/org/${orgSlug}/dashboard/billing`}
                     className="w-full text-left px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm flex items-center"
                   >
                     <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -450,7 +452,7 @@ export default function OrganizationSettings() {
                     Billing Settings
                   </Link>
                   <Link
-                    href="/dashboard/content"
+                    href={`/org/${orgSlug}/dashboard/content`}
                     className="w-full text-left px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-sm flex items-center"
                   >
                     <svg className="w-4 h-4 mr-2 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">

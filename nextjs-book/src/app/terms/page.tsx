@@ -4,19 +4,19 @@ import Link from 'next/link';
 
 export default function TermsOfServicePage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Terms of Service</h1>
-          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            Please read these terms carefully before using our platform.
-          </p>
-          <p className="mt-2 text-sm text-gray-500">Last updated: August 6, 2025</p>
-        </div>
+    <div className="mx-auto w-full max-w-3xl px-4 py-12">
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-zinc-900">Terms of Service</h1>
+        <p className="mx-auto mt-3 max-w-2xl text-lg text-zinc-600">
+          Please read these terms carefully before using our platform.
+        </p>
+        <p className="mt-2 text-sm text-zinc-500">Last updated: August 6, 2025</p>
+      </div>
 
-        {/* Terms of Service Content */}
-        <div className="mt-12 prose prose-indigo prose-lg mx-auto">
+      {/* Terms of Service Content */}
+      <div className="rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
+        <div className="prose prose-indigo prose-lg max-w-none">
           <h2>1. Acceptance of Terms</h2>
           <p>
             By accessing or using the Python Training Platform ("the Service"), you agree to be bound by these Terms of Service and all applicable laws and regulations. If you do not agree with any of these terms, you are prohibited from using or accessing the Service.
@@ -76,21 +76,21 @@ export default function TermsOfServicePage() {
           <h2>9. Contact Us</h2>
           <p>
             If you have any questions about these Terms, please{' '}
-            <Link href="/contact" className="text-indigo-600 hover:text-indigo-800">
+            <Link href="/contact" className="font-medium text-indigo-600 hover:text-indigo-700">
               contact us
             </Link>.
           </p>
         </div>
-
-        {/* Back to Home */}
-        <div className="mt-12 text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Back to Home
-          </Link>
         </div>
+
+      {/* Back to Home */}
+      <div className="mt-8 text-center">
+        <Link
+          href="/"
+          className="inline-flex items-center rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50"
+        >
+          Back to Home
+        </Link>
       </div>
     </div>
   );

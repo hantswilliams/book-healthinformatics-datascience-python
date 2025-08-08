@@ -4,19 +4,19 @@ import Link from 'next/link';
 
 export default function PrivacyPolicyPage() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto py-16 px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Privacy Policy</h1>
-          <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
-            We are committed to protecting your privacy and personal data.
-          </p>
-          <p className="mt-2 text-sm text-gray-500">Last updated: August 6, 2025</p>
-        </div>
+    <div className="mx-auto w-full max-w-3xl px-4 py-12">
+      {/* Header */}
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-bold text-zinc-900">Privacy Policy</h1>
+        <p className="mx-auto mt-3 max-w-2xl text-lg text-zinc-600">
+          We are committed to protecting your privacy and personal data.
+        </p>
+        <p className="mt-2 text-sm text-zinc-500">Last updated: August 6, 2025</p>
+      </div>
 
-        {/* Privacy Policy Content */}
-        <div className="mt-12 prose prose-indigo prose-lg mx-auto">
+      {/* Privacy Policy Content */}
+      <div className="rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
+        <div className="prose prose-indigo prose-lg max-w-none">
           <h2>1. Introduction</h2>
           <p>
             This Privacy Policy explains how we collect, use, process, and disclose your information, including personal information, in conjunction with your access to and use of our Python Training Platform.
@@ -112,21 +112,21 @@ export default function PrivacyPolicyPage() {
           <h2>10. Contact Us</h2>
           <p>
             If you have any questions about this Privacy Policy, please{' '}
-            <Link href="/contact" className="text-indigo-600 hover:text-indigo-800">
+            <Link href="/contact" className="font-medium text-indigo-600 hover:text-indigo-700">
               contact us
             </Link>.
           </p>
         </div>
-
-        {/* Back to Home */}
-        <div className="mt-12 text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
-          >
-            Back to Home
-          </Link>
         </div>
+
+      {/* Back to Home */}
+      <div className="mt-8 text-center">
+        <Link
+          href="/"
+          className="inline-flex items-center rounded-md border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm hover:bg-zinc-50"
+        >
+          Back to Home
+        </Link>
       </div>
     </div>
   );

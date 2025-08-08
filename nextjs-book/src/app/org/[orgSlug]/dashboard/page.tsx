@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useOrgSlug } from '@/lib/useOrgSlug';
 import { formatPrice } from '@/lib/stripe';
 
 interface SubscriptionStatus {
@@ -48,6 +49,7 @@ interface OrganizationStats {
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const orgSlug = useOrgSlug();
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
   const [organizationStats, setOrganizationStats] = useState<OrganizationStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -294,7 +296,7 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {['OWNER', 'ADMIN'].includes(session?.user.role || '') && (
                     <Link
-                      href="/dashboard/team"
+                      href={`/org/${orgSlug}/dashboard/team`}
                       className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                     >
                       <div>
@@ -313,7 +315,7 @@ export default function Dashboard() {
 
                   {permissions.canManageContent && (
                     <Link
-                      href="/dashboard/content"
+                      href={`/org/${orgSlug}/dashboard/content`}
                       className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                     >
                       <div>
@@ -331,7 +333,7 @@ export default function Dashboard() {
                   )}
 
                   <Link
-                    href="/dashboard/progress"
+                    href={`/org/${orgSlug}/dashboard/progress`}
                     className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                   >
                     <div>
@@ -349,7 +351,7 @@ export default function Dashboard() {
 
                   {permissions.canManageBilling && (
                     <Link
-                      href="/dashboard/billing"
+                      href={`/org/${orgSlug}/dashboard/billing`}
                       className="relative group bg-white p-6 focus-within:ring-2 focus-within:ring-inset focus-within:ring-blue-500 border border-gray-200 rounded-lg hover:shadow-md transition-shadow"
                     >
                       <div>
@@ -402,7 +404,7 @@ export default function Dashboard() {
               {permissions.canManageBilling && (
                 <div className="mt-6">
                   <Link
-                    href="/dashboard/settings"
+                    href={`/org/${orgSlug}/dashboard/settings`}
                     className="text-sm font-medium text-blue-600 hover:text-blue-500"
                   >
                     Organization Settings →

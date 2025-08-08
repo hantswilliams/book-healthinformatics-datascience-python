@@ -117,8 +117,8 @@ function JoinInvitationForm() {
         throw new Error(result.error || 'Failed to accept invitation');
       }
 
-      // Success - redirect to login
-      router.push('/login?message=Account created successfully. Please sign in.');
+      // Success - redirect to organization login
+      router.push(`/org/${invitation.organization.slug}/login?message=Account created successfully. Please sign in.`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to accept invitation');
     } finally {
@@ -311,7 +311,7 @@ function JoinInvitationForm() {
             <div className="text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link href={`/org/${invitation.organization.slug}/login`} className="font-medium text-blue-600 hover:text-blue-500">
                   Sign in
                 </Link>
               </p>

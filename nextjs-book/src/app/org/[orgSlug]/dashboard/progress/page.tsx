@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useOrgSlug } from '@/lib/useOrgSlug';
 
 interface BookProgress {
   bookId: string;
@@ -54,6 +55,7 @@ interface ProgressData {
 export default function ProgressDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const orgSlug = useOrgSlug();
   const [progressData, setProgressData] = useState<ProgressData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -190,7 +192,7 @@ export default function ProgressDashboard() {
               <nav className="flex" aria-label="Breadcrumb">
                 <ol className="inline-flex items-center space-x-1 md:space-x-3">
                   <li className="inline-flex items-center">
-                    <Link href="/dashboard" className="text-gray-500 hover:text-zinc-700">
+                    <Link href={`/org/${orgSlug}/dashboard`} className="text-gray-500 hover:text-zinc-700">
                       Dashboard
                     </Link>
                   </li>

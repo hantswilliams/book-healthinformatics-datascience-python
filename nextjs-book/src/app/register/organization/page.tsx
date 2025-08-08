@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-type SubscriptionTier = 'TEAM' | 'ORGANIZATION' | 'ENTERPRISE';
+type SubscriptionTier = 'STARTER' | 'PRO' | 'ENTERPRISE';
 type Industry = 'GENERAL' | 'HEALTHCARE' | 'FINANCE' | 'TECHNOLOGY' | 'EDUCATION' | 'MANUFACTURING' | 'GOVERNMENT' | 'NON_PROFIT';
 
 interface FormData {
@@ -24,22 +24,22 @@ interface FormData {
 
 const subscriptionTiers = [
   {
-    id: 'TEAM' as const,
-    name: 'Team',
-    price: 39,
-    annualPrice: 23,
-    seats: 25,
+    id: 'STARTER' as const,
+    name: 'Starter',
+    price: 29,
+    annualPrice: 19,
+    seats: 5,
     popular: false,
-    features: ['Up to 25 team members', 'Interactive Python courses', 'Progress tracking', 'Upload your own content']
+    features: ['Up to 5 team members', 'Interactive Python courses', 'Progress tracking', 'Basic support']
   },
   {
-    id: 'ORGANIZATION' as const,
-    name: 'Organization',
-    price: 129,
-    annualPrice: 79,
-    seats: 500,
+    id: 'PRO' as const,
+    name: 'Pro',
+    price: 99,
+    annualPrice: 59,
+    seats: 25,
     popular: true,
-    features: ['Up to 500 team members', 'All Team features', 'Advanced analytics', 'Custom branding', 'Priority support']
+    features: ['Up to 25 team members', 'All Starter features', 'Advanced analytics', 'Custom content upload', 'Priority support']
   },
   {
     id: 'ENTERPRISE' as const,
@@ -78,7 +78,7 @@ export default function OrganizationRegister() {
     username: '',
     password: '',
     confirmPassword: '',
-    subscriptionTier: 'TEAM',
+    subscriptionTier: 'STARTER',
     billingPeriod: 'annual'
   });
 
@@ -146,8 +146,8 @@ export default function OrganizationRegister() {
         throw new Error(result.error || 'Registration failed');
       }
 
-      // Registration successful - redirect to payment setup or onboarding
-      router.push(`/onboarding/payment?orgId=${result.data.organizationId}`);
+      // Registration successful - redirect to org-specific onboarding
+      router.push(`/org/${result.data.organizationSlug}/onboarding/payment?orgId=${result.data.organizationId}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
@@ -483,14 +483,8 @@ export default function OrganizationRegister() {
             <div className="text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <Link href="/login" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link href="/" className="font-medium text-blue-600 hover:text-blue-500">
                   Sign in
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600 mt-2">
-                Want to join an existing organization?{' '}
-                <Link href="/register/join" className="font-medium text-blue-600 hover:text-blue-500">
-                  Join with invite code
                 </Link>
               </p>
             </div>
