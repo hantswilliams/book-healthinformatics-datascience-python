@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Pyodide + Monaco Editor — Isolated Cell State</title>
+  <style>
+    :root { 
+      --bg: #0b1020; 
+      --panel: #121a33; 
+      --panel-darker: #0d1428;
+      --ink: #e8ecff; 
+      --muted: #a6b0d6; 
+      --accent: #7aa2f7; 
+      --warn: #ff6b6b;
+      --border: #23305d;
+      --border-light: #2a3769;
+    }
+    html, body { 
+      margin: 0; 
+      padding: 0; 
+      background: var(--bg); 
+      color: var(--ink); 
+      font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; 
+    }
+    header { 
+      padding: 16px 20px; 
+      border-bottom: 1px solid var(--border); 
+      background: rgba(18, 26, 51, 0.5);
+    }
+    header h1 { 
+      margin: 0; 
+      font-size: 18px; 
+    }
+    header .sub { 
+      color: var(--muted); 
+      margin-top: 6px; 
+      font-size: 13px; 
+    }
+    .toolbar { 
+      display: flex; 
+      gap: 10px; 
+      padding: 12px 20px; 
+      align-items: center; 
+      flex-wrap: wrap;
+      background: rgba(18, 26, 51, 0.3);
+      border-bottom: 1px solid rgba(35, 48, 93, 0.5);
+    }
+    .toolbar button { 
+      background: var(--panel); 
+      color: var(--ink); 
+      border: 1px solid var(--border-light); 
+      border-radius: 10px; 
+      padding: 8px 12px; 
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s ease;
+    }
+    .toolbar button:hover { 
+      border-color: var(--accent);
+      background: rgba(122, 162, 247, 0.1);
+    }
+    .toolbar .status { 
+      margin-left: auto; 
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .container { 
+      padding: 10px 20px 30px; 
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+    .cell { 
+      background: var(--panel); 
+      border: 1px solid var(--border); 
+      border-radius: 14px; 
+      margin: 16px 0; 
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    .cell header { 
+      display: flex; 
+      align-items: center; 
+      gap: 14px; 
+      padding: 10px 12px; 
+      border-bottom: 1px solid var(--border);
+      background: rgba(18, 26, 51, 0.7);
+    }
+    .cell header h2 { 
+      margin: 0; 
+      font-size: 13px; 
+      color: var(--muted); 
+      font-weight: 600; 
+    }
+    .cell header .actions { 
+      margin-left: auto; 
+      display: flex; 
+      gap: 8px; 
+    }
+    .cell header button { 
+      background: transparent; 
+      border: 1px solid var(--border-light); 
+      color: var(--ink); 
+      padding: 6px 10px; 
+      border-radius: 8px; 
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s ease;
+    }
+    .cell header button:hover { 
+      border-color: var(--accent);
+      background: rgba(122, 162, 247, 0.1);
+    }
+    .cell header button.run {
+      background: rgba(122, 162, 247, 0.15);
+      border-color: rgba(122, 162, 247, 0.4);
+    }
+    .cell header button.run:hover {
+      background: rgba(122, 162, 247, 0.25);
+      border-color: var(--accent);
+    }
+    .editor { 
+      width: 100%; 
+      height: 200px; 
+    }
+    .output-wrap { 
+      border-top: 1px solid var(--border); 
+      background: var(--panel-darker);
+    }
+    .output-label { 
+      padding: 6px 10px; 
+      background: rgba(18, 26, 51, 0.8);
+      color: var(--muted); 
+      font-size: 11px; 
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+    }
+    .output-label::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #41a0ff;
+      margin-right: 6px;
+    }
+    .console { 
+      height: 200px; 
+      border: 1px solid var(--border);
+      background: #0a1124;
+    }
+    .monaco-editor, .monaco-mouse-cursor-text { 
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !important; 
+    }
+    .cell header .actions .muted { 
+      opacity: 0.75; 
+    }
+    .cell header .actions .muted:hover { 
+      opacity: 1; 
+    }
+    .cell .status-badge {
+      font-size: 11px;
+      padding: 3px 6px;
+      border-radius: 4px;
+      background: rgba(18, 26, 51, 0.7);
+      color: var(--muted);
+      margin-left: 8px;
+    }
+    .cell .status-badge.isolate {
+      background: rgba(97, 134, 219, 0.2);
+      color: #a0c0ff;
+      border: 1px solid rgba(97, 134, 219, 0.3);
+    }
+    footer { 
+      padding: 20px; 
+      color: var(--muted); 
+      font-size: 12px;
+      text-align: center;
+      border-top: 1px solid rgba(35, 48, 93, 0.5);
+    }
+    a { 
+      color: var(--accent); 
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Pyodide + Monaco Editor — Isolated Cell State</h1>
+    <div class="sub">Each cell has its own independent Python environment (variables are not shared between cells).</div>
+  </header>
+
+  <div class="toolbar">
+    <button id="runAll">Run All Cells</button>
+    <button id="reset">Reset All Environments</button>
+    <span class="status" id="status">Initializing…</span>
+  </div>
+
+  <div class="container" id="cells">
+    <section class="cell" data-cell-index="0">
+      <header>
+        <h2>Cell 1 — Import pandas</h2>
+        <span class="status-badge isolate">Isolated</span>
+        <div class="actions">
+          <button class="run">Run</button>
+          <button class="clear muted">Clear Output</button>
+          <button class="copy muted">Copy Output</button>
+          <button class="save muted">Save Code</button>
+        </div>
+      </header>
+      <div class="editor" id="editor-0"></div>
+      <div class="output-wrap">
+        <div class="output-label">Output</div>
+        <div class="console" id="console-0"></div>
+      </div>
+    </section>
+
+    <section class="cell" data-cell-index="1">
+      <header>
+        <h2>Cell 2 — Create dummy DataFrame</h2>
+        <span class="status-badge isolate">Isolated</span>
+        <div class="actions">
+          <button class="run">Run</button>
+          <button class="clear muted">Clear Output</button>
+          <button class="copy muted">Copy Output</button>
+          <button class="save muted">Save Code</button>
+        </div>
+      </header>
+      <div class="editor" id="editor-1"></div>
+      <div class="output-wrap">
+        <div class="output-label">Output</div>
+        <div class="console" id="console-1"></div>
+      </div>
+    </section>
+
+    <section class="cell" data-cell-index="2">
+      <header>
+        <h2>Cell 3 — Try to access DataFrame from Cell 2</h2>
+        <span class="status-badge isolate">Isolated</span>
+        <div class="actions">
+          <button class="run">Run</button>
+          <button class="clear muted">Clear Output</button>
+          <button class="copy muted">Copy Output</button>
+          <button class="save muted">Save Code</button>
+        </div>
+      </header>
+      <div class="editor" id="editor-2"></div>
+      <div class="output-wrap">
+        <div class="output-label">Output</div>
+        <div class="console" id="console-2"></div>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    Pyodide + Monaco Editor &copy; 2025
+  </footer>
+
+  <!-- Loaders and libs -->
+  <script>
+    function loadScript(src, timeoutMs = 20000) {
+      return new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        const timer = setTimeout(() => { s.remove(); reject(new Error("Timeout " + src)); }, timeoutMs);
+        s.src = src; s.async = true;
+        s.onload = () => { clearTimeout(timer); resolve(); };
+        s.onerror = () => { clearTimeout(timer); reject(new Error("Failed " + src)); };
+        document.head.appendChild(s);
+      });
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs/loader.js"></script>
+
+  <script>
+    const defaultCells = [
+`import pandas as pd
+print("pandas version:", pd.__version__)
+print('\n')
+print('another line')
+
+# Define a variable that won't be available in other cells
+my_var = "This variable is only in Cell 1"
+print(f"Created: {my_var}")`,
+`# Create a small DataFrame and store as 'df'
+import pandas as pd
+
+data = {
+    "patient_id": [101, 102, 103, 104, 105],
+    "age": [63, 55, 47, 71, 60],
+    "bp_systolic": [132, 125, 118, 140, 130],
+    "bp_diastolic": [82, 77, 74, 88, 80],
+    "group": ["A", "B", "A", "A", "B"],
+}
+df = pd.DataFrame(data)
+print("df created:", df.shape)
+print(df)
+
+# Try to access variable from Cell 1
+try:
+    print(f"\\nVariable from Cell 1: {my_var}")
+except NameError as e:
+    print(f"\\nError: {e}")`,
+`import pandas as pd
+
+# Try to access DataFrame from Cell 2
+try:
+    print("## Attempting to access df from Cell 2")
+    print(df.head())
+except NameError as e:
+    print(f"Error: {e}")
+    
+# But we can create our own df in this cell
+print("\\n## Creating our own df in this cell")
+new_df = pd.DataFrame({
+    "id": [1, 2, 3],
+    "value": [10, 20, 30]
+})
+print(new_df)`
+    ];
+
+    let editors = [];
+    let consoles = [];
+    let pyodideInstances = {};
+    const PYODIDE_URL = "https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js";
+
+    function setStatus(msg) { document.getElementById("status").textContent = msg; }
+
+    async function createPyodideInstance() {
+      setStatus("Creating new Pyodide instance...");
+      await loadScript(PYODIDE_URL);
+      const instance = await loadPyodide({ stdout: ()=>{}, stderr: ()=>{} });
+      setStatus("Loading packages (pandas)…");
+      await instance.loadPackage(["pandas"]);
+      const prelude = `
+import sys, warnings, pandas as pd
+
+# Configure pandas display options
+warnings.filterwarnings("ignore")
+pd.set_option("display.width", 100)
+pd.set_option("display.max_colwidth", 80)
+`;
+      await instance.runPythonAsync(prelude);
+      setStatus("Ready");
+      return instance;
+    }
+
+    async function ensurePyodideForCell(cellIndex) {
+      // Each cell gets its own Pyodide instance
+      if (!pyodideInstances[cellIndex]) {
+        const cellStatus = document.querySelector(`.cell[data-cell-index="${cellIndex}"] .status-badge`);
+        const originalText = cellStatus.textContent;
+        cellStatus.textContent = "Loading...";
+        pyodideInstances[cellIndex] = await createPyodideInstance();
+        cellStatus.textContent = originalText;
+      }
+      return pyodideInstances[cellIndex];
+    }
+
+    // Robust conversion of stdout/stderr chunks to strings
+    const __decoder = (typeof TextDecoder !== "undefined") ? new TextDecoder() : null;
+    function toText(s) {
+      if (typeof s === "string") return s;
+      // Pyodide may pass Uint8Array in some builds; decode if possible
+      try {
+        if (__decoder && (s instanceof Uint8Array || (s && s.buffer))) {
+          return __decoder.decode(s);
+        }
+      } catch (_) {}
+      // If we're getting individual char codes from Pyodide, convert properly
+      if (typeof s === "number" && s > 0 && s < 65536) {
+        return String.fromCharCode(s);
+      }
+      return String(s);
+    }
+
+    function renderToConsole(monacoEditor, text) {
+      const model = monacoEditor.getModel();
+      // Normalize newlines - replace both \r\n and \r with \n
+      let chunk = String(text)
+        .replace(/\r\n/g, "\n")
+        .replace(/\r/g, "\n");
+      const lastLine = model.getLineCount();
+      const lastCol = model.getLineMaxColumn(lastLine);
+      model.applyEdits([{
+        range: new monaco.Range(lastLine, lastCol, lastLine, lastCol),
+        text: chunk,
+        forceMoveMarkers: true
+      }]);
+      monacoEditor.revealLine(model.getLineCount());
+    }
+
+    async function runCell(section) {
+      const idx = Number(section.dataset.cellIndex);
+      const pyodide = await ensurePyodideForCell(idx);
+      const editor = editors[idx];
+      const consoleEd = consoles[idx];
+      const code = editor.getValue();
+
+      consoleEd.getModel().setValue("");
+      
+      let buffer = "";
+      
+      // Setup custom output capturing functions to handle individual character codes
+      const appendToBuffer = (s) => {
+        const text = toText(s);
+        if (text) buffer += text;
+      };
+      
+      pyodide.setStdout({ raw: appendToBuffer });
+      pyodide.setStderr({ raw: appendToBuffer });
+
+      try {
+        await pyodide.runPythonAsync(code);
+        renderToConsole(consoleEd, buffer);
+      } catch (err) {
+        renderToConsole(consoleEd, buffer);
+        renderToConsole(consoleEd, "\n" + (err && err.message ? err.message : String(err)) + "\n");
+      } finally {
+        pyodide.setStdout();
+        pyodide.setStderr();
+      }
+    }
+
+    function storageKeyForCell(idx) { return "pyomono.isolate.cell." + idx; }
+
+    function saveCell(idx) {
+      try { localStorage.setItem(storageKeyForCell(idx), editors[idx].getValue()); } catch (e) {}
+    }
+
+    function loadCell(idx, fallback) {
+      try { return localStorage.getItem(storageKeyForCell(idx)) ?? fallback; } catch (e) { return fallback; }
+    }
+
+    function bindCellActions() {
+      document.querySelectorAll(".cell").forEach(section => {
+        const idx = Number(section.dataset.cellIndex);
+        const clearBtn = section.querySelector(".clear");
+        const copyBtn  = section.querySelector(".copy");
+        const saveBtn  = section.querySelector(".save");
+        const runBtn   = section.querySelector(".run");
+        clearBtn?.addEventListener("click", () => {
+          const consoleEd = consoles[idx];
+          consoleEd.getModel().setValue("");
+        });
+        copyBtn?.addEventListener("click", async () => {
+          const consoleEd = consoles[idx];
+          const text = consoleEd.getValue();
+          try { await navigator.clipboard.writeText(text); } catch (e) {}
+        });
+        saveBtn?.addEventListener("click", () => saveCell(idx));
+        // Prevent Enter-based run behavior (buttons-only execution)
+        section.addEventListener("keydown", (e) => {
+          if ((e.metaKey || e.ctrlKey) && (e.key === "Enter" || e.key === "Return")) {
+            e.stopPropagation();
+            e.preventDefault();
+          }
+        }, true);
+        // Auto-save on blur
+        section.addEventListener("focusout", () => saveCell(idx));
+      });
+    }
+
+    function initMonaco() {
+      require.config({ paths: { 'vs': 'https://cdn.jsdelivr.net/npm/monaco-editor@0.45.0/min/vs' } });
+      require(['vs/editor/editor.main'], function() {
+        const codeOpts = {
+          language: 'python', theme: 'vs-dark', automaticLayout: true,
+          fontLigatures: true, minimap: { enabled: false }, scrollBeyondLastLine: false,
+          renderWhitespace: 'selection', wordWrap: 'on'
+        };
+        const consoleOpts = {
+          language: 'plaintext', theme: 'vs-dark', automaticLayout: true,
+          readOnly: true, wordWrap: 'on', minimap: { enabled: false },
+          lineNumbers: 'off', scrollBeyondLastLine: false
+        };
+        for (let i = 0; i < 3; i++) {
+          const section = document.querySelector(`.cell[data-cell-index="${i}"]`);
+          const codeNode = document.getElementById('editor-' + i);
+          const ed = monaco.editor.create(codeNode, { ...codeOpts, value: loadCell(i, defaultCells[i]) });
+          editors.push(ed);
+
+          const conNode = document.getElementById('console-' + i);
+          const conEd = monaco.editor.create(conNode, { ...consoleOpts, value: "" });
+          consoles.push(conEd);
+        }
+        document.getElementById("runAll").addEventListener("click", async () => {
+          const sections = Array.from(document.querySelectorAll(".cell"));
+          for (const sec of sections) { await runCell(sec); }
+        });
+        document.getElementById("reset").addEventListener("click", async () => {
+          setStatus("Resetting all environments…");
+          pyodideInstances = {}; // Clear all instances
+          consoles.forEach(ed => ed.getModel().setValue(""));
+          setStatus("Ready (all environments reset)");
+        });
+        document.querySelectorAll(".cell .run").forEach(btn => {
+          btn.addEventListener("click", (e) => runCell(e.target.closest(".cell")));
+        });
+        bindCellActions();
+      });
+    }
+
+    (async function boot() {
+      setStatus("Loading dependencies…");
+      try {
+        initMonaco();
+        // Preload first Pyodide instance to save time on first run
+        await ensurePyodideForCell(0);
+        setStatus("Ready");
+      } catch (e) {
+        setStatus("Init failed: " + (e?.message || e));
+        console.error(e);
+      }
+    })();
+  </script>
+</body>
+</html>
