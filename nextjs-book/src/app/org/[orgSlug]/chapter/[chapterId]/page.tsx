@@ -6,6 +6,7 @@ import { useSession } from 'next-auth/react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import PythonEditor from '@/components/PythonEditor';
+import ExecutionAwarePythonEditor from '@/components/ExecutionAwarePythonEditor';
 import type { Chapter } from '@/types';
 
 interface ChapterPageProps {
@@ -161,14 +162,77 @@ export default function ChapterPage({ params }: ChapterPageProps) {
         )}
       </div>
 
+      {/* Chapter Execution Mode Info */}
+      {chapter.defaultExecutionMode && (
+        <div style={{
+          background: chapter.defaultExecutionMode === 'shared' ? '#eff6ff' : '#ecfdf5',
+          border: `1px solid ${chapter.defaultExecutionMode === 'shared' ? '#dbeafe' : '#d1fae5'}`,
+          borderRadius: '12px',
+          padding: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px'
+        }}>
+          <span style={{ fontSize: '20px' }}>
+            {chapter.defaultExecutionMode === 'shared' ? '🔗' : '🔒'}
+          </span>
+          <div>
+            <div style={{ 
+              fontSize: '14px', 
+              fontWeight: '600',
+              color: chapter.defaultExecutionMode === 'shared' ? '#3b82f6' : '#10b981'
+            }}>
+              Default: {chapter.defaultExecutionMode === 'shared' ? 'Shared State' : 'Isolated State'}
+            </div>
+            <div style={{ fontSize: '13px', color: '#6b7280', marginTop: '2px' }}>
+              {chapter.defaultExecutionMode === 'shared' 
+                ? 'Python variables persist between cells in this chapter'
+                : 'Python cells run independently with their own variables'
+              }
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Chapter Sections */}
       {chapter.sections.map((section, index) => (
         <div key={section.id} className="bg-white shadow-sm rounded-xl overflow-hidden">
           {section.title && (
             <div className="border-b border-gray-100 bg-white p-6">
-              <h2 className="text-lg font-semibold text-zinc-900">
-                {section.title}
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h2 className="text-lg font-semibold text-zinc-900">
+                  {section.title}
+                </h2>
+                {section.type === 'python' && section.executionMode && (
+                  <div style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    borderRadius: '6px',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    background: section.executionMode === 'shared' || 
+                               (section.executionMode === 'inherit' && chapter.defaultExecutionMode === 'shared')
+                               ? '#eff6ff' : '#ecfdf5',
+                    color: section.executionMode === 'shared' || 
+                           (section.executionMode === 'inherit' && chapter.defaultExecutionMode === 'shared')
+                           ? '#3b82f6' : '#10b981'
+                  }}>
+                    <span>
+                      {section.executionMode === 'shared' || 
+                       (section.executionMode === 'inherit' && chapter.defaultExecutionMode === 'shared')
+                       ? '🔗' : '🔒'}
+                    </span>
+                    <span>
+                      {section.executionMode === 'inherit' 
+                        ? `${chapter.defaultExecutionMode} (inherited)`
+                        : section.executionMode
+                      }
+                    </span>
+                  </div>
+                )}
+              </div>
             </div>
           )}
           <div className="p-6">
@@ -216,8 +280,15 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                 </ReactMarkdown>
               </div>
             ) : (
-              <PythonEditor
+              <ExecutionAwarePythonEditor
                 initialCode={section.content || '# No code provided'}
+                executionMode={
+                  section.executionMode === 'inherit' 
+                    ? (chapter.defaultExecutionMode as 'shared' | 'isolated') 
+                    : (section.executionMode as 'shared' | 'isolated')
+                }
+                contextId={chapterId}
+                sectionId={section.id}
                 onCodeRun={handleCodeRun}
               />
             )}

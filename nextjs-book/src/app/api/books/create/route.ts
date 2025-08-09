@@ -9,13 +9,16 @@ const sectionSchema = z.object({
   title: z.string().optional(),
   type: z.enum(['MARKDOWN', 'PYTHON']),
   content: z.string(),
-  order: z.number()
+  order: z.number(),
+  executionMode: z.enum(['SHARED', 'ISOLATED', 'INHERIT']).default('INHERIT'),
+  dependsOn: z.array(z.string()).optional()
 });
 
 const chapterSchema = z.object({
   title: z.string().min(1),
   emoji: z.string(),
   order: z.number(),
+  defaultExecutionMode: z.enum(['SHARED', 'ISOLATED']).default('SHARED'),
   sections: z.array(sectionSchema)
 });
 
@@ -121,7 +124,8 @@ export async function POST(request: NextRequest) {
               markdownUrl: '', // Legacy field - will be empty since we use sections now
               pythonUrl: '',   // Legacy field - will be empty since we use sections now
               isPublished: true,
-              estimatedMinutes
+              estimatedMinutes,
+              defaultExecutionMode: chapterData.defaultExecutionMode
             }
           });
 
@@ -134,7 +138,9 @@ export async function POST(request: NextRequest) {
                   title: sectionData.title || null,
                   type: sectionData.type,
                   order: sectionData.order,
-                  content: sectionData.content
+                  content: sectionData.content,
+                  executionMode: sectionData.executionMode,
+                  dependsOn: sectionData.dependsOn ? JSON.stringify(sectionData.dependsOn) : null
                 }
               });
             })

@@ -242,12 +242,21 @@ export default function ContentManagement() {
               </p>
             </div>
             {['OWNER', 'ADMIN'].includes(session?.user.role || '') && (
-              <Link
-                href={`/org/${orgSlug}/dashboard/content/create`}
-                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                Create New Course
-              </Link>
+              <div className="flex gap-3">
+                <Link
+                  href={`/org/${orgSlug}/dashboard/content/create-enhanced`}
+                  className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2"
+                >
+                  <span>🚀</span>
+                  Enhanced Builder
+                </Link>
+                <Link
+                  href={`/org/${orgSlug}/dashboard/content/create`}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  Upload Files
+                </Link>
+              </div>
             )}
           </div>
         </div>

@@ -154,7 +154,7 @@ model BookAccess {
   @@map("book_access")
 }
 
-// Chapters remain largely the same
+// Enhanced chapters with execution modes
 model Chapter {
   id          String @id
   bookId      String
@@ -165,6 +165,7 @@ model Chapter {
   pythonUrl   String
   isPublished Boolean @default(true)
   estimatedMinutes Int? // Time estimate for this chapter
+  defaultExecutionMode ExecutionMode @default(SHARED) // Default execution mode for sections
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -178,7 +179,7 @@ model Chapter {
   @@map("chapters")
 }
 
-// NEW: Section model for granular chapter content
+// Enhanced section model with execution modes
 model Section {
   id        String      @id @default(cuid())
   chapterId String
@@ -186,6 +187,8 @@ model Section {
   type      SectionType @default(MARKDOWN) // Content type
   content   String      // The actual content
   order     Int         // Order within the chapter
+  executionMode ExecutionMode @default(INHERIT) // Execution mode for this section
+  dependsOn String?     // JSON array of section IDs this section depends on
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
 
@@ -328,4 +331,10 @@ enum BillingEventType {
 enum SectionType {
   MARKDOWN
   PYTHON
+}
+
+enum ExecutionMode {
+  SHARED    // All cells in chapter/section share Pyodide instance and variables
+  ISOLATED  // Each cell gets its own Pyodide instance (independent execution)
+  INHERIT   // Section inherits execution mode from parent chapter
 }

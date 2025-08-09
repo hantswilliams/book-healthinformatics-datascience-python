@@ -109,13 +109,16 @@ export async function GET(
       emoji: chapter.emoji,
       order: chapter.order,
       estimatedMinutes: chapter.estimatedMinutes,
+      defaultExecutionMode: chapter.defaultExecutionMode?.toLowerCase() || 'shared',
       bookTitle: chapter.book.title,
       sections: chapter.sections.map(section => ({
         id: section.id,
         title: section.title,
         type: section.type.toLowerCase(), // Convert MARKDOWN/PYTHON to markdown/python
         content: section.content,
-        order: section.order
+        order: section.order,
+        executionMode: section.executionMode?.toLowerCase() || 'inherit',
+        dependsOn: section.dependsOn ? JSON.parse(section.dependsOn) : []
       }))
     };
 

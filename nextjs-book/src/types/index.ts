@@ -14,10 +14,18 @@ export interface Chapter {
   title: string;
   emoji: string;
   order: number;
+  estimatedMinutes?: number;
+  defaultExecutionMode?: string;
+  bookTitle?: string;
   sections: Array<{
+    id: string;
     type: 'markdown' | 'python';
-    url: string;
+    content: string;
     title?: string;
+    order: number;
+    executionMode?: string;
+    dependsOn?: string[];
+    url?: string; // Legacy field
   }>;
 }
 

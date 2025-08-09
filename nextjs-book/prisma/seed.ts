@@ -129,7 +129,8 @@ async function main() {
       markdownUrl: '', // Will be populated by sections
       pythonUrl: '',   // Will be populated by sections
       isPublished: true,
-      estimatedMinutes: 30
+      estimatedMinutes: 30,
+      defaultExecutionMode: 'SHARED' // New field
     }
   });
 
@@ -160,6 +161,7 @@ Python is a high-level, interpreted programming language that's perfect for heal
       title: 'Your First Python Program',
       type: 'PYTHON',
       order: 2,
+      executionMode: 'SHARED', // Explicitly set to shared
       content: `# Your first Python program
 print("Hello, Healthcare World!")
 
@@ -198,7 +200,11 @@ Let's see more examples with healthcare data.`
       title: 'Healthcare Data Examples',
       type: 'PYTHON',
       order: 4,
-      content: `# Healthcare data variables
+      executionMode: 'SHARED', // This will use variables from previous cells
+      content: `# Building on previous variables - notice we can use patient_name from earlier
+print(f"Previous patient: {patient_name}")
+
+# Healthcare data variables
 patient_id = "HC001"
 blood_pressure_systolic = 120
 blood_pressure_diastolic = 80
@@ -225,7 +231,8 @@ print(f"Medications: {', '.join(medications)}")`
       markdownUrl: '',
       pythonUrl: '',
       isPublished: true,
-      estimatedMinutes: 45
+      estimatedMinutes: 45,
+      defaultExecutionMode: 'ISOLATED' // Different execution mode for this chapter
     }
   });
 
@@ -254,7 +261,8 @@ These data structures are fundamental for healthcare data management.`
       title: 'Patient Data Structures',
       type: 'PYTHON',
       order: 2,
-      content: `# Patient data using dictionaries
+      executionMode: 'ISOLATED', // This runs independently
+      content: `# Patient data using dictionaries - isolated execution
 patient_record = {
     "id": "HC001",
     "name": "John Doe",
@@ -276,6 +284,45 @@ print(f"Temperature: {patient_record['vital_signs']['temperature']}°F")
 # Adding new medication
 patient_record['medications'].append("Metformin")
 print(f"Updated medications: {patient_record['medications']}")`
+    }
+  });
+
+  // Add a practice exercise with isolated execution
+  await prisma.section.create({
+    data: {
+      chapterId: chapter2.id,
+      title: 'Practice Exercise - BMI Calculator',
+      type: 'PYTHON',
+      order: 3,
+      executionMode: 'ISOLATED', // Independent practice
+      content: `# Practice Exercise: Calculate BMI for patients
+# This runs in isolation - create your own data
+
+patients = [
+    {"name": "Alice", "weight": 65, "height": 1.65},
+    {"name": "Bob", "weight": 80, "height": 1.80},
+    {"name": "Carol", "weight": 70, "height": 1.70}
+]
+
+# TODO: Calculate BMI for each patient
+# BMI = weight(kg) / height(m)^2
+
+for patient in patients:
+    # Your code here:
+    bmi = patient["weight"] / (patient["height"] ** 2)
+    print(f"{patient['name']}: BMI = {bmi:.2f}")
+    
+    # Categorize BMI
+    if bmi < 18.5:
+        category = "Underweight"
+    elif bmi < 25:
+        category = "Normal"
+    elif bmi < 30:
+        category = "Overweight"
+    else:
+        category = "Obese"
+    
+    print(f"  Category: {category}\\n")`
     }
   });
 
