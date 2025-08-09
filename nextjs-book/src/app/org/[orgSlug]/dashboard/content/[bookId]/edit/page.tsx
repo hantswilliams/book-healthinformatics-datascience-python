@@ -226,9 +226,12 @@ export default function EditCoursePage() {
               <span>Edit Course</span>
             </nav>
             <h1 className="text-2xl font-bold text-gray-900">Edit Course</h1>
-            <p className="text-sm text-gray-600 mt-1">Update metadata for this course. Chapter and section editing coming soon.</p>
+            <p className="text-sm text-gray-600 mt-1">Update basic metadata for this course.</p>
           </div>
           <div className="flex items-center space-x-3">
+            <Link href={`/org/${orgSlug}/dashboard/content/${bookId}/edit-enhanced`} className="inline-flex items-center px-3 py-2 rounded-md text-sm bg-blue-600 text-white hover:bg-blue-700">
+              🚀 Enhanced Editor
+            </Link>
             <Link href={`/book/${(form as any).slug || ''}`} className="text-sm text-blue-600 hover:underline">View</Link>
             <Link href={`/org/${orgSlug}/dashboard/content`} className="inline-flex items-center px-3 py-2 rounded-md text-sm border border-gray-300 bg-white hover:bg-gray-50">Back</Link>
           </div>
@@ -297,6 +300,48 @@ export default function EditCoursePage() {
             </button>
           </div>
         </form>
+
+        {/* Enhanced Editor Info */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg shadow p-6">
+          <div className="flex items-start space-x-4">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                <span className="text-xl">🚀</span>
+              </div>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Enhanced Editor Available
+              </h3>
+              <p className="text-sm text-gray-600 mb-4">
+                For advanced editing including full chapter and section management, Python execution modes, 
+                and Monaco code editor, use our Enhanced Editor.
+              </p>
+              <div className="flex items-center space-x-4 text-sm text-gray-600">
+                <div className="flex items-center">
+                  <span className="w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+                  Full chapter/section editing
+                </div>
+                <div className="flex items-center">
+                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                  Python execution modes
+                </div>
+                <div className="flex items-center">
+                  <span className="w-2 h-2 bg-purple-400 rounded-full mr-2"></span>
+                  Monaco code editor
+                </div>
+              </div>
+              <div className="mt-4">
+                <Link 
+                  href={`/org/${orgSlug}/dashboard/content/${bookId}/edit-enhanced`}
+                  className="inline-flex items-center px-4 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  🚀 Open Enhanced Editor
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <section>
           <div className="flex items-center justify-between mb-4">

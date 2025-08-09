@@ -4,8 +4,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import Editor from '@monaco-editor/react';
 
 // Global shared Pyodide instances per execution context
-const sharedPyodideInstances: Record<string, any> = {};
-const isolatedPyodideInstances: Record<string, any> = {};
+const sharedPyodideInstances: Record<string, unknown> = {};
+const isolatedPyodideInstances: Record<string, unknown> = {};
 
 interface ExecutionAwarePythonEditorProps {
   initialCode?: string;
@@ -86,7 +86,7 @@ print("Python environment ready!")
     }
   }, [executionMode, contextId, sectionId]);
 
-  const handleEditorDidMount = (editor: any, monaco: any) => {
+  const handleEditorDidMount = (editor: unknown, monaco: unknown) => {
     editorRef.current = editor;
     
     // Add keyboard shortcut

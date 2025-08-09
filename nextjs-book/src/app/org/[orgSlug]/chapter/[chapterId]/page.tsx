@@ -54,7 +54,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
     };
 
     loadChapter();
-  }, [params]);
+  }, []); // Remove params dependency to prevent infinite re-renders
 
   const handleCodeRun = (code: string, success: boolean) => {
     // Track exercise attempt (in a real app, you'd send this to your backend)

@@ -43,7 +43,7 @@ export default function EnhancedChapterBuilder({
   // State management
   const [chapter, setChapter] = useState<EnhancedChapter>(
     initialChapter || {
-      id: `chapter-${Date.now()}`,
+      id: `chapter-default`,
       title: 'New Chapter',
       emoji: '📖',
       defaultExecutionMode: 'shared',
@@ -59,19 +59,35 @@ export default function EnhancedChapterBuilder({
   const [pasteTargetIndex, setPasteTargetIndex] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Check permissions
+  // Helper functions
+  const [sectionIdCounter, setSectionIdCounter] = useState(0);
+
+  // Sync with initialChapter prop changes (when different chapter is selected)
+  useEffect(() => {
+    if (initialChapter && initialChapter.id !== chapter.id) {
+      console.log('EnhancedChapterBuilder switching from', chapter.title, 'to', initialChapter.title);
+      setChapter(initialChapter);
+    }
+  }, [initialChapter, chapter.id]);
+
+  // Update parent when chapter changes (debounced to prevent infinite loops)
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      onChapterUpdate?.(chapter);
+    }, 100); // Debounce to prevent rapid updates
+    
+    return () => clearTimeout(timeoutId);
+  }, [chapter, onChapterUpdate]);
+
+  // Check permissions after hooks
   if (!session || !['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(session.user.role)) {
     router.push('/dashboard');
     return null;
   }
-
-  // Update parent when chapter changes
-  useEffect(() => {
-    onChapterUpdate?.(chapter);
-  }, [chapter, onChapterUpdate]);
-
-  // Helper functions
-  const generateSectionId = () => `section-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const generateSectionId = () => {
+    setSectionIdCounter(prev => prev + 1);
+    return `section-new-${sectionIdCounter + 1}`;
+  };
 
   const addSection = (type: 'markdown' | 'python', targetIndex?: number) => {
     const newSection: EnhancedSection = {
