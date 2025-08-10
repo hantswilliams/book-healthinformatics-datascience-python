@@ -9,7 +9,7 @@ A modern, interactive web application for learning Python in the context of heal
 - **User Authentication**: Complete login/registration system with NextAuth.js
 - **Progress Tracking**: Personal dashboards and learning progress monitoring
 - **Role-based Access Control**: Admin, Instructor, and Student roles with different permissions
-- **Database Integration**: SQLite database with Prisma ORM for user management
+- **Database Integration**: PostgreSQL database with Prisma ORM for scalable user management
 - **Markdown Content**: React-based markdown rendering with syntax highlighting
 - **Modern UI**: Clean, responsive design with Tailwind CSS
 - **TypeScript**: Full type safety throughout the application
@@ -20,7 +20,7 @@ A modern, interactive web application for learning Python in the context of heal
 - **Framework**: Next.js 15 with App Router
 - **Language**: TypeScript
 - **Authentication**: NextAuth.js with credentials provider
-- **Database**: SQLite with Prisma ORM
+- **Database**: PostgreSQL with Prisma ORM and Prisma Accelerate
 - **Styling**: Tailwind CSS
 - **Python Runtime**: Pyodide v0.26.4
 - **Code Editor**: Monaco Editor
@@ -60,17 +60,24 @@ A modern, interactive web application for learning Python in the context of heal
    npm install
    ```
 
-2. **Set up the database**
+2. **Set up environment variables**
    ```bash
-   npm run db:reset
+   cp .env.example .env.local
+   # Add your PostgreSQL connection strings
    ```
 
-3. **Run the development server**
+3. **Set up the database**
+   ```bash
+   npx prisma migrate dev
+   npm run db:seed
+   ```
+
+4. **Run the development server**
    ```bash
    npm run dev
    ```
 
-4. **Open your browser**
+5. **Open your browser**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
 ### Available Scripts
@@ -89,33 +96,44 @@ A modern, interactive web application for learning Python in the context of heal
 
 ## 🗄️ Database
 
-The Next.js app includes a local SQLite database with Prisma ORM for testing and development:
+The application uses a production-ready PostgreSQL database with Prisma ORM:
 
 ### Database Features
-- **SQLite Database**: Local `prisma/dev.db` file for development
-- **Prisma ORM**: Type-safe database operations
-- **Seeded Data**: Pre-populated with test users, chapters, and exercises
-- **API Routes**: RESTful endpoints for database operations
+- **PostgreSQL Database**: Scalable production database with connection pooling
+- **Prisma Accelerate**: Built-in caching and connection pooling for optimal performance
+- **Multi-tenant Architecture**: Organizations, users, books, and progress tracking
+- **Role-based Access Control**: Owner, Admin, Instructor, and Learner roles
+- **Subscription Management**: Integrated billing and subscription tracking
 
 ### Database Schema
-- **Users**: Authentication and user management
-- **Chapters**: Learning content structure
-- **Progress**: User completion tracking
-- **Exercises**: Code execution history
+- **Organizations**: Multi-tenant boundary with billing
+- **Users**: Authentication and role management
+- **Books & Chapters**: Hierarchical content structure with sections
+- **Progress**: Detailed learning progress tracking
+- **Exercises**: Interactive code execution history
+- **BookAccess**: Granular content access control
+- **BillingEvents**: Audit trail for subscription events
 
-### Test Database
-Visit `/test-db` to view all database content and test API endpoints.
+### Environment Configuration
+```bash
+# Required environment variables
+DATABASE_URL="postgres://username:password@host:5432/database?sslmode=require"
+PRISMA_DATABASE_URL="prisma+postgres://accelerate.prisma-data.net/?api_key=your_key"
+```
 
 ### Database Management
 ```bash
 # View database in browser GUI
 npm run db:studio
 
-# Reset database with fresh test data
-npm run db:reset
+# Apply schema changes
+npx prisma migrate dev
 
-# View database file
-ls -la prisma/dev.db
+# Seed with demo data
+npm run db:seed
+
+# Reset database (development only)
+npm run db:reset
 ```
 
 ## 🔐 Demo Accounts
@@ -127,29 +145,36 @@ All demo accounts use the password: **`password123`**
 
 | Role | Email | Username | Access Level |
 |------|-------|----------|--------------|
-| **Student** | `student1@healthinformatics.com` | `student1` | Chapter access, progress tracking |
-| **Student** | `student2@healthinformatics.com` | `student2` | Chapter access, progress tracking |
-| **Instructor** | `instructor@healthinformatics.com` | `instructor` | Course content management |
-| **Admin** | `admin@healthinformatics.com` | `admin` | Full platform administration |
+| **Owner** | `owner@demo-org.com` | `owner` | Organization owner, billing management |
+| **Admin** | `admin@demo-org.com` | `admin` | Content management, user administration |
+| **Instructor** | `instructor@demo-org.com` | `instructor` | Content assignment, progress monitoring |
+| **Learner** | `learner@demo-org.com` | `learner` | Learning content access, progress tracking |
 
 ### Account Features by Role
 
-#### 👨‍🎓 Student Accounts
-- Access to all learning chapters
-- Personal progress tracking
-- Exercise completion monitoring
-- Account settings management
+#### 👑 Owner Account
+- Organization management and billing
+- Subscription and payment management
+- Full user management capabilities
+- Complete platform administration
+
+#### ⚙️ Admin Account
+- Content creation and management
+- User invitation and role assignment
+- Progress monitoring and reporting
+- Organization settings management
 
 #### 👨‍🏫 Instructor Account
-- Everything students have access to
-- Course content management capabilities
-- Student progress monitoring
+- Content assignment to learners
+- Progress monitoring and analytics
+- Learning content access
+- Student performance tracking
 
-#### ⚡ Admin Account
-- Full platform administration
-- User management dashboard
-- System statistics and analytics
-- Database management tools
+#### 🎓 Learner Account
+- Interactive learning content access
+- Personal progress tracking
+- Exercise completion and scoring
+- Account profile management
 
 ### Quick Login
 Visit the homepage and use the demo account boxes, or go directly to `/login` and use any of the email addresses above with password `password123`.
@@ -205,12 +230,14 @@ This Next.js version maintains feature parity with the original Flask applicatio
 - **Routing**: Next.js App Router instead of Flask routes
 
 ### ✅ Enhanced Features
-- **User Authentication**: Complete NextAuth.js implementation with role-based access
-- **Database Integration**: Full Prisma ORM integration with SQLite
-- **Progress Persistence**: Server-side progress tracking and storage
-- **Admin Panel**: Comprehensive admin dashboard with user management
-- **Account Management**: User profile editing and account settings
-- **Progress Dashboard**: Personal learning progress visualization
+- **Multi-tenant SaaS Architecture**: Complete organization-based multi-tenancy
+- **Subscription Management**: Integrated Stripe billing with multiple tiers
+- **User Authentication**: NextAuth.js with role-based access control
+- **PostgreSQL Database**: Production-ready database with connection pooling
+- **Interactive Content Editor**: Monaco-based content creation and editing
+- **Progress Analytics**: Comprehensive learning progress tracking and reporting
+- **Team Management**: User invitations and role-based permissions
+- **Admin Dashboard**: Full platform administration and monitoring
 
 ## 📂 Project Structure
 
