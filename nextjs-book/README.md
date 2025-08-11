@@ -1,4 +1,4 @@
-# Health Informatics Learning Platform - Next.js Version
+# Health Informatics Learning Platform - Next.js Version.
 
 A modern, interactive web application for learning Python in the context of healthcare data analysis, built with Next.js, TypeScript, and Pyodide.
 
