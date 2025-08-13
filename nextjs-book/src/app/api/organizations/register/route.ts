@@ -1,7 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-import { prisma } from '@/lib/db';
+import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+
+type Database = {
+  public: {
+    Tables: {
+      organizations: {
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          industry: string;
+          website?: string;
+          subscription_status: string;
+          subscription_tier: string;
+          max_seats: number;
+          trial_ends_at: string;
+        };
+      };
+      users: {
+        Insert: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          username: string;
+          role: string;
+          organization_id: string;
+          onboarding_completed: boolean;
+        };
+      };
+    };
+  };
+};
 
 const registerSchema = z.object({
   // Organization details
@@ -26,10 +57,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = registerSchema.parse(body);
 
+    // Create Supabase admin client
+    const supabase = createClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
     // Check if organization slug is available
-    const existingOrgBySlug = await prisma.organization.findUnique({
-      where: { slug: validatedData.organizationSlug }
-    });
+    const { data: existingOrgBySlug } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('slug', validatedData.organizationSlug)
+      .single();
 
     if (existingOrgBySlug) {
       return NextResponse.json(
@@ -39,9 +79,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user email already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: validatedData.email }
-    });
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', validatedData.email)
+      .single();
 
     if (existingUser) {
       return NextResponse.json(
@@ -51,9 +93,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if username is taken
-    const existingUsername = await prisma.user.findUnique({
-      where: { username: validatedData.username }
-    });
+    const { data: existingUsername } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', validatedData.username)
+      .single();
 
     if (existingUsername) {
       return NextResponse.json(
@@ -62,8 +106,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(validatedData.password, 12);
 
     // Set trial period (14 days)
     const trialEndsAt = new Date();
@@ -76,38 +118,87 @@ export async function POST(request: NextRequest) {
       ENTERPRISE: 999 // "unlimited" 
     }[validatedData.subscriptionTier];
 
-    // Create organization and owner user in a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // Create organization
-      const organization = await tx.organization.create({
-        data: {
-          name: validatedData.organizationName,
-          slug: validatedData.organizationSlug,
-          industry: validatedData.industry,
-          website: validatedData.website,
-          subscriptionStatus: 'TRIAL',
-          subscriptionTier: validatedData.subscriptionTier,
-          maxSeats,
-          trialEndsAt,
-        }
-      });
+    // Create organization first
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .insert({
+        name: validatedData.organizationName,
+        slug: validatedData.organizationSlug,
+        industry: validatedData.industry,
+        website: validatedData.website,
+        subscription_status: 'TRIAL',
+        subscription_tier: validatedData.subscriptionTier,
+        max_seats: maxSeats,
+        trial_ends_at: trialEndsAt.toISOString(),
+      })
+      .select('id, slug, trial_ends_at')
+      .single();
 
-      // Create owner user
-      const user = await tx.user.create({
-        data: {
-          firstName: validatedData.firstName,
-          lastName: validatedData.lastName,
-          email: validatedData.email,
-          username: validatedData.username,
-          password: hashedPassword,
-          role: 'OWNER',
-          organizationId: organization.id,
-          onboardingCompleted: false,
-        }
-      });
+    if (orgError || !organization) {
+      console.error('Organization creation error:', orgError);
+      return NextResponse.json(
+        { error: 'Failed to create organization' },
+        { status: 500 }
+      );
+    }
 
-      return { organization, user };
+    // Create user in Supabase Auth first
+    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
+      email: validatedData.email,
+      password: validatedData.password,
+      email_confirm: true, // Auto-confirm email
     });
+
+    if (authError || !authUser.user) {
+      console.error('Auth user creation error:', authError);
+      // Cleanup: delete the organization if auth user creation failed
+      await supabase.from('organizations').delete().eq('id', organization.id);
+      return NextResponse.json(
+        { error: 'Failed to create user account' },
+        { status: 500 }
+      );
+    }
+
+    // Create user record in our custom users table
+    console.log('Creating user profile with auth ID:', authUser.user.id);
+    console.log('User data:', {
+      id: authUser.user.id,
+      first_name: validatedData.firstName,
+      last_name: validatedData.lastName,
+      email: validatedData.email,
+      username: validatedData.username,
+      role: 'OWNER',
+      organization_id: organization.id,
+      onboarding_completed: false,
+    });
+    
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .insert({
+        id: authUser.user.id, // Use the auth user's ID
+        first_name: validatedData.firstName,
+        last_name: validatedData.lastName,
+        email: validatedData.email,
+        username: validatedData.username,
+        role: 'OWNER',
+        organization_id: organization.id,
+        onboarding_completed: false,
+      })
+      .select('id')
+      .single();
+
+    if (userError || !user) {
+      console.error('User profile creation error:', userError);
+      // Cleanup: delete the auth user and organization if profile creation failed
+      await supabase.auth.admin.deleteUser(authUser.user.id);
+      await supabase.from('organizations').delete().eq('id', organization.id);
+      return NextResponse.json(
+        { error: 'Failed to create user profile' },
+        { status: 500 }
+      );
+    }
+
+    const result = { organization, user };
 
     // Return success response (excluding sensitive data)
     return NextResponse.json({
@@ -116,7 +207,7 @@ export async function POST(request: NextRequest) {
         organizationId: result.organization.id,
         organizationSlug: result.organization.slug,
         userId: result.user.id,
-        trialEndsAt: result.organization.trialEndsAt,
+        trialEndsAt: result.organization.trial_ends_at,
       }
     });
 

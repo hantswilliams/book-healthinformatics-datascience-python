@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 interface Chapter {
   id: string;
@@ -34,7 +34,7 @@ interface Book {
 }
 
 export default function ContentManagement() {
-  const { data: session, status } = useSession();
+  const { user, userProfile, organization, loading: authLoading } = useSupabase();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   const [books, setBooks] = useState<Book[]>([]);
@@ -46,21 +46,21 @@ export default function ContentManagement() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<{bookId: string, title: string} | null>(null);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (authLoading) return;
     
-    if (!session) {
+    if (!user || !userProfile || !organization) {
       router.push('/login');
       return;
     }
 
     // Check permissions - OWNER and ADMIN can manage content
-    if (!['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(session.user.role)) {
-      router.push('/dashboard');
+    if (!['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(userProfile.role)) {
+      router.push(`/org/${orgSlug}/dashboard`);
       return;
     }
 
     fetchBooks();
-  }, [session, status, router]);
+  }, [user, userProfile, organization, authLoading, router, orgSlug]);
 
   const fetchBooks = async () => {
     try {
@@ -197,7 +197,7 @@ export default function ContentManagement() {
     }
   };
 
-  if (status === 'loading' || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -241,7 +241,7 @@ export default function ContentManagement() {
                 Manage your organization's learning content and access to marketplace courses
               </p>
             </div>
-            {['OWNER', 'ADMIN'].includes(session?.user.role || '') && (
+            {['OWNER', 'ADMIN'].includes(userProfile?.role || '') && (
               <div className="flex gap-3">
                 <Link
                   href={`/org/${orgSlug}/dashboard/content/create-enhanced`}
@@ -468,7 +468,9 @@ export default function ContentManagement() {
                 <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
                   <div className="flex flex-wrap gap-2">
                     <Link 
-                      href={`/book/${book.slug}`}
+                      href={book.chapters.length > 0 
+                        ? `/org/${orgSlug}/chapter/${book.chapters[0].id}` 
+                        : `/book/${book.slug}`}
                       className="inline-flex items-center px-4 py-2 border border-blue-300 text-blue-700 bg-white rounded-lg hover:bg-blue-50 hover:border-blue-400 transition-colors text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 shadow-sm"
                     >
                       <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

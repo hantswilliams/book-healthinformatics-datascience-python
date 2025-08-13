@@ -1,21 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { getAuthenticatedUser, createClient } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ bookId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, error: authError } = await getAuthenticatedUser();
     
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Only organization owners, admins, and instructors can edit books
-    if (!['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(session.user.role)) {
+    if (!['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(user.role)) {
       return NextResponse.json(
         { error: 'Only organization owners, admins, and instructors can edit books' },
         { status: 403 }
@@ -24,29 +22,42 @@ export async function GET(
 
     const resolvedParams = await params;
     const bookId = resolvedParams.bookId;
+    const supabase = await createClient();
 
     // Get the book with full chapter and section data
-    const book = await prisma.book.findUnique({
-      where: {
-        id: bookId
-      },
-      include: {
-        chapters: {
-          include: {
-            sections: {
-              orderBy: {
-                order: 'asc'
-              }
-            }
-          },
-          orderBy: {
-            order: 'asc'
-          }
-        }
-      }
-    });
+    const { data: book, error: bookError } = await supabase
+      .from('books')
+      .select(`
+        id,
+        slug,
+        title,
+        description,
+        difficulty,
+        category,
+        estimated_hours,
+        tags,
+        organization_id,
+        chapters (
+          id,
+          title,
+          emoji,
+          display_order,
+          default_execution_mode,
+          sections (
+            id,
+            title,
+            type,
+            content,
+            display_order,
+            execution_mode,
+            depends_on
+          )
+        )
+      `)
+      .eq('id', bookId)
+      .single();
 
-    if (!book) {
+    if (bookError || !book) {
       return NextResponse.json(
         { error: 'Book not found' },
         { status: 404 }
@@ -54,7 +65,7 @@ export async function GET(
     }
 
     // Check if user has access to this book
-    if (book.organizationId !== session.user.organizationId) {
+    if (book.organization_id !== user.organization_id) {
       return NextResponse.json(
         { error: 'You do not have access to this book' },
         { status: 403 }
@@ -69,25 +80,29 @@ export async function GET(
       description: book.description || '',
       difficulty: book.difficulty,
       category: book.category,
-      estimatedHours: book.estimatedHours || 1,
+      estimatedHours: book.estimated_hours || 1,
       tags: book.tags ? JSON.parse(book.tags) : [],
-      chapters: book.chapters.map(chapter => ({
-        id: chapter.id,
-        title: chapter.title,
-        emoji: chapter.emoji,
-        order: chapter.order - 1, // Convert to 0-based index for UI
-        defaultExecutionMode: chapter.defaultExecutionMode?.toLowerCase() || 'shared',
-        sections: chapter.sections.map(section => ({
-          id: section.id,
-          type: section.type.toLowerCase() as 'markdown' | 'python',
-          title: section.title || '',
-          content: section.content,
-          order: section.order - 1, // Convert to 0-based index for UI
-          executionMode: section.executionMode?.toLowerCase() || 'inherit',
-          dependsOn: section.dependsOn ? JSON.parse(section.dependsOn) : [],
-          isEditing: false
+      chapters: (book.chapters || [])
+        .sort((a: any, b: any) => a.display_order - b.display_order)
+        .map((chapter: any) => ({
+          id: chapter.id,
+          title: chapter.title,
+          emoji: chapter.emoji,
+          order: chapter.display_order - 1, // Convert to 0-based index for UI
+          defaultExecutionMode: chapter.default_execution_mode?.toLowerCase() || 'shared',
+          sections: (chapter.sections || [])
+            .sort((a: any, b: any) => a.display_order - b.display_order)
+            .map((section: any) => ({
+              id: section.id,
+              type: section.type.toLowerCase() as 'markdown' | 'python',
+              title: section.title || '',
+              content: section.content,
+              order: section.display_order - 1, // Convert to 0-based index for UI
+              executionMode: section.execution_mode?.toLowerCase() || 'inherit',
+              dependsOn: section.depends_on ? JSON.parse(section.depends_on) : [],
+              isEditing: false
+            }))
         }))
-      }))
     };
 
     return NextResponse.json({ book: enhancedBook });

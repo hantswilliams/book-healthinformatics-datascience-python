@@ -4,8 +4,8 @@ import Link from 'next/link';
 import LogoMark from './LogoMark';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
 import { useOrgSlug } from '@/lib/useOrgSlug';
+import { useSupabase } from '@/lib/SupabaseProvider';
 import type { User } from '@/types';
 
 interface HeaderProps {
@@ -14,10 +14,23 @@ interface HeaderProps {
   isSidebarOpen?: boolean;
 }
 
-export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderProps) {
+export default function Header({ user: propUser, onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const orgSlug = useOrgSlug();
   const pathname = usePathname();
+  const { signOut, user: supabaseUser, userProfile } = useSupabase();
+  
+  // Use Supabase user profile for role checks if available, otherwise fall back to prop user
+  const user = userProfile ? {
+    id: supabaseUser?.id || '',
+    username: userProfile.username || '',
+    email: userProfile.email || '',
+    firstName: userProfile.first_name || '',
+    lastName: userProfile.last_name || '',
+    role: userProfile.role as 'OWNER' | 'ADMIN' | 'INSTRUCTOR' | 'LEARNER',
+    createdAt: new Date(userProfile.joined_at || ''),
+    updatedAt: new Date(userProfile.updated_at || userProfile.joined_at || '')
+  } : propUser;
 
   const navItems = [
     {
@@ -31,6 +44,15 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
       match: (p: string) => p.includes('/resources')
     }
   ];
+
+  // Add Admin item if user has proper permissions
+  if (user && ['OWNER', 'ADMIN'].includes(user.role)) {
+    navItems.push({
+      label: 'Admin',
+      href: orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard',
+      match: (p: string) => p.includes('/dashboard')
+    });
+  }
 
   return (
     <div className="sticky top-0 z-50 border-b border-zinc-200/70 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -63,31 +85,22 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
                         href={item.href}
                         className={[
                           'px-3 py-2 text-sm font-medium rounded-md transition',
+                          item.label === 'Admin' ? 'flex items-center gap-1' : '',
                           active
                             ? 'text-indigo-700 bg-indigo-50 ring-1 ring-inset ring-indigo-200'
                             : 'text-zinc-700 hover:text-indigo-700 hover:bg-zinc-100'
                         ].join(' ')}
                       >
-                        {item.label}
+                        {item.label === 'Admin' && (
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                          </svg>
+                        )}
+                        <span>{item.label}</span>
                       </Link>
                     );
                   })}
-                  {(['OWNER', 'ADMIN'].includes(user.role)) && (
-                    <Link
-                      href={orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard'}
-                      className={[
-                        'px-3 py-2 text-sm font-medium rounded-md transition flex items-center gap-1',
-                        pathname?.includes('/dashboard')
-                          ? 'text-indigo-700 bg-indigo-50 ring-1 ring-inset ring-indigo-200'
-                          : 'text-zinc-700 hover:text-indigo-700 hover:bg-zinc-100'
-                      ].join(' ')}
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2 4 4 10-10 2 2-12 12z" />
-                      </svg>
-                      <span>Admin</span>
-                    </Link>
-                  )}
                 </div>
               </div>
               
@@ -134,21 +147,13 @@ export default function Header({ user, onToggleSidebar, isSidebarOpen }: HeaderP
                         >
                           Account Settings
                         </Link>
-                        {user.role === 'admin' && (
-                          <Link
-                            href={orgSlug ? `/org/${orgSlug}/admin` : '/admin'}
-                            className="block px-4 py-2 text-sm text-zinc-700 hover:bg-zinc-50"
-                            onClick={() => setIsDropdownOpen(false)}
-                          >
-                            Admin Panel
-                          </Link>
-                        )}
                       </div>
                       <div className="py-1">
                         <button
-                          onClick={() => {
+                          onClick={async () => {
                             setIsDropdownOpen(false);
-                            signOut({ callbackUrl: '/' });
+                            await signOut();
+                            window.location.href = '/';
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                         >

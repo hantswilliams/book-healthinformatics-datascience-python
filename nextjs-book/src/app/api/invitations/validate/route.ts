@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { Database } from '@/lib/supabase-types';
 
 export async function GET(request: NextRequest) {
   try {
@@ -13,28 +15,45 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Find the invitation
-    const invitation = await prisma.invitation.findUnique({
-      where: { token },
-      include: {
-        organization: {
-          select: {
-            name: true,
-            slug: true,
-            industry: true
-          }
+    const cookieStore = await cookies();
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
         },
-        inviter: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true
-          }
-        }
       }
-    });
+    );
 
-    if (!invitation) {
+    // Find the invitation with organization details
+    const { data: invitation, error: invitationError } = await supabase
+      .from('invitations')
+      .select(`
+        *,
+        organization:organizations(
+          id,
+          name,
+          slug,
+          industry
+        ),
+        inviter:users!invitations_invited_by_fkey(
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .eq('token', token)
+      .single();
+
+    if (invitationError || !invitation) {
       return NextResponse.json(
         { error: 'Invalid invitation token' },
         { status: 404 }
@@ -42,7 +61,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if invitation has expired
-    if (invitation.expiresAt < new Date()) {
+    if (new Date(invitation.expires_at) < new Date()) {
       return NextResponse.json(
         { error: 'Invitation has expired' },
         { status: 400 }
@@ -50,7 +69,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check if invitation has already been accepted
-    if (invitation.acceptedAt) {
+    if (invitation.accepted_at) {
       return NextResponse.json(
         { error: 'Invitation has already been accepted' },
         { status: 400 }
@@ -63,10 +82,12 @@ export async function GET(request: NextRequest) {
       data: {
         email: invitation.email,
         role: invitation.role,
-        expiresAt: invitation.expiresAt,
+        expiresAt: invitation.expires_at,
+        organizationId: invitation.organization_id,
+        organizationName: invitation.organization?.name,
         organization: invitation.organization,
         invitedBy: invitation.inviter,
-        createdAt: invitation.createdAt
+        createdAt: invitation.created_at
       }
     });
 

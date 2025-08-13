@@ -1,12 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
-import { formatPrice } from '@/lib/stripe';
 import { Card, StatCard, Badge } from '@/components/ui/Card';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 interface SubscriptionStatus {
   organization: {
@@ -48,7 +47,7 @@ interface OrganizationStats {
 }
 
 export default function Dashboard() {
-  const { data: session, status } = useSession();
+  const { user, userProfile, organization: userOrganization, loading: authLoading } = useSupabase();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   const [subscriptionStatus, setSubscriptionStatus] = useState<SubscriptionStatus | null>(null);
@@ -57,15 +56,23 @@ export default function Dashboard() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    if (status === 'loading') return;
+    // Don't redirect immediately - wait for auth to fully load
+    if (authLoading) return;
     
-    if (!session) {
-      router.push('/login');
-      return;
+    // Only redirect if auth loading is complete and we're certain there's no user
+    if (!user || !userProfile || !userOrganization) {
+      // Add a small delay to prevent race conditions with session rehydration
+      const timeout = setTimeout(() => {
+        if (!authLoading && (!user || !userProfile || !userOrganization)) {
+          router.push('/login');
+        }
+      }, 100);
+      
+      return () => clearTimeout(timeout);
     }
 
     fetchDashboardData();
-  }, [session, status, router]);
+  }, [user, userProfile, userOrganization, authLoading, router]);
 
   const fetchDashboardData = async () => {
     try {
@@ -96,6 +103,18 @@ export default function Dashboard() {
       setIsLoading(false);
     }
   };
+
+  // Show loading screen while auth is initializing or redirect is happening
+  if (authLoading || (!user || !userProfile || !userOrganization)) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleManageBilling = async () => {
     try {
@@ -131,7 +150,7 @@ export default function Dashboard() {
     }
   };
 
-  if (status === 'loading' || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -142,7 +161,7 @@ export default function Dashboard() {
     );
   }
 
-  if (!session || !subscriptionStatus || !organizationStats) {
+  if (!user || !userProfile || !userOrganization || !subscriptionStatus || !organizationStats) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -154,7 +173,7 @@ export default function Dashboard() {
     );
   }
 
-  const { organization, permissions } = subscriptionStatus;
+  const { permissions } = subscriptionStatus;
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
@@ -163,17 +182,17 @@ export default function Dashboard() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{organization.name}</h1>
-              <p className="mt-1 text-sm text-zinc-600">Welcome back, {session.user.firstName}. Here's your overview.</p>
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{userOrganization.name}</h1>
+              <p className="mt-1 text-sm text-zinc-600">Welcome back, {userProfile.first_name || user.email?.split('@')[0]}. Here's your overview.</p>
             </div>
             <div className="flex items-center gap-3">
-              <Badge tone={statusTone(organization.subscriptionStatus).tone}>
-                {organization.subscriptionStatus === 'TRIAL'
-                  ? `Trial · ${organization.trialDaysRemaining}d left`
-                  : statusTone(organization.subscriptionStatus).label}
+              <Badge tone={statusTone(userOrganization.subscription_status).tone}>
+                {userOrganization.subscription_status === 'TRIAL'
+                  ? `Trial · ${Math.max(0, Math.ceil((new Date(userOrganization.trial_ends_at || '').getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}d left`
+                  : statusTone(userOrganization.subscription_status).label}
               </Badge>
-              <Badge tone={tierTone(organization.subscriptionTier).tone}>
-                {tierTone(organization.subscriptionTier).label}
+              <Badge tone={tierTone(userOrganization.subscription_tier).tone}>
+                {tierTone(userOrganization.subscription_tier).label}
               </Badge>
             </div>
           </div>
@@ -182,38 +201,41 @@ export default function Dashboard() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         {/* Alert for trial ending soon */}
-        {organization.subscriptionStatus === 'TRIAL' && organization.trialDaysRemaining <= 3 && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm text-yellow-700">
-                  <strong>Trial ending soon!</strong> Your trial expires in {organization.trialDaysRemaining} days.{' '}
-                  {permissions.canManageBilling && (
-                    <button onClick={handleManageBilling} className="underline font-medium">
-                      Set up billing now
-                    </button>
-                  )}
-                </p>
+        {userOrganization.subscription_status === 'TRIAL' && userOrganization.trial_ends_at && (() => {
+          const daysRemaining = Math.max(0, Math.ceil((new Date(userOrganization.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+          return daysRemaining <= 3 ? (
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-yellow-700">
+                    <strong>Trial ending soon!</strong> Your trial expires in {daysRemaining} days.{' '}
+                    {permissions.canManageBilling && (
+                      <button onClick={handleManageBilling} className="underline font-medium">
+                        Set up billing now
+                      </button>
+                    )}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          ) : null;
+        })()}
 
         {/* Stats Overview */}
         <div className="mb-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             label="Team Members"
-            value={<>{organization.currentSeats} / {organization.maxSeats}</>}
+            value={<>{subscriptionStatus?.organization?.currentSeats || 0} / {userOrganization.max_seats}</>}
             icon={(<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>)}
           />
           <StatCard
             label="Plan"
-            value={organization.subscriptionTier}
+            value={userOrganization.subscription_tier}
             icon={(<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>)}
           />
             <StatCard
@@ -234,7 +256,7 @@ export default function Dashboard() {
             <Card padding="lg" className="h-full">
               <h3 className="mb-6 text-sm font-semibold uppercase tracking-wide text-zinc-600">Quick Actions</h3>
               <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
-                  {['OWNER', 'ADMIN'].includes(session?.user.role || '') && (
+                  {['OWNER', 'ADMIN'].includes(userProfile?.role || '') && (
                     <Link
                       href={`/org/${orgSlug}/dashboard/team`}
                       className="group relative rounded-xl border border-zinc-200 bg-white/60 p-6 backdrop-blur-sm transition hover:border-indigo-300 hover:shadow-md"
@@ -309,23 +331,23 @@ export default function Dashboard() {
             <dl className="space-y-4">
               <div className="flex items-start justify-between gap-4">
                 <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">Organization</dt>
-                <dd className="text-sm font-medium text-zinc-900">{organization.name}</dd>
+                <dd className="text-sm font-medium text-zinc-900">{userOrganization.name}</dd>
               </div>
               <div className="flex items-start justify-between gap-4">
                 <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">Slug</dt>
-                <dd className="text-sm font-medium text-zinc-900">{organization.slug}</dd>
+                <dd className="text-sm font-medium text-zinc-900">{userOrganization.slug}</dd>
               </div>
               <div className="flex items-start justify-between gap-4">
                 <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">Your Role</dt>
-                <dd className="text-sm font-medium text-zinc-900">{session.user.role}</dd>
+                <dd className="text-sm font-medium text-zinc-900">{userProfile.role}</dd>
               </div>
-              {organization.subscriptionEndsAt && (
+              {userOrganization.subscription_ends_at && (
                 <div className="flex items-start justify-between gap-4">
                   <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                    {organization.subscriptionStatus === 'TRIAL' ? 'Trial Ends' : 'Next Billing'}
+                    {userOrganization.subscription_status === 'TRIAL' ? 'Trial Ends' : 'Next Billing'}
                   </dt>
                   <dd className="text-sm font-medium text-zinc-900">
-                    {new Date(organization.subscriptionEndsAt).toLocaleDateString()}
+                    {new Date(userOrganization.subscription_ends_at).toLocaleDateString()}
                   </dd>
                 </div>
               )}

@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { getAuthenticatedUser, createClient } from '@/lib/supabase-server';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ chapterId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, error: authError } = await getAuthenticatedUser();
     
-    if (!session?.user) {
+    if (authError || !user) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -20,30 +18,40 @@ export async function GET(
     const resolvedParams = await params;
     const chapterId = resolvedParams.chapterId;
 
-    // Get the chapter with book and access information
-    const chapter = await prisma.chapter.findUnique({
-      where: {
-        id: chapterId
-      },
-      include: {
-        book: {
-          select: {
-            id: true,
-            title: true,
-            organizationId: true,
-            isPublished: true,
-            isPublic: true
-          }
-        },
-        sections: {
-          orderBy: {
-            order: 'asc'
-          }
-        }
-      }
-    });
+    // Get Supabase client
+    const supabase = await createClient();
 
-    if (!chapter) {
+    // Get the chapter with book and sections information
+    const { data: chapter, error: chapterError } = await supabase
+      .from('chapters')
+      .select(`
+        id,
+        title,
+        emoji,
+        display_order,
+        estimated_minutes,
+        default_execution_mode,
+        book:books!inner(
+          id,
+          title,
+          organization_id,
+          is_published,
+          is_public
+        ),
+        sections!inner(
+          id,
+          title,
+          type,
+          content,
+          display_order,
+          execution_mode,
+          depends_on
+        )
+      `)
+      .eq('id', chapterId)
+      .single();
+
+    if (chapterError || !chapter) {
       return NextResponse.json(
         { error: 'Chapter not found' },
         { status: 404 }
@@ -51,7 +59,7 @@ export async function GET(
     }
 
     // Check if the book is published
-    if (!chapter.book.isPublished) {
+    if (!chapter.book.is_published) {
       return NextResponse.json(
         { error: 'This chapter is not yet published' },
         { status: 403 }
@@ -62,34 +70,36 @@ export async function GET(
     let hasAccess = false;
 
     // If it's a public book, allow access
-    if (chapter.book.isPublic) {
+    if (chapter.book.is_public) {
       hasAccess = true;
     } 
     // If it's an organization book, check organization membership and book access
-    else if (chapter.book.organizationId) {
+    else if (chapter.book.organization_id) {
       // Check if user belongs to the same organization
-      if (session.user.organizationId === chapter.book.organizationId) {
+      if (user.organization_id === chapter.book.organization_id) {
         // Check if there's specific book access granted
-        const bookAccess = await prisma.bookAccess.findFirst({
-          where: {
-            organizationId: session.user.organizationId,
-            bookId: chapter.book.id,
-            userId: session.user.id
-          }
-        });
+        const { data: bookAccess, error: bookAccessError } = await supabase
+          .from('book_access')
+          .select('*')
+          .eq('organization_id', user.organization_id)
+          .eq('book_id', chapter.book.id)
+          .eq('user_id', user.id)
+          .single();
+
+        // Check if there are any access controls for this book
+        const { count: accessControlCount } = await supabase
+          .from('book_access')
+          .select('*', { count: 'exact', head: true })
+          .eq('organization_id', user.organization_id)
+          .eq('book_id', chapter.book.id);
 
         // Grant access if:
         // 1. User has explicit book access, OR
         // 2. User is OWNER/ADMIN (they can access all org books), OR
         // 3. No specific access control exists (default org access)
         if (bookAccess || 
-            ['OWNER', 'ADMIN'].includes(session.user.role) ||
-            (await prisma.bookAccess.count({ 
-              where: { 
-                organizationId: session.user.organizationId, 
-                bookId: chapter.book.id 
-              } 
-            })) === 0) {
+            ['OWNER', 'ADMIN'].includes(user.role) ||
+            (accessControlCount === 0)) {
           hasAccess = true;
         }
       }
@@ -107,19 +117,21 @@ export async function GET(
       id: chapter.id,
       title: chapter.title,
       emoji: chapter.emoji,
-      order: chapter.order,
-      estimatedMinutes: chapter.estimatedMinutes,
-      defaultExecutionMode: chapter.defaultExecutionMode?.toLowerCase() || 'shared',
+      order: chapter.display_order,
+      estimatedMinutes: chapter.estimated_minutes,
+      defaultExecutionMode: chapter.default_execution_mode?.toLowerCase() || 'shared',
       bookTitle: chapter.book.title,
-      sections: chapter.sections.map(section => ({
-        id: section.id,
-        title: section.title,
-        type: section.type.toLowerCase(), // Convert MARKDOWN/PYTHON to markdown/python
-        content: section.content,
-        order: section.order,
-        executionMode: section.executionMode?.toLowerCase() || 'inherit',
-        dependsOn: section.dependsOn ? JSON.parse(section.dependsOn) : []
-      }))
+      sections: chapter.sections
+        .sort((a: any, b: any) => a.display_order - b.display_order)
+        .map((section: any) => ({
+          id: section.id,
+          title: section.title,
+          type: section.type.toLowerCase(), // Convert MARKDOWN/PYTHON to markdown/python
+          content: section.content,
+          order: section.display_order,
+          executionMode: section.execution_mode?.toLowerCase() || 'inherit',
+          dependsOn: section.depends_on ? JSON.parse(section.depends_on) : []
+        }))
     };
 
     return NextResponse.json({ chapter: chapterData });

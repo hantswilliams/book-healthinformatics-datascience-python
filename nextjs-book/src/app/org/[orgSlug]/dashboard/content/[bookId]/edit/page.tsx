@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 interface Book {
   id: string;
@@ -24,7 +24,7 @@ const categoryOptions = [
 ];
 
 export default function EditCoursePage() {
-  const { data: session, status } = useSession();
+  const { user, userProfile, organization, loading: authLoading } = useSupabase();
   const router = useRouter();
   const params = useParams();
   const orgSlug = useOrgSlug();
@@ -40,18 +40,18 @@ export default function EditCoursePage() {
   const [chapters, setChapters] = useState<Chapter[]>([]);
 
   useEffect(() => {
-    if (status === 'loading') return;
-    if (!session) {
+    if (authLoading) return;
+    if (!user || !userProfile || !organization) {
       router.push('/login');
       return;
     }
-    if (!['OWNER','ADMIN'].includes(session.user.role)) {
+    if (!['OWNER','ADMIN'].includes(userProfile.role)) {
       router.push(`/org/${orgSlug}/dashboard/content`);
       return;
     }
     fetchBook();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, session, bookId]);
+  }, [authLoading, user, userProfile, organization, bookId]);
 
   const fetchBook = async () => {
     try {

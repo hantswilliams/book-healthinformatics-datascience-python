@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { useSupabase } from '@/lib/SupabaseProvider';
 import MonacoCodeBlock from './MonacoCodeBlock';
 
 // Enhanced interfaces with execution modes
@@ -37,7 +37,7 @@ export default function EnhancedChapterBuilder({
   onChapterUpdate, 
   onSave 
 }: EnhancedChapterBuilderProps) {
-  const { data: session } = useSession();
+  const { user, userProfile, loading } = useSupabase();
   const router = useRouter();
 
   // State management
@@ -80,13 +80,17 @@ export default function EnhancedChapterBuilder({
   }, [chapter, onChapterUpdate]);
 
   // Check permissions after hooks
-  if (!session || !['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(session.user.role)) {
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+  
+  if (!user || !userProfile || !['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(userProfile.role)) {
     router.push('/dashboard');
     return null;
   }
   const generateSectionId = () => {
-    setSectionIdCounter(prev => prev + 1);
-    return `section-new-${sectionIdCounter + 1}`;
+    const newId = `section-new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return newId;
   };
 
   const addSection = (type: 'markdown' | 'python', targetIndex?: number) => {

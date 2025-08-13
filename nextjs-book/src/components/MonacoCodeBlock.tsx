@@ -1,8 +1,8 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Editor from '@monaco-editor/react';
-import * as monaco from 'monaco-editor';
+import dynamic from 'next/dynamic';
 
 interface MonacoCodeBlockProps {
   value: string;
@@ -29,13 +29,30 @@ export default function MonacoCodeBlock({
   executionMode,
   isRunning = false
 }: MonacoCodeBlockProps) {
-  const editorRef = useRef<monaco.editor.IStandaloneCodeEditor | null>(null);
+  const [isClient, setIsClient] = useState(false);
+  const editorRef = useRef<any>(null);
 
-  const handleEditorDidMount = (editor: monaco.editor.IStandaloneCodeEditor) => {
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Show loading until client-side
+  if (!isClient) {
+    return (
+      <div 
+        className="bg-gray-100 rounded-md border p-4 flex items-center justify-center"
+        style={{ height: `${height}px` }}
+      >
+        <div className="text-gray-500">Loading editor...</div>
+      </div>
+    );
+  }
+
+  const handleEditorDidMount = (editor: any, monaco: any) => {
     editorRef.current = editor;
     
     // Add keyboard shortcuts
-    if (onRun) {
+    if (onRun && monaco) {
       editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
         onRun();
       });
@@ -46,7 +63,7 @@ export default function MonacoCodeBlock({
     }
   };
 
-  const editorOptions: monaco.editor.IStandaloneEditorConstructionOptions = {
+  const editorOptions = {
     theme: 'vs-dark',
     fontSize: 13,
     fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
@@ -73,43 +90,7 @@ export default function MonacoCodeBlock({
     insertSpaces: true,
   };
 
-  // Custom theme that matches your design
-  useEffect(() => {
-    monaco.editor.defineTheme('custom-dark', {
-      base: 'vs-dark',
-      inherit: true,
-      rules: [
-        { token: 'comment', foreground: 'a6b0d6', fontStyle: 'italic' },
-        { token: 'keyword', foreground: '7aa2f7', fontStyle: 'bold' },
-        { token: 'string', foreground: '9ece6a' },
-        { token: 'number', foreground: 'ff6b6b' },
-        { token: 'operator', foreground: 'e8ecff' },
-        { token: 'identifier', foreground: 'e8ecff' },
-        { token: 'type', foreground: '7aa2f7' },
-      ],
-      colors: {
-        'editor.background': '#0d1428',
-        'editor.foreground': '#e8ecff',
-        'editor.lineHighlightBackground': '#121a33',
-        'editor.selectionBackground': '#23305d',
-        'editor.inactiveSelectionBackground': '#1a2443',
-        'editorCursor.foreground': '#7aa2f7',
-        'editorLineNumber.foreground': '#a6b0d6',
-        'editorLineNumber.activeForeground': '#7aa2f7',
-        'editorGutter.background': '#0b1020',
-        'scrollbarSlider.background': '#23305d',
-        'scrollbarSlider.hoverBackground': '#2a3769',
-        'scrollbarSlider.activeBackground': '#7aa2f7',
-        'editorWidget.background': '#121a33',
-        'editorWidget.border': '#23305d',
-        'editorSuggestWidget.background': '#121a33',
-        'editorSuggestWidget.border': '#23305d',
-        'editorSuggestWidget.foreground': '#e8ecff',
-        'editorSuggestWidget.selectedBackground': '#23305d',
-      }
-    });
-    monaco.editor.setTheme('custom-dark');
-  }, []);
+  // Remove custom theme setup to avoid SSR issues
 
   const getExecutionModeStyle = () => {
     if (!executionMode || executionMode === 'inherit') return {};

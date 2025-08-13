@@ -1,38 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { getAuthenticatedUser, createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, error: authError } = await getAuthenticatedUser();
     
-    if (!session?.user) {
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const supabase = await createClient();
+
+    // Fetch user's progress from Supabase
+    const { data: progress, error: progressError } = await supabase
+      .from('progress')
+      .select(`
+        id,
+        user_id,
+        book_id,
+        chapter_id,
+        completed,
+        completed_at,
+        time_spent,
+        score,
+        created_at,
+        updated_at,
+        chapter:chapters(
+          id,
+          title,
+          emoji,
+          book:books(
+            id,
+            title
+          )
+        )
+      `)
+      .eq('user_id', user.id)
+      .order('updated_at', { ascending: false });
+
+    if (progressError) {
+      console.error('Error fetching progress:', progressError);
       return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
+        { error: 'Failed to fetch progress' },
+        { status: 500 }
       );
     }
 
-    const progress = await prisma.progress.findMany({
-      where: {
-        userId: session.user.id
-      },
-      include: {
-        chapter: {
-          include: {
-            book: true
-          }
-        }
-      },
-      orderBy: {
-        chapter: {
-          order: 'asc'
-        }
-      }
-    });
+    // Transform progress data to match frontend expectations
+    const transformedProgress = (progress || []).map(p => ({
+      id: p.id,
+      chapterId: p.chapter_id,  // Convert snake_case to camelCase
+      completed: p.completed,
+      completedAt: p.completed_at  // Convert snake_case to camelCase
+    }));
 
-    return NextResponse.json({ progress });
+
+    return NextResponse.json({ progress: transformedProgress });
   } catch (error) {
     console.error('Error fetching progress:', error);
     return NextResponse.json(
@@ -44,14 +67,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, error: authError } = await getAuthenticatedUser();
     
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    if (authError || !user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const supabase = await createClient();
 
     const body = await request.json();
     const { chapterId, completed } = body;
@@ -63,86 +85,50 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify the chapter exists and user has access to it
-    const chapter = await prisma.chapter.findFirst({
-      where: {
-        id: chapterId
-      },
-      include: {
-        book: {
-          include: {
-            bookAccess: {
-              where: {
-                userId: session.user.id
-              }
-            }
-          }
-        }
-      }
-    });
+    // Get chapter details to find the book_id
+    const { data: chapter, error: chapterError } = await supabase
+      .from('chapters')
+      .select('id, book_id')
+      .eq('id', chapterId)
+      .single();
 
-    if (!chapter) {
+    if (chapterError || !chapter) {
       return NextResponse.json(
         { error: 'Chapter not found' },
         { status: 404 }
       );
     }
 
-    // Check if user has access to this book (either through bookAccess or organization)
-    const hasAccess = chapter.book.bookAccess.length > 0 || 
-                     (chapter.book.organizationId && chapter.book.organizationId === session.user.organizationId);
+    // Upsert progress record (insert or update if exists)
+    const progressData = {
+      user_id: user.id,
+      book_id: chapter.book_id,
+      chapter_id: chapterId,
+      completed: completed ?? true,
+      completed_at: completed ? new Date().toISOString() : null,
+      updated_at: new Date().toISOString()
+    };
 
-    if (!hasAccess) {
+    const { data: progressResult, error: progressError } = await supabase
+      .from('progress')
+      .upsert(progressData, {
+        onConflict: 'user_id,chapter_id'
+      })
+      .select()
+      .single();
+
+    if (progressError) {
+      console.error('Error updating progress:', progressError);
       return NextResponse.json(
-        { error: 'Access denied to this chapter' },
-        { status: 403 }
+        { error: 'Failed to update progress' },
+        { status: 500 }
       );
     }
 
-    // Update or create progress
-    const progress = await prisma.progress.upsert({
-      where: {
-        userId_chapterId: {
-          userId: session.user.id,
-          chapterId
-        }
-      },
-      update: {
-        completed: completed ?? true,
-        completedAt: completed ? new Date() : null
-      },
-      create: {
-        user: {
-          connect: {
-            id: session.user.id
-          }
-        },
-        book: {
-          connect: {
-            id: chapter.book.id
-          }
-        },
-        chapter: {
-          connect: {
-            id: chapterId
-          }
-        },
-        completed: completed ?? true,
-        completedAt: completed ? new Date() : null
-      },
-      include: {
-        chapter: {
-          include: {
-            book: true
-          }
-        }
-      }
-    });
-
     return NextResponse.json({ 
       success: true, 
-      progress,
-      message: `Chapter "${chapter.title}" marked as ${completed ? 'completed' : 'incomplete'}`
+      progress: progressResult,
+      message: `Progress updated successfully`
     });
   } catch (error) {
     console.error('Error updating progress:', error);

@@ -1,8 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getToken } from 'next-auth/jwt';
+import { createServerClient } from '@supabase/ssr';
+import type { Database } from '@/lib/supabase';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  let response = NextResponse.next({
+    request: {
+      headers: request.headers,
+    },
+  });
+
+  // Create Supabase client for middleware with improved cookie handling
+  const supabase = createServerClient<Database>(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({
+            request,
+          });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
 
   // Skip middleware for static files, API routes, and public routes
   if (
@@ -16,7 +46,7 @@ export async function middleware(request: NextRequest) {
     pathname === '/contact' ||
     pathname.startsWith('/register/organization')
   ) {
-    return NextResponse.next();
+    return response;
   }
 
   // Handle organization-specific routes
@@ -29,21 +59,35 @@ export async function middleware(request: NextRequest) {
     }
 
     // For login routes, allow access without authentication
-    // Organization validation will happen in the layout component
     if (pathname.endsWith('/login')) {
-      return NextResponse.next();
+      return response;
     }
 
     // For authenticated routes, verify user session
-    const token = await getToken({ req: request });
+    // First check if we have session cookies
+    const hasAuthCookies = request.cookies.getAll().some(cookie => 
+      cookie.name.startsWith('sb-') && cookie.value
+    );
 
-    if (!token) {
+    if (!hasAuthCookies) {
       return NextResponse.redirect(new URL(`/org/${orgSlug}/login`, request.url));
     }
 
+    // Try to get user, but be more lenient on errors during cookie refresh
+    const { data: { user }, error } = await supabase.auth.getUser();
+
+    // Only redirect if we're certain there's no valid session
+    // Ignore temporary network errors or token refresh issues
+    if (!user && error && !error.message?.includes('refresh')) {
+      return NextResponse.redirect(new URL(`/org/${orgSlug}/login`, request.url));
+    }
+
+    // If we have cookies but user is null (likely during refresh), allow through
+    // The client-side provider will handle the final authentication state
+
     // Organization membership validation will be handled in layout components
-    // to avoid database calls in middleware
-    return NextResponse.next();
+    // to avoid additional database calls in middleware
+    return response;
   }
 
   // Handle legacy routes - redirect to homepage for now
@@ -62,10 +106,10 @@ export async function middleware(request: NextRequest) {
 
   // Allow /login route for email-first flow
   if (pathname === '/login') {
-    return NextResponse.next();
+    return response;
   }
 
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {

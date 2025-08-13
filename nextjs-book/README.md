@@ -211,6 +211,217 @@ The Python environment is initialized in `src/lib/usePyodide.ts`. You can extend
 await pyodideInstance.loadPackage(['numpy', 'matplotlib', 'pandas']);
 ```
 
+## 📧 Supabase Setup
+
+This application uses **Supabase** for authentication, database, and email functionality. Follow these steps to set up your Supabase project:
+
+### Step 1: Create Supabase Project
+
+1. Go to [supabase.com](https://supabase.com) and sign up
+2. Create a new project
+3. Note your **PROJECT_REF** from the URL: `https://supabase.com/dashboard/project/YOUR_PROJECT_REF`
+4. Go to **Settings > API** and copy your:
+   - Project URL (e.g., `https://YOUR_PROJECT_REF.supabase.co`)
+   - Anon public key
+   - Service role key (keep secret!)
+
+### Step 2: Environment Variables
+
+Add these to your `.env.local`:
+
+```bash
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key_here
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+
+# App Configuration  
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### Step 3: Database Setup
+
+Run these SQL scripts in your **Supabase Dashboard > SQL Editor**:
+
+#### 3.1 Create Database Tables
+
+```sql
+-- Run supabase-migration.sql first
+-- This creates all tables: organizations, users, books, chapters, etc.
+-- File: supabase-migration.sql (copy contents and run in SQL Editor)
+```
+
+#### 3.2 Create Verification Codes Table
+
+```sql
+-- Create verification_codes table for passwordless login
+CREATE TABLE verification_codes (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT NOT NULL,
+  code TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ NULL,
+  attempts INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create indexes for performance
+CREATE INDEX idx_verification_codes_email ON verification_codes(email);
+CREATE INDEX idx_verification_codes_expires_at ON verification_codes(expires_at);
+
+-- Enable Row Level Security
+ALTER TABLE verification_codes ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Allow anonymous read access" ON verification_codes
+  FOR SELECT TO anon USING (true);
+
+CREATE POLICY "Allow service role full access" ON verification_codes
+  FOR ALL TO service_role USING (true);
+
+CREATE POLICY "Allow authenticated users to update verification codes" ON verification_codes
+  FOR UPDATE TO authenticated USING (true);
+
+-- Cleanup function for expired codes
+CREATE OR REPLACE FUNCTION cleanup_expired_verification_codes()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM verification_codes 
+  WHERE expires_at < NOW() - INTERVAL '1 hour';
+END;
+$$ LANGUAGE plpgsql;
+```
+
+#### 3.3 Set up Row Level Security Policies
+
+```sql
+-- Run supabase-rls-policies.sql
+-- This sets up security policies for all tables
+-- File: supabase-rls-policies.sql (copy contents and run in SQL Editor)
+```
+
+### Step 4: Email Setup (SMTP)
+
+#### 4.1 Install Supabase CLI
+
+```bash
+# macOS
+brew install supabase/tap/supabase
+
+# Other platforms: https://supabase.com/docs/guides/cli
+```
+
+#### 4.2 Deploy Email Function
+
+```bash
+# Login and link your project
+supabase login
+supabase link --project-ref YOUR_PROJECT_REF
+
+# Set up SMTP secrets (example with Gmail)
+supabase secrets set SMTP_HOST=smtp.gmail.com
+supabase secrets set SMTP_PORT=587
+supabase secrets set SMTP_USER=your-email@gmail.com
+supabase secrets set SMTP_PASS=your-gmail-app-password
+supabase secrets set FROM_EMAIL=your-email@gmail.com
+
+# Deploy the email function
+supabase functions deploy send-email-smtp
+```
+
+#### 4.3 Gmail App Password Setup
+
+For Gmail SMTP:
+1. Enable 2-Factor Authentication on your Google account
+2. Go to [Google Account Settings](https://myaccount.google.com)
+3. **Security → 2-Step Verification → App passwords**
+4. Generate a new app password for "Mail"
+5. Use this app password (not your regular password) as `SMTP_PASS`
+
+#### 4.4 Alternative Email Providers
+
+**Outlook/Hotmail:**
+```bash
+supabase secrets set SMTP_HOST=smtp-mail.outlook.com
+supabase secrets set SMTP_USER=your-email@outlook.com
+supabase secrets set SMTP_PASS=your-account-password
+```
+
+**Custom SMTP:**
+```bash
+supabase secrets set SMTP_HOST=smtp.your-provider.com
+supabase secrets set SMTP_PORT=587
+supabase secrets set SMTP_USER=your-username
+supabase secrets set SMTP_PASS=your-password
+```
+
+### Step 5: Test Your Setup
+
+#### 5.1 Test Database Connection
+
+```bash
+npm run dev
+# Visit http://localhost:3000/test-db to verify database connection
+```
+
+#### 5.2 Test Email Function
+
+```bash
+curl -X POST "https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-email-smtp" \
+  -H "Authorization: Bearer YOUR_ANON_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "test@example.com",
+    "subject": "Test Email",
+    "html": "<h1>🎉 SMTP is working!</h1><p>Your verification code workflow is ready.</p>"
+  }'
+```
+
+#### 5.3 Test Verification Code Flow
+
+1. **Send Code**: POST to `/api/auth/send-code`
+   ```json
+   {"email": "test@yourdomain.com", "orgSlug": "demo-org"}
+   ```
+
+2. **Check Email**: You should receive a 6-digit verification code
+
+3. **Verify Code**: POST to `/api/auth/verify-code`
+   ```json
+   {"email": "test@yourdomain.com", "code": "123456", "orgSlug": "demo-org"}
+   ```
+
+### 🔧 Troubleshooting
+
+#### Function Not Found
+```bash
+supabase functions list  # Check if deployed
+supabase functions deploy send-email-smtp  # Redeploy if needed
+```
+
+#### Email Not Sending
+```bash
+supabase functions logs send-email-smtp  # Check function logs
+supabase secrets list  # Verify secrets are set
+```
+
+#### Development Mode
+If SMTP isn't configured, emails will be logged to console:
+```
+📧 Email fallback (SMTP function not deployed): {
+  to: ['user@example.com'],
+  subject: 'Your verification code: 123456'
+}
+```
+
+### 📁 Important Files
+
+- `supabase-migration.sql` - Complete database schema
+- `supabase-verification-codes-table.sql` - Verification codes table
+- `supabase-rls-policies.sql` - Security policies
+- `supabase/functions/send-email-smtp/` - Email function
+- `SUPABASE_SMTP_SETUP.md` - Detailed email setup guide
+
 ## 🔄 Migrated from Flask
 
 This Next.js version maintains feature parity with the original Flask application:

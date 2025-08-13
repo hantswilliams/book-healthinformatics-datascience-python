@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 const findOrganizationsSchema = z.object({
@@ -10,28 +10,46 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { email } = findOrganizationsSchema.parse(body);
+    
+    // Use service role key for this public endpoint
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
 
     // Find all users with this email across organizations
-    const users = await prisma.user.findMany({
-      where: { 
-        email: email.toLowerCase(),
-        isActive: true 
-      },
-      include: {
-        organization: {
-          select: {
-            id: true,
-            slug: true,
-            name: true,
-            logo: true,
-            industry: true,
-            subscriptionStatus: true,
-          },
-        },
-      },
-    });
+    const { data: users, error } = await supabase
+      .from('users')
+      .select(`
+        id,
+        email,
+        role,
+        first_name,
+        last_name,
+        is_active,
+        organization:organizations(
+          id,
+          slug,
+          name,
+          logo,
+          industry,
+          subscription_status
+        )
+      `)
+      .eq('email', email.toLowerCase())
+      .eq('is_active', true);
 
-    if (users.length === 0) {
+    if (error) {
+      console.error('Database error:', error);
+      return NextResponse.json({
+        success: false,
+        error: 'Failed to find organizations',
+        organizations: [],
+      }, { status: 500 });
+    }
+
+    if (!users || users.length === 0) {
       return NextResponse.json({
         success: false,
         error: 'No account found with this email address',
@@ -47,10 +65,10 @@ export async function POST(request: NextRequest) {
         name: user.organization.name,
         logo: user.organization.logo,
         industry: user.organization.industry,
-        subscriptionStatus: user.organization.subscriptionStatus,
+        subscriptionStatus: user.organization.subscription_status,
         userRole: user.role,
-        userFirstName: user.firstName,
-        userLastName: user.lastName,
+        userFirstName: user.first_name,
+        userLastName: user.last_name,
       }))
       .filter((org, index, self) => 
         index === self.findIndex(o => o.id === org.id)

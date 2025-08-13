@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { useOrgSlug } from '@/lib/useOrgSlug';
+import { useSupabase } from '@/lib/SupabaseProvider';
 import LogoMark from '@/components/LogoMark';
 import type { Chapter, User } from '@/types';
 
@@ -27,10 +28,23 @@ interface SidebarProps {
   onClose?: () => void;
 }
 
-export default function Sidebar({ books, user, loading, className = '', onClose }: SidebarProps) {
+export default function Sidebar({ books, user: propUser, loading, className = '', onClose }: SidebarProps) {
   const pathname = usePathname();
   const orgSlug = useOrgSlug();
+  const { user: supabaseUser, userProfile } = useSupabase();
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
+  
+  // Use Supabase user profile for role checks if available, otherwise fall back to prop user
+  const user = userProfile ? {
+    id: supabaseUser?.id || '',
+    username: userProfile.username || '',
+    email: userProfile.email || '',
+    firstName: userProfile.first_name || '',
+    lastName: userProfile.last_name || '',
+    role: userProfile.role as 'OWNER' | 'ADMIN' | 'INSTRUCTOR' | 'LEARNER',
+    createdAt: new Date(userProfile.joined_at || ''),
+    updatedAt: new Date(userProfile.updated_at || userProfile.joined_at || '')
+  } : propUser;
 
   // Auto-expand book that contains current chapter
   useEffect(() => {
@@ -108,17 +122,17 @@ export default function Sidebar({ books, user, loading, className = '', onClose 
             </svg>
             <span className="font-medium">Resources</span>
           </Link>
-          {user?.role === 'admin' && (
+          {user && ['OWNER', 'ADMIN'].includes(user.role) && (
             <Link
-              href={orgSlug ? `/org/${orgSlug}/admin` : '/admin'}
+              href={orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard'}
               onClick={onClose}
-              className="flex items-center px-3 py-2 mt-2 text-orange-700 hover:bg-orange-50 hover:text-orange-800 rounded-lg transition"
+              className="flex items-center px-3 py-2 mt-2 text-indigo-700 hover:bg-indigo-50 hover:text-indigo-800 rounded-lg transition"
             >
               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-              <span className="font-medium">Admin Panel</span>
+              <span className="font-medium">Admin</span>
             </Link>
           )}
         </div>

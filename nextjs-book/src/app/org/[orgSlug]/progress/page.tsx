@@ -1,8 +1,8 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 interface Progress {
   id: string;
@@ -34,22 +34,22 @@ interface Exercise {
 }
 
 export default function ProgressPage() {
-  const { data: session, status } = useSession();
+  const { user, organization, loading: authLoading } = useSupabase();
   const [progress, setProgress] = useState<Progress[]>([]);
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (session?.user) {
+    if (user && organization) {
       fetchProgress();
       fetchExercises();
       fetchBooks();
     }
-  }, [session]);
+  }, [user, organization]);
 
   const fetchProgress = async () => {
-    if (!session?.user) return;
+    if (!user) return;
     
     try {
       const response = await fetch('/api/progress');
@@ -88,7 +88,7 @@ export default function ProgressPage() {
     }
   };
 
-  if (status === 'loading' || loading) {
+  if (authLoading || loading) {
     return (
       <div className="max-w-4xl mx-auto">
         <div className="animate-pulse">
@@ -103,7 +103,7 @@ export default function ProgressPage() {
     );
   }
 
-  if (!session) {
+  if (!user || !organization) {
     return (
       <div className="max-w-4xl mx-auto text-center">
         <h1 className="text-2xl font-bold text-gray-900 mb-4">Please Sign In</h1>
@@ -300,7 +300,13 @@ export default function ProgressPage() {
                                 }`}>
                                   {isCompleted ? 'Completed' : hasStarted ? 'In Progress' : 'Not Started'}
                                 </span>
-                                {chapterExercises.length > 0 && (
+                                {/* Show section completion status based on chapter completion */}
+                                {isCompleted && (
+                                  <span className="text-xs text-green-600">
+                                    All sections completed
+                                  </span>
+                                )}
+                                {!isCompleted && chapterExercises.length > 0 && (
                                   <span className="text-xs text-gray-600">
                                     {chapterExercises.filter(e => e.isCorrect).length}/{chapterExercises.length} exercises correct
                                   </span>

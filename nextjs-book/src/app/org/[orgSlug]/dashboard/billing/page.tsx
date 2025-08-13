@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import { formatPrice, SUBSCRIPTION_TIERS } from '@/lib/stripe';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 interface BillingEvent {
   id: string;
@@ -43,7 +43,7 @@ interface SubscriptionDetails {
 }
 
 export default function BillingOverview() {
-  const { data: session, status } = useSession();
+  const { user, userProfile, organization: supabaseOrg, loading: authLoading } = useSupabase();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   const [subscriptionDetails, setSubscriptionDetails] = useState<SubscriptionDetails | null>(null);
@@ -51,23 +51,24 @@ export default function BillingOverview() {
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const [error, setError] = useState('');
+  const [showPlanSelection, setShowPlanSelection] = useState(false);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (authLoading) return;
     
-    if (!session) {
+    if (!user || !userProfile) {
       router.push('/login');
       return;
     }
 
     // Check permissions - only owners can view billing
-    if (session.user.role !== 'OWNER') {
-      router.push('/dashboard');
+    if (userProfile.role !== 'OWNER') {
+      router.push(`/org/${orgSlug}/dashboard`);
       return;
     }
 
     fetchBillingData();
-  }, [session, status, router]);
+  }, [user, userProfile, supabaseOrg, authLoading, router]);
 
   const fetchBillingData = async () => {
     try {
@@ -199,7 +200,7 @@ export default function BillingOverview() {
     }
   };
 
-  if (status === 'loading' || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -511,12 +512,12 @@ export default function BillingOverview() {
                                 'Setup Billing Account'
                               )}
                             </button>
-                            <Link
-                              href="/register/organization"
+                            <button
+                              onClick={() => setShowPlanSelection(true)}
                               className="bg-gray-600 text-white px-4 py-2 rounded-md text-sm hover:bg-zinc-700"
                             >
                               Choose Plan
-                            </Link>
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -572,6 +573,108 @@ export default function BillingOverview() {
                   </button>
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Plan Selection Modal */}
+        {showPlanSelection && (
+          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+            <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
+              <div className="mt-3">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg leading-6 font-medium text-gray-900">Choose Your Plan</h3>
+                  <button
+                    onClick={() => setShowPlanSelection(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {Object.entries(SUBSCRIPTION_TIERS).map(([key, tier]) => (
+                    <div
+                      key={key}
+                      className={`border rounded-lg p-6 relative ${
+                        key === 'PRO' ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-200'
+                      }`}
+                    >
+                      {key === 'PRO' && (
+                        <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                          <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                            Most Popular
+                          </span>
+                        </div>
+                      )}
+                      
+                      <div className="text-center">
+                        <h4 className="text-xl font-semibold text-gray-900 mb-2">{tier.name}</h4>
+                        <div className="mb-4">
+                          {tier.amount === 0 ? (
+                            <div>
+                              <span className="text-3xl font-bold text-gray-900">Contact</span>
+                              <p className="text-sm text-gray-500">for pricing</p>
+                            </div>
+                          ) : (
+                            <div>
+                              <span className="text-3xl font-bold text-gray-900">{formatPrice(tier.amount)}</span>
+                              <span className="text-gray-500">/month</span>
+                              <p className="text-sm text-green-600 mt-1">
+                                Save 34% with annual billing: {formatPrice(tier.annualAmount)}/month
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="mb-6">
+                          <p className="text-sm font-medium text-gray-900 mb-3">
+                            Up to {tier.seats === 999999 ? 'Unlimited' : tier.seats} team members
+                          </p>
+                          <ul className="text-sm text-gray-600 space-y-2">
+                            {tier.features.map((feature, index) => (
+                              <li key={index} className="flex items-center">
+                                <svg className="h-4 w-4 text-green-500 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                {feature}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        <button
+                          onClick={() => {
+                            // TODO: Implement plan selection logic
+                            setShowPlanSelection(false);
+                            setError('Plan selection will be implemented when Stripe is configured.');
+                          }}
+                          className={`w-full py-2 px-4 rounded-md text-sm font-medium transition-colors ${
+                            key === 'PRO'
+                              ? 'bg-blue-600 text-white hover:bg-blue-700'
+                              : key === 'ENTERPRISE'
+                              ? 'bg-gray-800 text-white hover:bg-gray-900'
+                              : 'bg-gray-600 text-white hover:bg-gray-700'
+                          }`}
+                        >
+                          {key === 'ENTERPRISE' ? 'Contact Sales' : 'Select Plan'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={() => setShowPlanSelection(false)}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md text-sm hover:bg-gray-400"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

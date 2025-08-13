@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 interface BookProgress {
   bookId: string;
@@ -53,7 +53,7 @@ interface ProgressData {
 }
 
 export default function ProgressDashboard() {
-  const { data: session, status } = useSession();
+  const { user, userProfile, organization, loading: authLoading } = useSupabase();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   const [progressData, setProgressData] = useState<ProgressData | null>(null);
@@ -63,21 +63,21 @@ export default function ProgressDashboard() {
   const [sortBy, setSortBy] = useState<'name' | 'progress' | 'activity'>('progress');
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (authLoading) return;
     
-    if (!session) {
+    if (!user) {
       router.push('/login');
       return;
     }
 
     // Check permissions - Only OWNER, ADMIN, and INSTRUCTOR can view progress
-    if (!['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(session.user.role)) {
+    if (!user || !userProfile || !organization || !['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(userProfile.role)) {
       router.push('/dashboard');
       return;
     }
 
     fetchProgressData();
-  }, [session, status, router]);
+  }, [user, userProfile, organization, authLoading, router]);
 
   const fetchProgressData = async () => {
     try {
@@ -159,7 +159,7 @@ export default function ProgressDashboard() {
     }
   };
 
-  if (status === 'loading' || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

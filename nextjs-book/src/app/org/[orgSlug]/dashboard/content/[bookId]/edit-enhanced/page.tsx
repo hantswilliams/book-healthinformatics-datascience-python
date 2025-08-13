@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import EnhancedChapterBuilder from '@/components/EnhancedChapterBuilder';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 // Enhanced interfaces that match our new schema
 interface EnhancedSection {
@@ -50,7 +50,7 @@ interface EnhancedBookData {
 }
 
 export default function EditEnhancedPage() {
-  const { data: session, status } = useSession();
+  const { user, userProfile, organization, loading: authLoading } = useSupabase();
   const router = useRouter();
   const params = useParams();
   const orgSlug = useOrgSlug();
@@ -117,17 +117,17 @@ export default function EditEnhancedPage() {
   }, []);
 
   useEffect(() => {
-    if (!isClient || status === 'loading') return;
-    if (!session) {
+    if (!isClient || authLoading) return;
+    if (!user || !userProfile || !organization) {
       router.push('/login');
       return;
     }
-    if (!['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(session.user.role)) {
+    if (!['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(userProfile.role)) {
       router.push(`/org/${orgSlug}/dashboard/content`);
       return;
     }
     fetchBookData();
-  }, [isClient, status, session?.user?.id, bookId, orgSlug, router, fetchBookData]);
+  }, [isClient, authLoading, user?.id, bookId, orgSlug, router, fetchBookData]);
 
   const addNewChapter = () => {
     setChapterIdCounter(prev => prev + 1);
@@ -228,7 +228,7 @@ export default function EditEnhancedPage() {
   };
 
   // Check permissions and client-side rendering
-  if (!isClient || status === 'loading') {
+  if (!isClient || authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-gray-600">Loading...</div>
@@ -236,7 +236,7 @@ export default function EditEnhancedPage() {
     );
   }
 
-  if (!session || !['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(session.user.role)) {
+  if (!user || !userProfile || !organization || !['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(userProfile.role)) {
     router.push(`/org/${orgSlug}/dashboard/content`);
     return null;
   }

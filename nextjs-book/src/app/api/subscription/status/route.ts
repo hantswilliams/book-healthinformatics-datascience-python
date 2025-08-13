@@ -1,37 +1,74 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { stripe } from '@/lib/stripe-server';
+import type { Database } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
     
-    if (!session?.user) {
+    // Create Supabase client for server-side authentication
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              );
+            } catch {
+              // The `setAll` method was called from a Server Component.
+            }
+          },
+        },
+      }
+    );
+
+    // Get the authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get organization with subscription details
-    const organization = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
-      include: {
-        _count: { select: { users: true } }
-      }
-    });
+    // Get user with organization details
+    const { data: userWithOrg, error: userError } = await supabase
+      .from('users')
+      .select(`
+        *,
+        organization:organizations(*)
+      `)
+      .eq('id', user.id)
+      .eq('is_active', true)
+      .single();
 
-    if (!organization) {
+    if (userError || !userWithOrg || !userWithOrg.organization) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
       );
     }
 
+    const organization = userWithOrg.organization;
+    
+    // Count active users in the organization
+    const { count: userCount } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', organization.id)
+      .eq('is_active', true);
+
     let stripeSubscription = null;
-    if (organization.stripeSubscriptionId) {
+    if (organization.stripe_subscription_id) {
       try {
         stripeSubscription = await stripe.subscriptions.retrieve(
-          organization.stripeSubscriptionId,
+          organization.stripe_subscription_id,
           { expand: ['latest_invoice', 'customer'] }
         );
       } catch (error) {
@@ -41,9 +78,9 @@ export async function GET(request: NextRequest) {
 
     // Calculate trial days remaining
     let trialDaysRemaining = 0;
-    if (organization.trialEndsAt && organization.subscriptionStatus === 'TRIAL') {
+    if (organization.trial_ends_at && organization.subscription_status === 'TRIAL') {
       const now = new Date();
-      const trialEnd = new Date(organization.trialEndsAt);
+      const trialEnd = new Date(organization.trial_ends_at);
       const diffTime = trialEnd.getTime() - now.getTime();
       trialDaysRemaining = Math.max(0, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
     }
@@ -53,15 +90,19 @@ export async function GET(request: NextRequest) {
         id: organization.id,
         name: organization.name,
         slug: organization.slug,
-        subscriptionStatus: organization.subscriptionStatus,
-        subscriptionTier: organization.subscriptionTier,
-        maxSeats: organization.maxSeats,
-        currentSeats: organization._count.users,
-        subscriptionStartedAt: organization.subscriptionStartedAt,
-        subscriptionEndsAt: organization.subscriptionEndsAt,
-        trialEndsAt: organization.trialEndsAt,
+        description: organization.description,
+        website: organization.website,
+        industry: organization.industry,
+        subscriptionStatus: organization.subscription_status,
+        subscriptionTier: organization.subscription_tier,
+        maxSeats: organization.max_seats,
+        currentSeats: userCount || 0,
+        subscriptionStartedAt: organization.subscription_started_at,
+        subscriptionEndsAt: organization.subscription_ends_at,
+        trialEndsAt: organization.trial_ends_at,
         trialDaysRemaining,
-        hasStripeCustomer: !!organization.stripeCustomerId,
+        hasStripeCustomer: !!organization.stripe_customer_id,
+        createdAt: organization.created_at,
       },
       stripe: stripeSubscription ? {
         id: stripeSubscription.id,
@@ -72,9 +113,9 @@ export async function GET(request: NextRequest) {
         latestInvoice: stripeSubscription.latest_invoice,
       } : null,
       permissions: {
-        canManageBilling: session.user.role === 'OWNER',
-        canInviteUsers: ['OWNER', 'ADMIN'].includes(session.user.role),
-        canManageContent: ['OWNER', 'ADMIN'].includes(session.user.role),
+        canManageBilling: userWithOrg.role === 'OWNER',
+        canInviteUsers: ['OWNER', 'ADMIN'].includes(userWithOrg.role),
+        canManageContent: ['OWNER', 'ADMIN'].includes(userWithOrg.role),
       }
     };
 

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 interface UploadedFile {
   id: string;
@@ -35,7 +35,7 @@ interface BookForm { // backend model remains 'book'
 }
 
 export default function CreateBook() { // component name kept; UI text will say Course
-  const { data: session } = useSession();
+  const { user, userProfile, organization } = useSupabase();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   
@@ -59,7 +59,7 @@ export default function CreateBook() { // component name kept; UI text will say 
   const [unassignedFiles, setUnassignedFiles] = useState<UploadedFile[]>([]);
 
   // Check permissions
-  if (!session || !['OWNER', 'ADMIN'].includes(session.user.role)) {
+  if (!user || !userProfile || !organization || !['OWNER', 'ADMIN'].includes(userProfile.role)) {
     router.push('/dashboard');
     return null;
   }

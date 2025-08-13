@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { getAuthenticatedUser, createClient } from '@/lib/supabase-server';
 import { z } from 'zod';
 
 const schema = z.object({ sectionIds: z.array(z.string()).min(1) });
@@ -11,42 +9,75 @@ export async function PATCH(
   context: { params: Promise<{ chapterId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user || !['OWNER','ADMIN'].includes(session.user.role)) {
+    const { user, error: authError } = await getAuthenticatedUser();
+    if (authError || !user || !['OWNER','ADMIN'].includes(user.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { chapterId } = await context.params;
+    const supabase = await createClient();
 
     const body = await request.json();
     const { sectionIds } = schema.parse(body);
 
-    // Fetch chapter and verify belongs to org
-    const chapter = await prisma.chapter.findFirst({
-      where: { id: chapterId },
-      include: { book: true }
-    });
-    if (!chapter || chapter.book.organizationId !== session.user.organizationId) {
+    // Fetch chapter and verify belongs to user's org
+    const { data: chapter, error: chapterError } = await supabase
+      .from('chapters')
+      .select(`
+        id,
+        title,
+        book:books (
+          id,
+          title,
+          organization_id
+        )
+      `)
+      .eq('id', chapterId)
+      .single();
+
+    if (chapterError || !chapter || (chapter.book as any)?.organization_id !== user.organization_id) {
       return NextResponse.json({ error: 'Chapter not found' }, { status: 404 });
     }
 
-    const existingSections = await prisma.section.findMany({
-      where: { chapterId },
-      select: { id: true }
-    });
-    const existingIds = new Set(existingSections.map(s => s.id));
+    // Get existing sections to validate IDs
+    const { data: existingSections, error: sectionsError } = await supabase
+      .from('sections')
+      .select('id')
+      .eq('chapter_id', chapterId);
+
+    if (sectionsError) {
+      throw sectionsError;
+    }
+
+    const existingIds = new Set((existingSections || []).map(s => s.id));
     if (sectionIds.some(id => !existingIds.has(id))) {
       return NextResponse.json({ error: 'Invalid section ids' }, { status: 400 });
     }
 
-    await prisma.$transaction(async (tx) => {
-      for (let i = 0; i < sectionIds.length; i++) {
-        await tx.section.update({ where: { id: sectionIds[i] }, data: { order: -(i + 1) } });
+    // Update section orders
+    // First, set negative orders to avoid conflicts
+    for (let i = 0; i < sectionIds.length; i++) {
+      const { error: updateError } = await supabase
+        .from('sections')
+        .update({ display_order: -(i + 1) })
+        .eq('id', sectionIds[i]);
+      
+      if (updateError) {
+        throw updateError;
       }
-      for (let i = 0; i < sectionIds.length; i++) {
-        await tx.section.update({ where: { id: sectionIds[i] }, data: { order: i + 1 } });
+    }
+
+    // Then set the final positive orders
+    for (let i = 0; i < sectionIds.length; i++) {
+      const { error: updateError } = await supabase
+        .from('sections')
+        .update({ display_order: i + 1 })
+        .eq('id', sectionIds[i]);
+      
+      if (updateError) {
+        throw updateError;
       }
-    });
+    }
 
     return NextResponse.json({ success: true, message: 'Sections reordered' });
   } catch (error) {

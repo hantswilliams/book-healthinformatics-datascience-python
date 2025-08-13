@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { getAuthenticatedUser, createClient } from '@/lib/supabase-server';
 import { z } from 'zod';
 
 const updateBookSchema = z.object({
@@ -28,48 +26,108 @@ export async function GET(
   context: { params: Promise<{ bookId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    const { user, error: authError } = await getAuthenticatedUser();
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const { bookId } = await context.params;
+    const supabase = await createClient();
 
-  const book = await prisma.book.findFirst({
-      where: {
-    id: bookId,
-        // allow owner/admin/instructor within org; learners only if published
-        OR: [
-          { organizationId: session.user.organizationId },
-          { organizationId: null }
-        ]
-      },
-      include: {
-        chapters: {
-          orderBy: { order: 'asc' },
-          include: {
-            sections: {
-              orderBy: { order: 'asc' }
-            }
-          }
-        }
-      }
-    });
+    // Get the book with chapters and sections
+    const { data: book, error: bookError } = await supabase
+      .from('books')
+      .select(`
+        id,
+        slug,
+        title,
+        description,
+        cover_image,
+        difficulty,
+        estimated_hours,
+        category,
+        tags,
+        is_published,
+        is_public,
+        display_order,
+        organization_id,
+        created_by,
+        created_at,
+        updated_at,
+        chapters (
+          id,
+          title,
+          emoji,
+          display_order,
+          estimated_minutes,
+          is_published,
+          default_execution_mode,
+          sections (
+            id,
+            title,
+            type,
+            content,
+            display_order,
+            execution_mode,
+            depends_on
+          )
+        )
+      `)
+      .eq('id', bookId)
+      .single();
 
-    if (!book) {
+    if (bookError || !book) {
       return NextResponse.json({ error: 'Book not found' }, { status: 404 });
     }
 
-    // basic authorization: only org members can view org book drafts
-    if (!book.isPublished && book.organizationId && book.organizationId !== session.user.organizationId) {
+    // Check authorization: user must be in same organization or book must be public
+    const canAccess = book.is_public || 
+                     (book.organization_id === user.organization_id) ||
+                     (book.organization_id === null);
+
+    if (!canAccess) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
     }
 
+    // If book is unpublished, only org members can view it
+    if (!book.is_published && book.organization_id && book.organization_id !== user.organization_id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    // Transform data to match expected format
+    const transformedBook = {
+      ...book,
+      isPublished: book.is_published,
+      isPublic: book.is_public,
+      organizationId: book.organization_id,
+      createdBy: book.created_by,
+      createdAt: book.created_at,
+      updatedAt: book.updated_at,
+      estimatedHours: book.estimated_hours,
+      coverImage: book.cover_image,
+      order: book.display_order,
+      tags: book.tags ? JSON.parse(book.tags) : [],
+      chapters: (book.chapters || [])
+        .sort((a: any, b: any) => a.display_order - b.display_order)
+        .map((chapter: any) => ({
+          ...chapter,
+          order: chapter.display_order,
+          isPublished: chapter.is_published,
+          estimatedMinutes: chapter.estimated_minutes,
+          defaultExecutionMode: chapter.default_execution_mode,
+          sections: (chapter.sections || [])
+            .sort((a: any, b: any) => a.display_order - b.display_order)
+            .map((section: any) => ({
+              ...section,
+              order: section.display_order,
+              executionMode: section.execution_mode,
+              dependsOn: section.depends_on ? JSON.parse(section.depends_on) : []
+            }))
+        }))
+    };
+
     return NextResponse.json({
       success: true,
-      book: {
-        ...book,
-        tags: book.tags ? JSON.parse(book.tags) : []
-      }
+      book: transformedBook
     });
   } catch (error) {
     console.error('Error fetching book:', error);
@@ -82,49 +140,57 @@ export async function PATCH(
   context: { params: Promise<{ bookId: string }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user || !['OWNER', 'ADMIN'].includes(session.user.role)) {
+    const { user, error: authError } = await getAuthenticatedUser();
+    if (authError || !user || !['OWNER', 'ADMIN'].includes(user.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { bookId } = await context.params;
+    const supabase = await createClient();
 
     const body = await request.json();
     const validated = updateBookSchema.parse(body);
 
-    // ensure book belongs to org
-    const existing = await prisma.book.findFirst({
-      where: { id: bookId, organizationId: session.user.organizationId }
-    });
-    if (!existing) {
+    // Ensure book belongs to user's organization
+    const { data: existing, error: findError } = await supabase
+      .from('books')
+      .select('*')
+      .eq('id', bookId)
+      .eq('organization_id', user.organization_id)
+      .single();
+
+    if (findError || !existing) {
       return NextResponse.json({ error: 'Book not found in your organization' }, { status: 404 });
     }
 
-    const updated = await prisma.book.update({
-      where: { id: bookId },
-      data: {
+    // Update the book
+    const { data: updated, error: updateError } = await supabase
+      .from('books')
+      .update({
         title: validated.title ?? existing.title,
         description: validated.description !== undefined ? validated.description : existing.description,
         difficulty: validated.difficulty ?? existing.difficulty,
         category: validated.category ?? existing.category,
-        estimatedHours: validated.estimatedHours ?? existing.estimatedHours,
-        tags: validated.tags ? JSON.stringify(validated.tags) : existing.tags
-      },
-      select: {
-        id: true,
-        title: true,
-        description: true,
-        difficulty: true,
-        category: true,
-        estimatedHours: true,
-        tags: true,
-        updatedAt: true
-      }
-    });
+        estimated_hours: validated.estimatedHours ?? existing.estimated_hours,
+        tags: validated.tags ? JSON.stringify(validated.tags) : existing.tags,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', bookId)
+      .select('id, title, description, difficulty, category, estimated_hours, tags, updated_at')
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
 
     return NextResponse.json({
       success: true,
-      book: { ...updated, tags: updated.tags ? JSON.parse(updated.tags) : [] },
+      book: { 
+        ...updated, 
+        tags: updated.tags ? JSON.parse(updated.tags) : [],
+        estimatedHours: updated.estimated_hours,
+        updatedAt: updated.updated_at
+      },
       message: 'Book updated successfully'
     });
   } catch (error) {
@@ -141,9 +207,9 @@ export async function DELETE(
   { params }: { params: { bookId: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const { user, error: authError } = await getAuthenticatedUser();
     
-    if (!session?.user || !['OWNER', 'ADMIN'].includes(session.user.role)) {
+    if (authError || !user || !['OWNER', 'ADMIN'].includes(user.role)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -151,29 +217,32 @@ export async function DELETE(
     }
 
     const bookId = params.bookId;
+    const supabase = await createClient();
 
     // Verify the book belongs to the user's organization
-    const book = await prisma.book.findFirst({
-      where: {
-        id: bookId,
-        organizationId: session.user.organizationId
-      },
-      include: {
-        chapters: true
-      }
-    });
+    const { data: book, error: findError } = await supabase
+      .from('books')
+      .select('id, title, organization_id')
+      .eq('id', bookId)
+      .eq('organization_id', user.organization_id)
+      .single();
 
-    if (!book) {
+    if (findError || !book) {
       return NextResponse.json(
         { error: 'Book not found in your organization' },
         { status: 404 }
       );
     }
 
-    // Delete the book and all related chapters (cascade delete)
-    await prisma.book.delete({
-      where: { id: bookId }
-    });
+    // Delete the book (cascade delete will handle chapters and sections)
+    const { error: deleteError } = await supabase
+      .from('books')
+      .delete()
+      .eq('id', bookId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
 
     return NextResponse.json({ 
       success: true,

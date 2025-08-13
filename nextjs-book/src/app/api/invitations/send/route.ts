@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { Database } from '@/lib/supabase-types';
 import { sendEmail } from '@/lib/email';
 import { createInvitationEmail } from '@/lib/email-templates';
 import { z } from 'zod';
@@ -9,19 +9,49 @@ import crypto from 'crypto';
 
 const inviteSchema = z.object({
   email: z.string().email(),
-  role: z.enum(['ADMIN', 'INSTRUCTOR', 'LEARNER']).default('LEARNER'),
+  role: z.enum(['OWNER', 'ADMIN', 'INSTRUCTOR', 'LEARNER']).default('LEARNER'),
 });
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
     
-    if (!session?.user) {
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get user profile to check role and organization
+    const { data: userProfile, error: profileError } = await supabase
+      .from('users')
+      .select('role, organization_id, first_name, last_name, email')
+      .eq('id', user.id)
+      .single();
+
+    if (profileError || !userProfile) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
+    }
+
     // Check if user can send invitations (OWNER or ADMIN)
-    if (!['OWNER', 'ADMIN'].includes(session.user.role)) {
+    if (!['OWNER', 'ADMIN'].includes(userProfile.role)) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
@@ -32,123 +62,136 @@ export async function POST(request: NextRequest) {
     const { email, role } = inviteSchema.parse(body);
 
     // Get user's organization with current user count
-    const organization = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId },
-      include: {
-        users: { select: { id: true } },
-        _count: { select: { users: true } }
-      }
-    });
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .select('id, name, max_seats')
+      .eq('id', userProfile.organization_id)
+      .single();
 
-    if (!organization) {
+    if (orgError || !organization) {
       return NextResponse.json(
         { error: 'Organization not found' },
         { status: 404 }
       );
     }
 
-    // Check if organization has reached seat limit
-    if (organization._count.users >= organization.maxSeats) {
+    // Get current user count for the organization
+    const { count: userCount, error: countError } = await supabase
+      .from('users')
+      .select('id', { count: 'exact', head: true })
+      .eq('organization_id', userProfile.organization_id);
+
+    if (countError) {
+      console.error('Error counting users:', countError);
       return NextResponse.json(
-        { error: `Seat limit reached. Your plan allows ${organization.maxSeats} users.` },
+        { error: 'Failed to check seat limit' },
+        { status: 500 }
+      );
+    }
+
+    // Check if organization has reached seat limit
+    if (userCount && userCount >= organization.max_seats) {
+      return NextResponse.json(
+        { error: `Seat limit reached. Your plan allows ${organization.max_seats} users.` },
         { status: 400 }
       );
     }
 
-    // Check if user is already a member of this organization
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
+    // Check if user is already a member of this or another organization
+    const { data: existingUser, error: userCheckError } = await supabase
+      .from('users')
+      .select('organization_id, id')
+      .eq('email', email)
+      .maybeSingle();
 
-    if (existingUser && existingUser.organizationId === session.user.organizationId) {
+    if (userCheckError) {
+      console.error('Error checking existing user:', userCheckError);
+    }
+
+    if (existingUser && existingUser.organization_id === userProfile.organization_id) {
       return NextResponse.json(
         { error: 'User is already a member of this organization' },
         { status: 400 }
       );
     }
 
-    if (existingUser && existingUser.organizationId !== session.user.organizationId) {
+    if (existingUser && existingUser.organization_id !== userProfile.organization_id) {
       return NextResponse.json(
         { error: 'User is already a member of another organization' },
         { status: 400 }
       );
     }
 
-    // Check if there's already a pending invitation
-    const existingInvitation = await prisma.invitation.findUnique({
-      where: {
-        email_organizationId: {
-          email,
-          organizationId: session.user.organizationId
-        }
-      }
-    });
+    // Generate a unique user ID for the new user
+    const newUserId = crypto.randomUUID();
+    
+    // Create user directly in the users table
+    const { data: newUser, error: createUserError } = await supabase
+      .from('users')
+      .insert({
+        id: newUserId,
+        email,
+        username: email.split('@')[0],
+        first_name: null,
+        last_name: email.split('@')[0], // Use email prefix as temporary last name
+        organization_id: userProfile.organization_id,
+        role,
+        invited_by: user.id,
+        is_active: true,
+        onboarding_completed: false
+      })
+      .select()
+      .single();
 
-    if (existingInvitation && existingInvitation.expiresAt > new Date()) {
+    if (createUserError || !newUser) {
+      console.error('Error creating user:', createUserError);
+      
+      // Check if it's a duplicate key constraint violation
+      if (createUserError?.code === '23505') {
+        return NextResponse.json(
+          { error: 'A user with this email already exists. Please check and try again.' },
+          { status: 409 }
+        );
+      }
+      
       return NextResponse.json(
-        { error: 'Invitation already sent and still valid' },
-        { status: 400 }
+        { error: 'Failed to create user account' },
+        { status: 500 }
       );
     }
 
-    // Generate secure invitation token
-    const token = crypto.randomBytes(32).toString('hex');
+    // Send welcome email to the newly created user
+    console.log(`Sending welcome email to newly created user ${email} with role: ${role}`);
     
-    // Set expiration to 7 days from now
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    // Delete existing invitation if it exists (expired ones)
-    if (existingInvitation) {
-      await prisma.invitation.delete({
-        where: { id: existingInvitation.id }
-      });
-    }
-
-    // Create new invitation
-    const invitation = await prisma.invitation.create({
-      data: {
-        email,
-        organizationId: session.user.organizationId,
-        invitedBy: session.user.id,
-        role,
-        token,
-        expiresAt,
-      },
-      include: {
-        organization: true,
-        inviter: {
-          select: {
-            firstName: true,
-            lastName: true,
-            email: true
-          }
-        }
-      }
-    });
-
-    // Send invitation email
-    const inviteUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/register/join?token=${token}`;
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+    const loginUrl = `${baseUrl}/org/${organization.slug || organization.id}/login`;
     
     try {
-      const emailHtml = createInvitationEmail({
-        inviteeName: email.split('@')[0], // Use email username as fallback name
-        organizationName: invitation.organization.name,
-        inviterName: `${invitation.inviter.firstName} ${invitation.inviter.lastName}`,
-        role: invitation.role,
-        inviteUrl,
-        expiresAt: invitation.expiresAt
+      const { createWelcomeEmail } = await import('@/lib/email-templates');
+      
+      const emailHtml = createWelcomeEmail({
+        userName: email.split('@')[0],
+        organizationName: organization.name,
+        loginUrl
       });
+      
+      console.log(`📧 Generated welcome email for ${email}`);
+      console.log(`📋 Email subject: Welcome to ${organization.name}!`);
 
       const emailResult = await sendEmail({
         to: email,
-        subject: `You've been invited to join ${invitation.organization.name}`,
+        subject: `Welcome to ${organization.name}!`,
         html: emailHtml
       });
 
       if (!emailResult.success) {
-        console.error('Failed to send invitation email:', emailResult.error);
+        console.error('Failed to send welcome email:', emailResult.error);
         // Continue with the response even if email fails
+      }
+      
+      // In development, log the login URL for testing
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`🔗 Login URL for ${email}: ${loginUrl}`);
       }
     } catch (emailError) {
       console.error('Email sending error:', emailError);
@@ -158,12 +201,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: {
-        id: invitation.id,
-        email: invitation.email,
-        role: invitation.role,
-        expiresAt: invitation.expiresAt,
-        // Don't return the actual token for security
-        inviteUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/register/join?token=${token}`
+        id: newUser.id,
+        email: newUser.email,
+        role: newUser.role,
+        createdAt: newUser.created_at,
+        loginUrl,
+        method: 'direct_user_creation'
       }
     });
 
@@ -172,7 +215,7 @@ export async function POST(request: NextRequest) {
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: 'Invalid data', details: error.errors },
+        { error: 'Invalid data', details: error.issues },
         { status: 400 }
       );
     }

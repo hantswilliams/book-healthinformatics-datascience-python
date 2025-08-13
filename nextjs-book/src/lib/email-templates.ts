@@ -15,6 +15,13 @@ export interface WelcomeEmailData {
   loginUrl: string;
 }
 
+export interface VerificationCodeEmailData {
+  userName: string;
+  organizationName: string;
+  verificationCode: string;
+  expiresInMinutes: number;
+}
+
 export interface TrialWarningEmailData {
   organizationName: string;
   ownerName: string;
@@ -83,27 +90,138 @@ export function createWelcomeEmail({
   const content = `
     <p>Welcome to <strong>${organizationName}</strong>, ${userName}! 🎉</p>
     
-    <p>Your account has been successfully created and you're now part of the team. Here's what you can do next:</p>
+    <p>Your account has been created and you're now part of the team. Here's how to get started:</p>
+    
+    <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0;">
+      <h4 style="margin: 0 0 8px 0; color: #1e40af;">✨ Passwordless Login</h4>
+      <p style="margin: 0; color: #1e40af; font-size: 14px;">No password needed! We'll send you a secure magic link to sign in.</p>
+    </div>
     
     <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 24px 0;">
-      <h3 style="margin: 0 0 16px 0; color: #1f2937;">Quick Start Guide</h3>
+      <h3 style="margin: 0 0 16px 0; color: #1f2937;">Getting Started</h3>
       <ol style="margin: 0; padding-left: 20px; color: #4b5563;">
-        <li style="margin-bottom: 8px;"><strong>Sign in</strong> to your account using the button below</li>
-        <li style="margin-bottom: 8px;"><strong>Explore courses</strong> available to your team</li>
-        <li style="margin-bottom: 8px;"><strong>Start coding</strong> with our interactive Python editor</li>
-        <li style="margin-bottom: 8px;"><strong>Track progress</strong> and collaborate with your teammates</li>
+        <li style="margin-bottom: 8px;"><strong>Click the button below</strong> to go to the login page</li>
+        <li style="margin-bottom: 8px;"><strong>Enter your email address</strong> and request a magic link</li>
+        <li style="margin-bottom: 8px;"><strong>Check your email</strong> and click the secure login link</li>
+        <li style="margin-bottom: 8px;"><strong>Start learning</strong> with interactive Python courses</li>
       </ol>
     </div>
 
+    <p><strong>What's Python Interactive?</strong></p>
+    <p>You'll have access to:</p>
+    <ul>
+      <li>🖥️ Interactive code editor with instant Python execution</li>
+      <li>📚 Industry-specific Python courses</li>
+      <li>📊 Progress tracking and team collaboration features</li>
+    </ul>
+
     <p><strong>Need help?</strong></p>
-    <p>If you have any questions, reach out to your team administrator or check out our help documentation once you're logged in.</p>
+    <p>If you have any questions, reach out to your team administrator.</p>
   `;
 
   return createEmailTemplate({
     title: `Welcome to ${organizationName}!`,
     content,
-    ctaText: 'Sign In to Your Account',
+    ctaText: 'Access Your Account',
     ctaUrl: loginUrl,
+    footerText: `${organizationName} • Python Interactive Learning Platform`
+  });
+}
+
+export function createMagicLinkInvitationEmail({
+  inviteeName,
+  organizationName,
+  inviterName,
+  role,
+  inviteUrl,
+  expiresAt
+}: InvitationEmailData) {
+  const roleDisplayNames = {
+    'OWNER': 'Organization Owner',
+    'ADMIN': 'Administrator', 
+    'INSTRUCTOR': 'Instructor',
+    'LEARNER': 'Learner'
+  };
+
+  const roleDescription = {
+    'OWNER': 'full access to billing, team management, and all features',
+    'ADMIN': 'ability to manage content, invite users, and oversee learning progress',
+    'INSTRUCTOR': 'ability to assign content and track learner progress',
+    'LEARNER': 'access to Python courses and progress tracking'
+  };
+
+  const content = `
+    <p>Hello!</p>
+    <p><strong>${inviterName}</strong> has invited you to join <strong>${organizationName}</strong> on Python Interactive, our collaborative Python learning platform.</p>
+    
+    <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 24px 0;">
+      <h3 style="margin: 0 0 8px 0; color: #1f2937;">Your Role: ${roleDisplayNames[role as keyof typeof roleDisplayNames]}</h3>
+      <p style="margin: 0; color: #4b5563; font-size: 14px;">This gives you ${roleDescription[role as keyof typeof roleDescription]}.</p>
+    </div>
+
+    <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0;">
+      <h4 style="margin: 0 0 8px 0; color: #1e40af;">✨ Passwordless Access</h4>
+      <p style="margin: 0; color: #1e40af; font-size: 14px;">No password needed! Just click the link below to join instantly.</p>
+    </div>
+
+    <p><strong>What's Python Interactive?</strong></p>
+    <p>Python Interactive is a modern learning platform where teams master Python programming together. You'll get:</p>
+    <ul>
+      <li>🖥️ Interactive code editor with instant Python execution</li>
+      <li>📚 Industry-specific Python courses (healthcare, finance, data science)</li>
+      <li>📊 Progress tracking and team collaboration features</li>
+      <li>🎯 Real-world projects and exercises</li>
+    </ul>
+
+    <p><strong>Next Steps:</strong></p>
+    <p>Click the button below to join your team instantly. This invitation expires on <strong>${expiresAt.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</strong>.</p>
+  `;
+
+  return createEmailTemplate({
+    title: `Join ${organizationName} with Magic Link`,
+    content,
+    ctaText: 'Join Team Instantly',
+    ctaUrl: inviteUrl,
+    footerText: `Invited by ${inviterName} • Python Interactive Learning Platform`
+  });
+}
+
+export function createVerificationCodeEmail({
+  userName,
+  organizationName,
+  verificationCode,
+  expiresInMinutes
+}: VerificationCodeEmailData) {
+  const content = `
+    <p>Hello ${userName}!</p>
+    
+    <p>Here's your verification code to sign in to <strong>${organizationName}</strong>:</p>
+    
+    <div style="background-color: #f3f4f6; padding: 30px; border-radius: 12px; margin: 32px 0; text-align: center;">
+      <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1f2937; font-family: Monaco, 'Courier New', monospace;">
+        ${verificationCode}
+      </div>
+      <p style="margin: 16px 0 0 0; color: #6b7280; font-size: 14px;">
+        This code expires in <strong>${expiresInMinutes} minutes</strong>
+      </p>
+    </div>
+
+    <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0;">
+      <h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 16px;">🔐 Security Note</h4>
+      <p style="margin: 0; color: #1e40af; font-size: 14px;">
+        Never share this code with anyone. We'll never ask for your verification code via phone or email.
+      </p>
+    </div>
+
+    <p><strong>Having trouble?</strong></p>
+    <p>If you didn't request this code, you can safely ignore this email. The code will expire automatically.</p>
+    
+    <p>If you need help, contact your team administrator.</p>
+  `;
+
+  return createEmailTemplate({
+    title: `Your verification code: ${verificationCode}`,
+    content,
     footerText: `${organizationName} • Python Interactive Learning Platform`
   });
 }

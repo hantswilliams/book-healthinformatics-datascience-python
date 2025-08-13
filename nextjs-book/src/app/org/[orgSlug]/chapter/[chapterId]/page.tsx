@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSupabase } from '@/lib/SupabaseProvider';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import PythonEditor from '@/components/PythonEditor';
@@ -14,7 +14,7 @@ interface ChapterPageProps {
 }
 
 export default function ChapterPage({ params }: ChapterPageProps) {
-  const { data: session } = useSession();
+  const { user, session } = useSupabase();
   const [chapter, setChapter] = useState<Chapter | null>(null);
   const [chapterId, setChapterId] = useState<string>('');
   const [isCompleting, setIsCompleting] = useState<boolean>(false);
@@ -67,7 +67,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
   };
 
   const handleMarkCompleted = async () => {
-    if (!session?.user || !chapterId || isCompleting) return;
+    if (!user || !chapterId || isCompleting) return;
     
     setIsCompleting(true);
     
@@ -300,7 +300,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
       <div className="text-center">
         <button
           onClick={handleMarkCompleted}
-          disabled={isCompleting || !session?.user?.id}
+          disabled={isCompleting || !user?.id}
           className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

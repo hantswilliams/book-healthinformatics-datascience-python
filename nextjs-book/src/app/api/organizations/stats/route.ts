@@ -1,23 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import type { Database } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
     
-    if (!session?.user?.id) {
+    // Create Supabase client for server-side authentication
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            try {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              );
+            } catch {
+              // The `setAll` method was called from a Server Component.
+            }
+          },
+        },
+      }
+    );
+
+    // Get the authenticated user
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get user's organization
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { organizationId: true }
-    });
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('organization_id')
+      .eq('id', authUser.id)
+      .eq('is_active', true)
+      .single();
 
-    if (!user) {
+    if (userError || !user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
@@ -27,54 +54,58 @@ export async function GET(request: NextRequest) {
       orgBookAccess,
       // Books created by this organization
       orgCreatedBooks,
-      // Total active users in organization
-      activeUsers,
       // Total progress records for organization users
       totalProgress
     ] = await Promise.all([
-      prisma.bookAccess.findMany({
-        where: { organizationId: user.organizationId },
-        include: { book: { select: { id: true } } }
-      }),
-      prisma.book.findMany({
-        where: { organizationId: user.organizationId },
-        select: { id: true }
-      }),
-      prisma.user.count({
-        where: {
-          organizationId: user.organizationId,
-          isActive: true
-        }
-      }),
-      prisma.progress.findMany({
-        where: {
-          user: {
-            organizationId: user.organizationId
-          }
-        },
-        select: {
-          completed: true,
-          timeSpent: true
-        }
-      })
+      supabase
+        .from('book_access')
+        .select(`
+          book_id,
+          books(id)
+        `)
+        .eq('organization_id', user.organization_id),
+      supabase
+        .from('books')
+        .select('id')
+        .eq('organization_id', user.organization_id),
+      supabase
+        .from('progress')
+        .select(`
+          completed,
+          time_spent,
+          users!inner(organization_id)
+        `)
+        .eq('users.organization_id', user.organization_id)
     ]);
+
+    // Count active users in organization
+    const { count: activeUsers } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', user.organization_id)
+      .eq('is_active', true);
+
+    // Handle data extraction with error checking
+    const bookAccessData = orgBookAccess.data || [];
+    const createdBooksData = orgCreatedBooks.data || [];
+    const progressData = totalProgress.data || [];
 
     // Calculate unique books (combine BookAccess and organization-created books)
     const bookIds = new Set([
-      ...orgBookAccess.map(access => access.book.id),
-      ...orgCreatedBooks.map(book => book.id)
+      ...bookAccessData.map((access: any) => access.books?.id).filter(Boolean),
+      ...createdBooksData.map((book: any) => book.id)
     ]);
 
     const totalBooks = bookIds.size;
     
     // Calculate completion statistics
-    const completedProgress = totalProgress.filter(p => p.completed);
-    const completionRate = totalProgress.length > 0 
-      ? Math.round((completedProgress.length / totalProgress.length) * 100)
+    const completedProgress = progressData.filter((p: any) => p.completed);
+    const completionRate = progressData.length > 0 
+      ? Math.round((completedProgress.length / progressData.length) * 100)
       : 0;
 
     // Calculate total time spent (in minutes)
-    const totalTimeSpent = totalProgress.reduce((sum, p) => sum + (p.timeSpent || 0), 0);
+    const totalTimeSpent = progressData.reduce((sum: number, p: any) => sum + (p.time_spent || 0), 0);
 
     return NextResponse.json({
       success: true,
@@ -82,10 +113,10 @@ export async function GET(request: NextRequest) {
         totalBooks,
         activeUsers,
         completionRate,
-        totalProgress: totalProgress.length,
+        totalProgress: progressData.length,
         completedProgress: completedProgress.length,
         totalTimeSpent, // in minutes
-        hasData: totalProgress.length > 0 // indicates if there's actual progress data
+        hasData: progressData.length > 0 // indicates if there's actual progress data
       }
     });
 

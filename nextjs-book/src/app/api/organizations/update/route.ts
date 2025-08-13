@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { Database } from '@/lib/supabase-types';
 import { z } from 'zod';
 
 const updateOrganizationSchema = z.object({
@@ -22,14 +22,48 @@ const updateOrganizationSchema = z.object({
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
     
-    if (!session?.user) {
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get user with organization details
+    const { data: userWithOrg, error: userError } = await supabase
+      .from('users')
+      .select(`
+        *,
+        organization:organizations(*)
+      `)
+      .eq('id', user.id)
+      .eq('is_active', true)
+      .single();
+
+    if (userError || !userWithOrg || !userWithOrg.organization) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
+    }
+
     // Only organization owners and admins can update organization settings
-    if (!['OWNER', 'ADMIN'].includes(session.user.role)) {
+    if (!['OWNER', 'ADMIN'].includes(userWithOrg.role)) {
       return NextResponse.json(
         { error: 'Only organization owners and admins can update organization settings' },
         { status: 403 }
@@ -39,17 +73,8 @@ export async function PATCH(request: NextRequest) {
     const body = await request.json();
     const validatedData = updateOrganizationSchema.parse(body);
 
-    // Get organization
-    const organization = await prisma.organization.findUnique({
-      where: { id: session.user.organizationId }
-    });
-
-    if (!organization) {
-      return NextResponse.json(
-        { error: 'Organization not found' },
-        { status: 404 }
-      );
-    }
+    // Use the organization data we already have
+    const organization = userWithOrg.organization;
 
     // Generate slug from name if name is being changed
     let slug = organization.slug;
@@ -63,24 +88,38 @@ export async function PATCH(request: NextRequest) {
       let counter = 1;
       slug = baseSlug;
       
-      while (await prisma.organization.findUnique({ where: { slug } })) {
+      while (true) {
+        const { data: existingOrg } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('slug', slug)
+          .single();
+        
+        if (!existingOrg) break;
+        
         slug = `${baseSlug}-${counter}`;
         counter++;
       }
     }
 
     // Update organization
-    const updatedOrganization = await prisma.organization.update({
-      where: { id: organization.id },
-      data: {
+    const { data: updatedOrganization, error: updateError } = await supabase
+      .from('organizations')
+      .update({
         name: validatedData.name,
         slug,
         description: validatedData.description || null,
         website: validatedData.website || null,
         industry: validatedData.industry,
-        updatedAt: new Date()
-      }
-    });
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', organization.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
 
     return NextResponse.json({
       success: true,

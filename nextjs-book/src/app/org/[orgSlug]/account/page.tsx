@@ -1,12 +1,12 @@
 'use client';
 
 import React from 'react';
-import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 export default function AccountPage() {
-  const { data: session, status, update } = useSession();
+  const { user, userProfile, organization, loading: authLoading } = useSupabase();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -16,16 +16,16 @@ export default function AccountPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // Initialize form data when session loads
+  // Initialize form data when user profile loads
   React.useEffect(() => {
-    if (session?.user) {
+    if (userProfile && user) {
       setFormData({
-        firstName: session.user.firstName || '',
-        lastName: session.user.lastName || '',
-        email: session.user.email || ''
+        firstName: userProfile.first_name || '',
+        lastName: userProfile.last_name || '',
+        email: user.email || ''
       });
     }
-  }, [session]);
+  }, [userProfile, user]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -64,7 +64,7 @@ export default function AccountPage() {
     }
   };
 
-  if (status === 'loading') {
+  if (authLoading) {
     return (
       <div className="max-w-2xl mx-auto">
         <div className="animate-pulse">
@@ -82,7 +82,7 @@ export default function AccountPage() {
     );
   }
 
-  if (!session) {
+  if (!user || !userProfile || !organization) {
     return (
       <div className="max-w-2xl mx-auto text-center">
         <h1 className="text-2xl font-bold text-zinc-900 mb-4">Please Sign In</h1>
@@ -189,9 +189,9 @@ export default function AccountPage() {
                   setMessage('');
                   // Reset form data
                   setFormData({
-                    firstName: session.user.firstName || '',
-                    lastName: session.user.lastName || '',
-                    email: session.user.email || ''
+                    firstName: userProfile.first_name || '',
+                    lastName: userProfile.last_name || '',
+                    email: user.email || ''
                   });
                 }}
                 className="px-4 py-2 bg-gray-200 text-zinc-700 rounded-md hover:bg-gray-300"
@@ -205,31 +205,31 @@ export default function AccountPage() {
             <div className="grid md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-zinc-700 mb-1">First Name</label>
-                <p className="text-zinc-900">{session.user.firstName || 'Not set'}</p>
+                <p className="text-zinc-900">{userProfile.first_name || 'Not set'}</p>
               </div>
               <div>
                 <label className="block text-sm font-medium text-zinc-700 mb-1">Last Name</label>
-                <p className="text-zinc-900">{session.user.lastName}</p>
+                <p className="text-zinc-900">{userProfile.last_name}</p>
               </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Email Address</label>
-              <p className="text-zinc-900">{session.user.email}</p>
+              <p className="text-zinc-900">{user.email}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Username</label>
-              <p className="text-zinc-900">{session.user.username}</p>
+              <p className="text-zinc-900">{userProfile.username}</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-zinc-700 mb-1">Role</label>
               <span className={`inline-block px-2 py-1 rounded text-sm font-medium ${
-                session.user.role === 'ADMIN' 
+                userProfile.role === 'ADMIN' 
                   ? 'bg-red-100 text-red-800'
-                  : session.user.role === 'INSTRUCTOR'
+                  : userProfile.role === 'INSTRUCTOR'
                   ? 'bg-blue-100 text-blue-800'
                   : 'bg-green-100 text-green-800'
               }`}>
-                {session.user.role.charAt(0) + session.user.role.slice(1).toLowerCase()}
+                {userProfile.role.charAt(0) + userProfile.role.slice(1).toLowerCase()}
               </span>
             </div>
           </div>

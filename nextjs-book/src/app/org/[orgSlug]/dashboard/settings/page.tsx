@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 interface Organization {
   id: string;
@@ -31,7 +31,7 @@ interface User {
 }
 
 export default function OrganizationSettings() {
-  const { data: session, status } = useSession();
+  const { user, userProfile, organization: supabaseOrg, loading: authLoading } = useSupabase();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   const [organization, setOrganization] = useState<Organization | null>(null);
@@ -52,21 +52,21 @@ export default function OrganizationSettings() {
   });
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (authLoading) return;
     
-    if (!session) {
+    if (!user || !userProfile || !supabaseOrg) {
       router.push('/login');
       return;
     }
 
     // Check permissions - Only owners and admins can access organization settings
-    if (!['OWNER', 'ADMIN'].includes(session.user.role)) {
-      router.push('/dashboard');
+    if (!['OWNER', 'ADMIN'].includes(userProfile.role)) {
+      router.push(`/org/${orgSlug}/dashboard`);
       return;
     }
 
     fetchOrganizationData();
-  }, [session, status, router]);
+  }, [user, userProfile, supabaseOrg, authLoading, router, orgSlug]);
 
   const fetchOrganizationData = async () => {
     try {
@@ -198,7 +198,7 @@ export default function OrganizationSettings() {
     { value: 'NON_PROFIT', label: 'Non-Profit' }
   ];
 
-  if (status === 'loading' || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -467,7 +467,7 @@ export default function OrganizationSettings() {
         </div>
 
         {/* Dangerous Actions Section - Only show for OWNER */}
-        {session?.user.role === 'OWNER' && (
+        {userProfile?.role === 'OWNER' && (
           <div className="mt-8">
             <div className="bg-white shadow rounded-lg border-l-4 border-red-500">
               <div className="px-6 py-4 border-b border-gray-200">

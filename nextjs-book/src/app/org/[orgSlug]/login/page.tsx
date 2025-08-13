@@ -1,10 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { signIn, getSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 const getIndustryIcon = (industry: string) => {
   const icons: { [key: string]: string } = {
@@ -23,15 +23,29 @@ const getIndustryIcon = (industry: string) => {
 export default function LoginPage() {
   const [formData, setFormData] = useState({
     email: '',
-    password: ''
+    password: '',
+    verificationCode: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [codeLoading, setCodeLoading] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
   const [orgInfo, setOrgInfo] = useState<{name: string; industry: string} | null>(null);
+  const [userRole, setUserRole] = useState<{
+    found: boolean;
+    role?: string;
+    authMethods?: {
+      passwordLogin: boolean;
+      codeLogin: boolean;
+    }
+  } | null>(null);
+  const [checkingRole, setCheckingRole] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const orgSlug = useOrgSlug();
+  const { signIn, signInWithMagicLink } = useSupabase();
 
   useEffect(() => {
     const messageParam = searchParams.get('message');
@@ -70,31 +84,164 @@ export default function LoginPage() {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const checkUserRole = async (email: string) => {
+    if (!email || !orgSlug) return;
+
+    setCheckingRole(true);
+    setError('');
+    setUserRole(null);
+
+    try {
+      const response = await fetch('/api/auth/check-user-role', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          orgSlug
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          setUserRole({ found: false });
+          setError(data.message || 'No account found with this email address in this organization');
+        } else {
+          setError(data.error || 'Failed to check user account');
+        }
+      } else {
+        setUserRole(data);
+        setError('');
+      }
+    } catch (error) {
+      console.error('Error checking user role:', error);
+      setError('An error occurred while checking your account');
+    } finally {
+      setCheckingRole(false);
+    }
+  };
+
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const result = await signIn('credentials', {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      });
+      const { error: signInError } = await signIn(formData.email, formData.password);
 
-      if (result?.error) {
+      if (signInError) {
         setError('Invalid email or password');
       } else {
-        const session = await getSession();
-        if (session) {
-          router.push(`/org/${orgSlug}/dashboard`);
-          router.refresh();
-        }
+        // Successful login - redirect to dashboard
+        router.push(`/org/${orgSlug}/dashboard`);
+        router.refresh();
       }
     } catch {
       setError('An error occurred during login');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSendCode = async () => {
+    if (!formData.email) {
+      setError('Please enter your email address');
+      return;
+    }
+
+    // Check user role first if we haven't already
+    if (!userRole) {
+      await checkUserRole(formData.email);
+      return; // Let the user see the result and click again
+    }
+
+    if (!userRole.found) {
+      setError('No account found with this email address in this organization');
+      return;
+    }
+
+    setError('');
+    setCodeLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          orgSlug: orgSlug
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to send verification code');
+      } else {
+        setCodeSent(true);
+        setMessage(`Verification code sent to ${formData.email}! Check your email and enter the 6-digit code below.`);
+      }
+    } catch {
+      setError('An error occurred while sending the verification code');
+    } finally {
+      setCodeLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    if (!formData.verificationCode || formData.verificationCode.length !== 6) {
+      setError('Please enter the 6-digit verification code');
+      return;
+    }
+
+    setError('');
+    setVerifyLoading(true);
+
+    try {
+      const response = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          code: formData.verificationCode,
+          orgSlug: orgSlug
+        })
+      });
+
+      const data = await response.json();
+      console.log('🔍 Verify response:', { response: response.ok, data });
+
+      if (!response.ok) {
+        setError(data.error || 'Invalid verification code');
+      } else {
+        console.log('✅ Verification successful, redirecting to:', data.redirectUrl);
+        // Successful verification - redirect to the provided URL
+        if (data.redirectUrl) {
+          console.log('🔄 Using data.redirectUrl:', data.redirectUrl);
+          // Try multiple redirect methods for better compatibility
+          try {
+            window.location.replace(data.redirectUrl);
+          } catch (e) {
+            console.log('window.location.replace failed, trying href');
+            window.location.href = data.redirectUrl;
+          }
+        } else {
+          console.log('🔄 Using fallback redirect');
+          router.push(`/org/${orgSlug}/dashboard`);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Frontend verification error:', error);
+      setError('An error occurred while verifying the code');
+    } finally {
+      setVerifyLoading(false);
     }
   };
 
@@ -128,67 +275,161 @@ export default function LoginPage() {
           </div>
         )}
 
-  <form onSubmit={handleSubmit} className="space-y-5">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-zinc-700 mb-2">
-              Email Address
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              placeholder="your.email@example.com"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-zinc-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
+        {codeSent ? (
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+              <p className="text-sm text-blue-600 mb-3">
+                Verification code sent! Check your email and enter the 6-digit code below.
+              </p>
+            </div>
+            
+            <div className="space-y-3">
               <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                type="text"
+                value={formData.verificationCode}
+                onChange={(e) => {
+                  // Only allow numbers and limit to 6 digits
+                  const value = e.target.value.replace(/\D/g, '').slice(0, 6);
+                  setFormData(prev => ({ ...prev, verificationCode: value }));
+                }}
+                placeholder="123456"
+                maxLength={6}
+                className="w-full rounded-md border border-zinc-300 px-3 py-2 text-center text-2xl font-mono tracking-widest text-zinc-900 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-zinc-700">
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <a href="#" className="text-indigo-600 hover:text-indigo-500">
-                Forgot your password?
-              </a>
+              
+              <button
+                type="button"
+                onClick={handleVerifyCode}
+                disabled={verifyLoading || formData.verificationCode.length !== 6}
+                className="w-full inline-flex justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {verifyLoading ? 'Verifying...' : 'Verify Code'}
+              </button>
+              
+              <div className="flex justify-between items-center text-sm">
+                <button
+                  onClick={() => {
+                    setCodeSent(false);
+                    setMessage('');
+                    setFormData({ email: '', password: '', verificationCode: '' });
+                  }}
+                  className="text-indigo-600 hover:text-indigo-500"
+                >
+                  Try different email
+                </button>
+                
+                <button
+                  onClick={handleSendCode}
+                  disabled={codeLoading}
+                  className="text-zinc-600 hover:text-zinc-500"
+                >
+                  {codeLoading ? 'Sending...' : 'Resend code'}
+                </button>
+              </div>
             </div>
           </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Email Input */}
+            <div>
+              <h3 className="text-sm font-medium text-zinc-700 mb-3">Enter your email to continue</h3>
+              <div className="space-y-3">
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  name="email"
+                  placeholder="your.email@example.com"
+                  required
+                  className="w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                />
+                
+                {/* Show role check button if email is entered but role not checked */}
+                {formData.email && !userRole && (
+                  <button
+                    type="button"
+                    onClick={() => checkUserRole(formData.email)}
+                    disabled={checkingRole}
+                    className="w-full inline-flex justify-center rounded-md bg-zinc-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {checkingRole ? 'Checking Account...' : 'Continue'}
+                  </button>
+                )}
+              </div>
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex w-full justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? 'Signing in…' : 'Sign in'}
-          </button>
-        </form>
+            {/* Show authentication methods based on user role */}
+            {userRole?.found && (
+              <>
+                {/* Verification Code Login - Available for all users */}
+                {userRole.authMethods?.codeLogin && (
+                  <div>
+                    <h3 className="text-sm font-medium text-zinc-700 mb-3">
+                      Sign In with Verification Code
+                    </h3>
+                    <div className="space-y-3">
+                      <button
+                        type="button"
+                        onClick={handleSendCode}
+                        disabled={codeLoading}
+                        className="w-full inline-flex justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {codeLoading ? 'Sending Code...' : 'Send 6-Digit Code'}
+                      </button>
+                      <p className="text-xs text-zinc-500 text-center">
+                        We&apos;ll send a verification code to your email
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Password Login - Only for non-learners */}
+                {userRole.authMethods?.passwordLogin && (
+                  <>
+                    {/* Divider */}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-zinc-300" />
+                      </div>
+                      <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-zinc-500">Or use your password</span>
+                      </div>
+                    </div>
+
+                    <form onSubmit={handlePasswordLogin} className="space-y-4">
+                      <div>
+                        <input
+                          type="password"
+                          name="password"
+                          required
+                          value={formData.password}
+                          onChange={handleChange}
+                          className="w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                          placeholder="Password"
+                        />
+                      </div>
+
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full inline-flex justify-center rounded-md bg-zinc-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {loading ? 'Signing in…' : 'Sign in with Password'}
+                      </button>
+                    </form>
+                  </>
+                )}
+
+                {/* Show user's role for clarity */}
+                <div className="text-center">
+                  <p className="text-xs text-zinc-500">
+                    Signing in as: <span className="font-medium">{userRole.role?.toLowerCase()}</span>
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="mt-6 text-center">
           <p className="text-sm text-zinc-600">

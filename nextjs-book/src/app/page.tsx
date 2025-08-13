@@ -1,34 +1,25 @@
 'use client';
 
 import Link from "next/link";
-import { useSession } from 'next-auth/react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PythonDemo from '@/components/PythonDemo';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 export default function Home() {
-  const { data: session, status } = useSession();
+  const { user, userProfile, organization, loading } = useSupabase();
   const router = useRouter();
 
   // Redirect logged-in users to their organization
   useEffect(() => {
-    if (status === 'loading') return; // Wait for session to load
+    if (loading) return; // Wait for auth to load
     
-    if (session?.user) {
-      // Fetch user's organization and redirect
-      fetch('/api/user/organization')
-        .then(res => res.json())
-        .then(data => {
-          if (data.organizationSlug) {
-            router.push(`/org/${data.organizationSlug}/dashboard`);
-          }
-        })
-        .catch(error => {
-          console.error('Failed to fetch organization:', error);
-        });
+    if (user && userProfile && organization) {
+      // Redirect to organization dashboard
+      router.push(`/org/${organization.slug}/dashboard`);
       return;
     }
-  }, [session, status, router]);
+  }, [user, userProfile, organization, loading, router]);
 
   return (
     <main className="relative overflow-hidden">

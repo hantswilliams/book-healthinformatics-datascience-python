@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import { Card, Badge } from '@/components/ui/Card';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 interface TeamMember {
   id: string;
@@ -63,7 +63,7 @@ interface UserBookAccess {
 }
 
 export default function TeamManagement() {
-  const { data: session, status } = useSession();
+  const { user, userProfile, organization, loading: authLoading } = useSupabase();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
@@ -79,21 +79,21 @@ export default function TeamManagement() {
   const [accessLoading, setAccessLoading] = useState(false);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (authLoading) return;
     
-    if (!session) {
+    if (!user || !userProfile || !organization) {
       router.push('/login');
       return;
     }
 
     // Check permissions
-    if (!['OWNER', 'ADMIN'].includes(session.user.role)) {
-      router.push('/dashboard');
+    if (!['OWNER', 'ADMIN'].includes(userProfile.role)) {
+      router.push(`/org/${orgSlug}/dashboard`);
       return;
     }
 
     fetchTeamData();
-  }, [session, status, router]);
+  }, [user, userProfile, organization, authLoading, router, orgSlug]);
 
   const fetchTeamData = async () => {
     try {
@@ -284,7 +284,7 @@ export default function TeamManagement() {
     }
   };
 
-  if (status === 'loading' || isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -379,33 +379,94 @@ export default function TeamManagement() {
                   <p className="mt-1 text-sm text-zinc-500">Invite your first team member to get started.</p>
                 </div>
               ) : (
-                <ul className="divide-y divide-zinc-200">
-                  {teamMembers.map(member => (
-                    <li key={member.id} className="flex flex-col gap-4 py-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-sm">
-                          <span className="text-sm font-semibold">
-                            {(member.firstName?.[0] || member.email[0]).toUpperCase()}
-                            {member.lastName?.[0]?.toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium text-zinc-900">{member.firstName} {member.lastName}</p>
-                          <p className="truncate text-xs text-zinc-500">{member.email}</p>
-                          <p className="mt-1 text-[11px] text-zinc-400">Joined {new Date(member.joinedAt).toLocaleDateString()}{member.lastLoginAt && ` • Active ${new Date(member.lastLoginAt).toLocaleDateString()}`}</p>
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                        <Badge tone={roleBadgeTone(member.role)}>{member.role}</Badge>
-                        {!member.isActive && <Badge tone="danger">Inactive</Badge>}
-                        <button onClick={() => openBookAccessModal(member.id)} className="text-xs font-medium text-indigo-600 hover:text-indigo-700">Courses</button>
-                        {session?.user.role === 'OWNER' && member.role !== 'OWNER' && member.isActive && (
-                          <button onClick={() => handleDeactivateUser(member.id)} className="text-xs font-medium text-rose-600 hover:text-rose-700">Deactivate</button>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                <div className="overflow-hidden">
+                  <table className="min-w-full">
+                    <thead>
+                      <tr className="border-b border-zinc-200">
+                        <th className="px-0 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Member</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Role</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Status</th>
+                        <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-100">
+                      {teamMembers.map(member => (
+                        <tr key={member.id} className="group hover:bg-zinc-50/50">
+                          {/* Member Info */}
+                          <td className="px-0 py-4">
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white shadow-sm">
+                                <span className="text-sm font-semibold">
+                                  {(member.firstName?.[0] || member.email[0]).toUpperCase()}
+                                  {member.lastName?.[0]?.toUpperCase()}
+                                </span>
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-zinc-900">{member.firstName} {member.lastName}</p>
+                                <p className="truncate text-xs text-zinc-500">{member.email}</p>
+                                <p className="mt-1 text-[11px] text-zinc-400">
+                                  Joined {new Date(member.joinedAt).toLocaleDateString()}
+                                  {member.lastLoginAt && ` • Active ${new Date(member.lastLoginAt).toLocaleDateString()}`}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          
+                          {/* Role */}
+                          <td className="px-3 py-4">
+                            <Badge tone={roleBadgeTone(member.role)}>{member.role}</Badge>
+                          </td>
+                          
+                          {/* Status */}
+                          <td className="px-3 py-4">
+                            {member.isActive ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-2 py-1 text-xs font-medium text-green-700">
+                                <div className="h-1.5 w-1.5 rounded-full bg-green-400"></div>
+                                Active
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-2 py-1 text-xs font-medium text-red-700">
+                                <div className="h-1.5 w-1.5 rounded-full bg-red-400"></div>
+                                Inactive
+                              </span>
+                            )}
+                          </td>
+                          
+                          {/* Actions */}
+                          <td className="px-3 py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              {/* Courses Button */}
+                              <button
+                                onClick={() => openBookAccessModal(member.id)}
+                                className="inline-flex items-center gap-2 rounded-md bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-700 transition hover:bg-indigo-100"
+                                title="Manage course access"
+                              >
+                                <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                                </svg>
+                                Courses
+                              </button>
+                              
+                              {/* Deactivate Button - Only for owners on non-owner active members */}
+                              {userProfile?.role === 'OWNER' && member.role !== 'OWNER' && member.isActive && (
+                                <button
+                                  onClick={() => handleDeactivateUser(member.id)}
+                                  className="inline-flex items-center gap-2 rounded-md bg-red-50 px-3 py-1.5 text-xs font-medium text-red-700 transition hover:bg-red-100"
+                                  title="Deactivate member"
+                                >
+                                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728L18.364 5.636M5.636 18.364l12.728-12.728" />
+                                  </svg>
+                                  Deactivate
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               )}
             </Card>
           </div>
@@ -476,7 +537,7 @@ export default function TeamManagement() {
                 >
                   <option value="LEARNER">Learner</option>
                   <option value="INSTRUCTOR">Instructor</option>
-                  {session?.user.role === 'OWNER' && <option value="ADMIN">Admin</option>}
+                  {userProfile?.role === 'OWNER' && <option value="ADMIN">Admin</option>}
                 </select>
               </div>
               <div className="flex justify-end gap-3 pt-2">
@@ -539,15 +600,31 @@ export default function TeamManagement() {
                               <p className="mt-2 text-[11px] text-zinc-500">Granted {new Date(book.grantedAt).toLocaleDateString()}</p>
                             )}
                           </div>
-                          <label className="mt-1 inline-flex items-center gap-2">
-                            <input
-                              type="checkbox"
-                              checked={book.hasAccess}
-                              onChange={e => toggleBookAccess(book.id, e.target.checked)}
-                              className="h-4 w-4 rounded border-zinc-300 text-indigo-600 focus:ring-indigo-500"
-                            />
-                            <span className="text-xs font-medium text-zinc-700">{book.hasAccess ? 'Access' : 'No Access'}</span>
-                          </label>
+                          <div className="flex flex-col items-end gap-2">
+                            <button
+                              onClick={() => toggleBookAccess(book.id, !book.hasAccess)}
+                              className={[
+                                'relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2',
+                                book.hasAccess ? 'bg-indigo-600' : 'bg-zinc-200'
+                              ].join(' ')}
+                              role="switch"
+                              aria-checked={book.hasAccess}
+                            >
+                              <span
+                                className={[
+                                  'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                                  book.hasAccess ? 'translate-x-5' : 'translate-x-0'
+                                ].join(' ')}
+                              />
+                            </button>
+                            <span className="text-xs font-medium text-zinc-700">
+                              {book.hasAccess ? (
+                                <span className="text-indigo-700">Enabled</span>
+                              ) : (
+                                <span className="text-zinc-500">Disabled</span>
+                              )}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ))}

@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import EnhancedChapterBuilder from '@/components/EnhancedChapterBuilder';
+import { useSupabase } from '@/lib/SupabaseProvider';
 
 // Enhanced interfaces that match our new schema
 interface EnhancedSection {
@@ -38,7 +38,7 @@ interface BookForm {
 }
 
 export default function CreateEnhancedBook() {
-  const { data: session } = useSession();
+  const { user, userProfile, organization } = useSupabase();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   
@@ -59,7 +59,7 @@ export default function CreateEnhancedBook() {
   const [currentChapterIndex, setCurrentChapterIndex] = useState(0);
 
   // Check permissions
-  if (!session || !['OWNER', 'ADMIN'].includes(session.user.role)) {
+  if (!user || !userProfile || !organization || !['OWNER', 'ADMIN'].includes(userProfile.role)) {
     router.push('/dashboard');
     return null;
   }
