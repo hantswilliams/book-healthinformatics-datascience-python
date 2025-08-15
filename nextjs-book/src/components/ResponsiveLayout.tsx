@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
+import { useSupabase } from '@/lib/SupabaseProvider';
 import type { User, Chapter } from '@/types';
 
 interface Book {
@@ -19,15 +20,30 @@ interface Book {
 }
 
 interface ResponsiveLayoutProps {
-  user?: User | null;
   chapters: Chapter[];
   children: React.ReactNode;
 }
 
-export default function ResponsiveLayout({ user, chapters, children }: ResponsiveLayoutProps) {
+export default function ResponsiveLayout({ chapters, children }: ResponsiveLayoutProps) {
+  const { user: supabaseUser, userProfile } = useSupabase();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Transform Supabase user to match existing User interface
+  const user = userProfile ? {
+    id: supabaseUser?.id || '',
+    username: userProfile.username || '',
+    email: userProfile.email || '',
+    firstName: userProfile.first_name || '',
+    lastName: userProfile.last_name || '',
+    role: userProfile.role as 'OWNER' | 'ADMIN' | 'INSTRUCTOR' | 'LEARNER',
+    organizationId: userProfile.organization_id || '',
+    organizationSlug: '', // We'll need to get this from organization data
+    organizationName: '',  // We'll need to get this from organization data
+    createdAt: new Date(userProfile.joined_at || ''),
+    updatedAt: new Date(userProfile.updated_at || userProfile.joined_at || '')
+  } : null;
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -38,12 +54,12 @@ export default function ResponsiveLayout({ user, chapters, children }: Responsiv
   };
 
   useEffect(() => {
-    if (user) {
+    if (userProfile) {
       fetchUserBooks();
     } else {
       setLoading(false);
     }
-  }, [user]);
+  }, [userProfile?.id]); // Only depend on the user ID to prevent infinite loops
 
   const fetchUserBooks = async () => {
     try {
@@ -51,9 +67,13 @@ export default function ResponsiveLayout({ user, chapters, children }: Responsiv
       if (response.ok) {
         const data = await response.json();
         setBooks(data.books || []);
+      } else {
+        console.error('Failed to fetch user books - HTTP', response.status);
+        setBooks([]);
       }
     } catch (error) {
       console.error('Error fetching user books:', error);
+      setBooks([]); // Set empty array on error to prevent UI issues
     } finally {
       setLoading(false);
     }
@@ -76,7 +96,6 @@ export default function ResponsiveLayout({ user, chapters, children }: Responsiv
             {/* Sidebar */}
             <Sidebar 
               books={books}
-              user={user}
               loading={loading}
               className={`
                 fixed inset-y-0 left-0 z-50 lg:static lg:translate-x-0 lg:z-auto
@@ -90,7 +109,6 @@ export default function ResponsiveLayout({ user, chapters, children }: Responsiv
             {/* Main content area */}
             <div className="flex-1 flex flex-col min-w-0">
               <Header 
-                user={user} 
                 onToggleSidebar={toggleSidebar}
                 isSidebarOpen={isSidebarOpen}
               />

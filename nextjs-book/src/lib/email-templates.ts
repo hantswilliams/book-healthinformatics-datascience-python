@@ -197,23 +197,23 @@ export function createVerificationCodeEmail({
     
     <p>Here's your verification code to sign in to <strong>${organizationName}</strong>:</p>
     
-    <div style="background-color: #f3f4f6; padding: 30px; border-radius: 12px; margin: 32px 0; text-align: center;">
-      <div style="font-size: 36px; font-weight: bold; letter-spacing: 8px; color: #1f2937; font-family: Monaco, 'Courier New', monospace;">
+    <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 2px solid #e2e8f0; padding: 40px; border-radius: 16px; margin: 40px 0; text-align: center; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);">
+      <div style="font-size: 42px; font-weight: 700; letter-spacing: 12px; color: #1e293b; font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace; text-shadow: 0 1px 2px rgb(0 0 0 / 0.05);">
         ${verificationCode}
       </div>
-      <p style="margin: 16px 0 0 0; color: #6b7280; font-size: 14px;">
-        This code expires in <strong>${expiresInMinutes} minutes</strong>
+      <p style="margin: 20px 0 0 0; color: #64748b; font-size: 15px; font-weight: 500;">
+        This code expires in <strong style="color: #475569;">${expiresInMinutes} minutes</strong>
       </p>
     </div>
 
-    <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0;">
-      <h4 style="margin: 0 0 8px 0; color: #1e40af; font-size: 16px;">🔐 Security Note</h4>
-      <p style="margin: 0; color: #1e40af; font-size: 14px;">
+    <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 5px solid #3b82f6; padding: 20px; margin: 32px 0; border-radius: 8px;">
+      <h4 style="margin: 0 0 10px 0; color: #1e40af; font-size: 17px; font-weight: 600;">🔐 Security Note</h4>
+      <p style="margin: 0; color: #1e40af; font-size: 15px; line-height: 1.6;">
         Never share this code with anyone. We'll never ask for your verification code via phone or email.
       </p>
     </div>
 
-    <p><strong>Having trouble?</strong></p>
+    <p><strong style="color: #374151;">Having trouble?</strong></p>
     <p>If you didn't request this code, you can safely ignore this email. The code will expire automatically.</p>
     
     <p>If you need help, contact your team administrator.</p>
@@ -222,7 +222,7 @@ export function createVerificationCodeEmail({
   return createEmailTemplate({
     title: `Your verification code: ${verificationCode}`,
     content,
-    footerText: `${organizationName} • Python Interactive Learning Platform`
+    footerText: `${organizationName} • Interactive Coding Platform`
   });
 }
 

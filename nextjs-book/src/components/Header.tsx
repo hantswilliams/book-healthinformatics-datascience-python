@@ -9,18 +9,17 @@ import { useSupabase } from '@/lib/SupabaseProvider';
 import type { User } from '@/types';
 
 interface HeaderProps {
-  user?: User | null;
   onToggleSidebar?: () => void;
   isSidebarOpen?: boolean;
 }
 
-export default function Header({ user: propUser, onToggleSidebar, isSidebarOpen }: HeaderProps) {
+export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const orgSlug = useOrgSlug();
   const pathname = usePathname();
   const { signOut, user: supabaseUser, userProfile } = useSupabase();
   
-  // Use Supabase user profile for role checks if available, otherwise fall back to prop user
+  // Use Supabase user profile for role checks
   const user = userProfile ? {
     id: supabaseUser?.id || '',
     username: userProfile.username || '',
@@ -30,7 +29,7 @@ export default function Header({ user: propUser, onToggleSidebar, isSidebarOpen 
     role: userProfile.role as 'OWNER' | 'ADMIN' | 'INSTRUCTOR' | 'LEARNER',
     createdAt: new Date(userProfile.joined_at || ''),
     updatedAt: new Date(userProfile.updated_at || userProfile.joined_at || '')
-  } : propUser;
+  } : null;
 
   const navItems = [
     {
@@ -153,7 +152,8 @@ export default function Header({ user: propUser, onToggleSidebar, isSidebarOpen 
                           onClick={async () => {
                             setIsDropdownOpen(false);
                             await signOut();
-                            window.location.href = '/';
+                            // Force a complete page reload to clear all state
+                            window.location.replace('/');
                           }}
                           className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                         >

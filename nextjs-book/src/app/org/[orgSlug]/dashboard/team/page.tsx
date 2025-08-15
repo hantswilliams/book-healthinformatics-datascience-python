@@ -67,7 +67,7 @@ export default function TeamManagement() {
   const router = useRouter();
   const orgSlug = useOrgSlug();
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
-  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   const [orgInfo, setOrgInfo] = useState<OrganizationInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -99,25 +99,22 @@ export default function TeamManagement() {
     try {
       setIsLoading(true);
       
-      // Fetch team members, invitations, and org info in parallel
-      const [membersResponse, invitationsResponse, statusResponse] = await Promise.all([
+      // Fetch team members and org info in parallel
+      const [membersResponse, statusResponse] = await Promise.all([
         fetch('/api/organizations/members'),
-        fetch('/api/invitations/pending'),
         fetch('/api/subscription/status')
       ]);
 
-      if (!membersResponse.ok || !invitationsResponse.ok || !statusResponse.ok) {
+      if (!membersResponse.ok || !statusResponse.ok) {
         throw new Error('Failed to load team data');
       }
 
-      const [membersResult, invitationsResult, statusResult] = await Promise.all([
+      const [membersResult, statusResult] = await Promise.all([
         membersResponse.json(),
-        invitationsResponse.json(),
         statusResponse.json()
       ]);
 
       setTeamMembers(membersResult.data || []);
-      setInvitations(invitationsResult.data || []);
       setOrgInfo({
         currentSeats: statusResult.data.organization.currentSeats,
         maxSeats: statusResult.data.organization.maxSeats,
@@ -188,24 +185,17 @@ export default function TeamManagement() {
     }
   };
 
-  const handleRemoveInvitation = async (invitationId: string) => {
-    if (!confirm('Are you sure you want to remove this invitation?')) return;
-
-    try {
-      const response = await fetch(`/api/invitations/${invitationId}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const result = await response.json();
-        throw new Error(result.error || 'Failed to remove invitation');
-      }
-
-      fetchTeamData();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove invitation');
-    }
-  };
+  // Filter team members based on search term
+  const filteredTeamMembers = teamMembers.filter(member => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      member.firstName?.toLowerCase().includes(searchLower) ||
+      member.lastName?.toLowerCase().includes(searchLower) ||
+      member.email.toLowerCase().includes(searchLower) ||
+      member.username.toLowerCase().includes(searchLower) ||
+      member.role.toLowerCase().includes(searchLower)
+    );
+  });
 
   const fetchMemberBookAccess = async (userId: string) => {
     try {
@@ -295,7 +285,7 @@ export default function TeamManagement() {
     );
   }
 
-  const canInviteMore = orgInfo && orgInfo.currentSeats + invitations.length < orgInfo.maxSeats;
+  const canInviteMore = orgInfo && orgInfo.currentSeats < orgInfo.maxSeats;
 
   return (
     <div className="min-h-screen bg-[#f7f8fa]">
@@ -362,21 +352,65 @@ export default function TeamManagement() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <div className="max-w-7xl mx-auto">
           {/* Team Members */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card padding="lg">
-              <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-600">Team Members <span className="font-normal text-zinc-400">({teamMembers.length})</span></h3>
+          <Card padding="lg">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-600">
+                  Team Members <span className="font-normal text-zinc-400">({filteredTeamMembers.length} of {teamMembers.length})</span>
+                </h3>
+              </div>
+              <div className="flex items-center gap-3">
+                {/* Search Input */}
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg className="h-4 w-4 text-zinc-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search members..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-4 py-2 w-64 rounded-md border border-zinc-300 bg-white text-sm text-zinc-900 placeholder-zinc-500 focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="absolute inset-y-0 right-0 flex items-center pr-3"
+                    >
+                      <svg className="h-4 w-4 text-zinc-400 hover:text-zinc-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
                 {canInviteMore && (
-                  <button onClick={() => setShowInviteModal(true)} className="hidden rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-indigo-700 md:inline-flex">Invite</button>
+                  <button onClick={() => setShowInviteModal(true)} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700">Invite Member</button>
                 )}
               </div>
-              {teamMembers.length === 0 ? (
+            </div>
+            {filteredTeamMembers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center">
                   <svg className="h-12 w-12 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>
                   <h4 className="mt-4 text-sm font-medium text-zinc-900">No team members yet</h4>
                   <p className="mt-1 text-sm text-zinc-500">Invite your first team member to get started.</p>
+                </div>
+              ) : searchTerm && filteredTeamMembers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <svg className="h-12 w-12 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <h4 className="mt-4 text-sm font-medium text-zinc-900">No members found</h4>
+                  <p className="mt-1 text-sm text-zinc-500">Try adjusting your search terms.</p>
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="mt-3 text-sm text-indigo-600 hover:text-indigo-700"
+                  >
+                    Clear search
+                  </button>
                 </div>
               ) : (
                 <div className="overflow-hidden">
@@ -390,7 +424,7 @@ export default function TeamManagement() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-100">
-                      {teamMembers.map(member => (
+                      {filteredTeamMembers.map(member => (
                         <tr key={member.id} className="group hover:bg-zinc-50/50">
                           {/* Member Info */}
                           <td className="px-0 py-4">
@@ -468,42 +502,7 @@ export default function TeamManagement() {
                   </table>
                 </div>
               )}
-            </Card>
-          </div>
-          {/* Pending Invitations */}
-          <div className="space-y-6">
-            <Card padding="lg">
-              <div className="mb-6 flex items-center justify-between">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-zinc-600">Pending Invitations <span className="font-normal text-zinc-400">({invitations.length})</span></h3>
-              </div>
-              {invitations.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-10 text-center">
-                  <svg className="h-10 w-10 text-zinc-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                  <p className="mt-3 text-sm text-zinc-500">No pending invitations</p>
-                </div>
-              ) : (
-                <ul className="space-y-3">
-                  {invitations.map(invitation => (
-                    <li key={invitation.id} className="rounded-lg border border-zinc-200 bg-white/60 p-4 backdrop-blur-sm">
-                      <div className="mb-2 flex items-center justify-between gap-4">
-                        <p className="truncate text-sm font-medium text-zinc-900" title={invitation.email}>{invitation.email}</p>
-                        <div className="flex items-center gap-2">
-                          <Badge tone={roleBadgeTone(invitation.role)}>{invitation.role}</Badge>
-                          <button
-                            onClick={() => handleRemoveInvitation(invitation.id)}
-                            className="text-[11px] font-medium text-rose-600 hover:text-rose-700"
-                            title="Remove invitation"
-                          >Remove</button>
-                        </div>
-                      </div>
-                      <p className="text-[11px] text-zinc-500">Invited by {invitation.invitedBy.firstName} {invitation.invitedBy.lastName}</p>
-                      <p className="text-[11px] text-zinc-500">Expires {new Date(invitation.expiresAt).toLocaleDateString()}</p>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
-          </div>
+          </Card>
         </div>
       </div>
 

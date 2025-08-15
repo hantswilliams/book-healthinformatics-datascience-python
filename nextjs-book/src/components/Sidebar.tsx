@@ -22,19 +22,18 @@ interface Book {
 
 interface SidebarProps {
   books: Book[];
-  user?: User | null;
   loading?: boolean;
   className?: string;
   onClose?: () => void;
 }
 
-export default function Sidebar({ books, user: propUser, loading, className = '', onClose }: SidebarProps) {
+export default function Sidebar({ books, loading, className = '', onClose }: SidebarProps) {
   const pathname = usePathname();
   const orgSlug = useOrgSlug();
   const { user: supabaseUser, userProfile } = useSupabase();
   const [expandedBooks, setExpandedBooks] = useState<Set<string>>(new Set());
   
-  // Use Supabase user profile for role checks if available, otherwise fall back to prop user
+  // Use Supabase user profile for role checks
   const user = userProfile ? {
     id: supabaseUser?.id || '',
     username: userProfile.username || '',
@@ -44,7 +43,7 @@ export default function Sidebar({ books, user: propUser, loading, className = ''
     role: userProfile.role as 'OWNER' | 'ADMIN' | 'INSTRUCTOR' | 'LEARNER',
     createdAt: new Date(userProfile.joined_at || ''),
     updatedAt: new Date(userProfile.updated_at || userProfile.joined_at || '')
-  } : propUser;
+  } : null;
 
   // Auto-expand book that contains current chapter
   useEffect(() => {
