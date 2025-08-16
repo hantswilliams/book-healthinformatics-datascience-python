@@ -18,6 +18,7 @@ interface TeamMember {
   joinedAt: string;
   lastLoginAt?: string;
   invitedBy?: string;
+  courseCount: number;
 }
 
 interface Invitation {
@@ -77,6 +78,16 @@ export default function TeamManagement() {
   const [selectedMember, setSelectedMember] = useState<string | null>(null);
   const [memberBookAccess, setMemberBookAccess] = useState<UserBookAccess | null>(null);
   const [accessLoading, setAccessLoading] = useState(false);
+  const [showBulkImportModal, setShowBulkImportModal] = useState(false);
+  const [showCsvUploadModal, setShowCsvUploadModal] = useState(false);
+  const [bulkImportLoading, setBulkImportLoading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const [importResults, setImportResults] = useState<{
+    total: number;
+    added: number;
+    skipped: number;
+    errors: string[];
+  } | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -252,6 +263,101 @@ export default function TeamManagement() {
   const closeBookAccessModal = () => {
     setSelectedMember(null);
     setMemberBookAccess(null);
+    // Refresh team data to update course counts
+    fetchTeamData();
+  };
+
+  const handleCSVUpload = async (file: File) => {
+    // Validate file type
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setError('Please select a CSV file');
+      return;
+    }
+
+    setBulkImportLoading(true);
+    setError('');
+    setImportResults(null);
+
+    try {
+      // Read file content
+      const text = await file.text();
+      
+      // Parse CSV - split by lines and get first column of each row
+      const lines = text.split('\n').filter(line => line.trim());
+      const emails = lines
+        .map(line => {
+          // Get first column (split by comma and take first part)
+          const firstColumn = line.split(',')[0].trim();
+          // Remove quotes if present
+          return firstColumn.replace(/^["']|["']$/g, '');
+        })
+        .filter(email => {
+          // Basic email validation
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          return email && emailRegex.test(email);
+        });
+
+      if (emails.length === 0) {
+        setError('No valid email addresses found in the CSV file');
+        return;
+      }
+
+      console.log(`📁 Parsed ${emails.length} emails from CSV:`, emails.slice(0, 5));
+
+      // Send to API
+      const response = await fetch('/api/organizations/bulk-import-learners', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ emails }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to import learners');
+      }
+
+      setImportResults(result.results);
+      setShowCsvUploadModal(false);
+      setShowBulkImportModal(true);
+      
+      // Refresh team data to show new members
+      fetchTeamData();
+
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to process CSV file');
+    } finally {
+      setBulkImportLoading(false);
+    }
+  };
+
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleCSVUpload(file);
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleCSVUpload(e.dataTransfer.files[0]);
+    }
   };
 
   const roleBadgeTone = (role: string): any => {
@@ -387,9 +493,25 @@ export default function TeamManagement() {
                     </button>
                   )}
                 </div>
-                {canInviteMore && (
-                  <button onClick={() => setShowInviteModal(true)} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700">Invite Member</button>
-                )}
+                <div className="flex items-center gap-2">
+                  {canInviteMore && (
+                    <>
+                      {/* CSV Upload Button */}
+                      <button
+                        onClick={() => setShowCsvUploadModal(true)}
+                        disabled={bulkImportLoading}
+                        className="inline-flex items-center gap-2 rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50"
+                      >
+                        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Import CSV
+                      </button>
+                      
+                      <button onClick={() => setShowInviteModal(true)} className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700">Invite Member</button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
             {filteredTeamMembers.length === 0 ? (
@@ -419,6 +541,7 @@ export default function TeamManagement() {
                       <tr className="border-b border-zinc-200">
                         <th className="px-0 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Member</th>
                         <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Role</th>
+                        <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Courses</th>
                         <th className="px-3 py-3 text-left text-xs font-medium uppercase tracking-wide text-zinc-500">Status</th>
                         <th className="px-3 py-3 text-right text-xs font-medium uppercase tracking-wide text-zinc-500">Actions</th>
                       </tr>
@@ -449,6 +572,22 @@ export default function TeamManagement() {
                           {/* Role */}
                           <td className="px-3 py-4">
                             <Badge tone={roleBadgeTone(member.role)}>{member.role}</Badge>
+                          </td>
+                          
+                          {/* Courses */}
+                          <td className="px-3 py-4">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-zinc-900">{member.courseCount}</span>
+                              {member.courseCount > 0 ? (
+                                <Badge tone="indigo" subtle>
+                                  {member.courseCount === 1 ? 'course' : 'courses'}
+                                </Badge>
+                              ) : (
+                                <Badge tone="neutral" subtle>
+                                  no access
+                                </Badge>
+                              )}
+                            </div>
                           </td>
                           
                           {/* Status */}
@@ -633,6 +772,231 @@ export default function TeamManagement() {
             ) : null}
             <div className="mt-8 flex justify-end">
               <button onClick={closeBookAccessModal} className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50">Close</button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* CSV Upload Modal */}
+      {showCsvUploadModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowCsvUploadModal(false)} />
+          <Card className="relative w-full max-w-2xl" padding="lg">
+            <div className="mb-6 flex items-start justify-between gap-6">
+              <div>
+                <h3 className="text-base font-semibold text-zinc-900">Import Learners from CSV</h3>
+                <p className="mt-1 text-sm text-zinc-500">Upload a CSV file to bulk import learners to your organization</p>
+              </div>
+              <button 
+                onClick={() => setShowCsvUploadModal(false)} 
+                className="rounded-md p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-600"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Instructions */}
+            <div className="mb-6 rounded-lg bg-blue-50 border border-blue-200 p-4">
+              <h4 className="text-sm font-medium text-blue-900 mb-2">CSV Format Requirements</h4>
+              <ul className="text-sm text-blue-800 space-y-1">
+                <li>• <strong>First column:</strong> Email addresses (one per row)</li>
+                <li>• <strong>No headers required:</strong> Start directly with email addresses</li>
+                <li>• <strong>Additional columns:</strong> Will be ignored</li>
+                <li>• <strong>Duplicates:</strong> Already existing emails will be skipped</li>
+              </ul>
+              <div className="mt-3 p-3 bg-blue-100 rounded border border-blue-300">
+                <p className="text-xs font-medium text-blue-900 mb-1">Example CSV content:</p>
+                <pre className="text-xs text-blue-800 font-mono">
+john@company.com
+jane@company.com
+bob@company.com</pre>
+              </div>
+            </div>
+
+            {/* File Upload Area */}
+            <div
+              className={`relative border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                dragActive 
+                  ? 'border-indigo-500 bg-indigo-50' 
+                  : 'border-zinc-300 hover:border-zinc-400'
+              }`}
+              onDragEnter={handleDrag}
+              onDragLeave={handleDrag}
+              onDragOver={handleDrag}
+              onDrop={handleDrop}
+            >
+              <input
+                id="csv-upload"
+                type="file"
+                accept=".csv"
+                onChange={handleFileInputChange}
+                disabled={bulkImportLoading}
+                className="sr-only"
+              />
+              
+              {bulkImportLoading ? (
+                <div className="flex flex-col items-center justify-center">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-300 border-t-indigo-600 mb-4"></div>
+                  <p className="text-sm font-medium text-zinc-900">Processing CSV...</p>
+                  <p className="text-xs text-zinc-500 mt-1">This may take a moment</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center">
+                  <svg 
+                    className={`h-12 w-12 mb-4 ${dragActive ? 'text-indigo-500' : 'text-zinc-400'}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  
+                  <p className="text-sm font-medium text-zinc-900 mb-1">
+                    {dragActive ? 'Drop your CSV file here' : 'Drag and drop your CSV file here'}
+                  </p>
+                  <p className="text-xs text-zinc-500 mb-4">or</p>
+                  
+                  <label 
+                    htmlFor="csv-upload" 
+                    className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700 cursor-pointer"
+                  >
+                    <svg className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Choose CSV File
+                  </label>
+                  
+                  <p className="text-xs text-zinc-500 mt-3">Maximum file size: 10MB</p>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowCsvUploadModal(false)}
+                disabled={bulkImportLoading}
+                className="inline-flex items-center rounded-md border border-zinc-300 bg-white px-4 py-2 text-sm font-medium text-zinc-700 shadow-sm transition hover:bg-zinc-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* CSV Import Results Modal */}
+      {showBulkImportModal && importResults && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-sm" onClick={() => setShowBulkImportModal(false)} />
+          <Card className="relative w-full max-w-lg" padding="lg">
+            <div className="mb-6 flex items-start justify-between gap-6">
+              <div>
+                <h3 className="text-base font-semibold text-zinc-900">Import Complete</h3>
+                <p className="mt-1 text-sm text-zinc-500">CSV import results summary</p>
+              </div>
+              <button 
+                onClick={() => setShowBulkImportModal(false)} 
+                className="rounded-md p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-600"
+              >
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {/* Summary Stats */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-center">
+                  <div className="text-2xl font-semibold text-green-900">{importResults.added}</div>
+                  <div className="text-xs font-medium text-green-700 uppercase tracking-wide">Added</div>
+                </div>
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-4 text-center">
+                  <div className="text-2xl font-semibold text-amber-900">{importResults.skipped}</div>
+                  <div className="text-xs font-medium text-amber-700 uppercase tracking-wide">Skipped</div>
+                </div>
+                <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-center">
+                  <div className="text-2xl font-semibold text-blue-900">{importResults.total}</div>
+                  <div className="text-xs font-medium text-blue-700 uppercase tracking-wide">Total</div>
+                </div>
+              </div>
+
+              {/* Success Message */}
+              {importResults.added > 0 && (
+                <div className="rounded-lg bg-green-50 border border-green-200 p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="h-5 w-5 flex-shrink-0 text-green-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <h4 className="text-sm font-medium text-green-900">Successfully Added Learners</h4>
+                      <p className="mt-1 text-sm text-green-800">
+                        {importResults.added} new learner{importResults.added === 1 ? '' : 's'} have been added to your organization. 
+                        They will receive welcome emails with login instructions.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Skipped Info */}
+              {importResults.skipped > 0 && (
+                <div className="rounded-lg bg-amber-50 border border-amber-200 p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="h-5 w-5 flex-shrink-0 text-amber-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <h4 className="text-sm font-medium text-amber-900">Skipped Emails</h4>
+                      <p className="mt-1 text-sm text-amber-800">
+                        {importResults.skipped} email{importResults.skipped === 1 ? '' : 's'} were skipped because they already exist in your organization.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Info */}
+              {importResults.errors && importResults.errors.length > 0 && (
+                <div className="rounded-lg bg-red-50 border border-red-200 p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="h-5 w-5 flex-shrink-0 text-red-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div>
+                      <h4 className="text-sm font-medium text-red-900">Errors</h4>
+                      <div className="mt-1 text-sm text-red-800">
+                        {importResults.errors.map((error, index) => (
+                          <p key={index} className="mb-1 last:mb-0">{error}</p>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Next Steps */}
+              {importResults.added > 0 && (
+                <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+                  <h4 className="text-sm font-medium text-blue-900">Next Steps</h4>
+                  <ul className="mt-2 text-sm text-blue-800 space-y-1">
+                    <li>• New learners can sign in using verification codes</li>
+                    <li>• Assign course access using the "Courses" button for each member</li>
+                    <li>• Monitor progress from the Progress dashboard</li>
+                  </ul>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-8 flex justify-end">
+              <button 
+                onClick={() => setShowBulkImportModal(false)} 
+                className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition hover:bg-indigo-700"
+              >
+                Done
+              </button>
             </div>
           </Card>
         </div>

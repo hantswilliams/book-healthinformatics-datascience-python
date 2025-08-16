@@ -76,6 +76,28 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    // Get course counts for all members in parallel
+    const memberIds = members.map(member => member.id);
+    const { data: courseCounts, error: courseCountError } = await supabase
+      .from('book_access')
+      .select('user_id')
+      .eq('organization_id', userProfile.organization_id)
+      .in('user_id', memberIds);
+
+    if (courseCountError) {
+      console.error('Error fetching course counts:', courseCountError);
+      return NextResponse.json(
+        { error: 'Failed to fetch course counts' },
+        { status: 500 }
+      );
+    }
+
+    // Create a map of user_id to course count
+    const courseCountMap = (courseCounts || []).reduce((acc, access) => {
+      acc[access.user_id] = (acc[access.user_id] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
     // Transform the data to match the expected format (camelCase)
     const formattedMembers = members.map(member => ({
       id: member.id,
@@ -88,6 +110,7 @@ export async function GET(request: NextRequest) {
       joinedAt: member.joined_at,
       lastLoginAt: member.last_login_at,
       invitedBy: member.invited_by,
+      courseCount: courseCountMap[member.id] || 0,
     }));
 
     return NextResponse.json({

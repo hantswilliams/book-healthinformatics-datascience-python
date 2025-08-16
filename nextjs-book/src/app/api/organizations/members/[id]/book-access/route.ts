@@ -223,29 +223,70 @@ export async function POST(
     }
 
     if (hasAccess) {
-      // Grant access - use upsert pattern with Supabase
-      const { data: access, error: accessError } = await supabase
+      // Grant access - check if access already exists first
+      const { data: existingAccess, error: checkError } = await supabase
         .from('book_access')
-        .upsert({
-          organization_id: currentUser.organization_id,
-          user_id: userId,
-          book_id: bookId,
-          access_type: accessType,
-          granted_by: currentUser.id,
-          granted_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+        .select('id, user_id')
+        .eq('organization_id', currentUser.organization_id)
+        .eq('user_id', userId)
+        .eq('book_id', bookId)
+        .maybeSingle();
 
-      if (accessError) {
-        console.error('Error granting book access:', accessError);
+      if (checkError) {
+        console.error('Error checking existing access:', checkError);
         return NextResponse.json(
-          { error: 'Failed to grant book access' },
+          { error: 'Failed to check existing access' },
           { status: 500 }
         );
       }
 
-      return NextResponse.json({ access, granted: true });
+      if (existingAccess) {
+        // Update existing access
+        const { data: access, error: updateError } = await supabase
+          .from('book_access')
+          .update({
+            access_type: accessType,
+            granted_by: currentUser.id,
+            granted_at: new Date().toISOString(),
+          })
+          .eq('id', existingAccess.id)
+          .select()
+          .single();
+
+        if (updateError) {
+          console.error('Error updating book access:', updateError);
+          return NextResponse.json(
+            { error: 'Failed to update book access' },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({ access, granted: true });
+      } else {
+        // Insert new access
+        const { data: access, error: insertError } = await supabase
+          .from('book_access')
+          .insert({
+            organization_id: currentUser.organization_id,
+            user_id: userId,
+            book_id: bookId,
+            access_type: accessType,
+            granted_by: currentUser.id,
+            granted_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error inserting book access:', insertError);
+          return NextResponse.json(
+            { error: 'Failed to grant book access' },
+            { status: 500 }
+          );
+        }
+
+        return NextResponse.json({ access, granted: true });
+      }
     } else {
       // Revoke access
       const { error: deleteError } = await supabase

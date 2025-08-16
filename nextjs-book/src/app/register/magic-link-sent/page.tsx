@@ -2,8 +2,9 @@
 
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export default function MagicLinkSentPage() {
+function MagicLinkSentContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
 
@@ -63,5 +64,20 @@ export default function MagicLinkSentPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MagicLinkSentPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <MagicLinkSentContent />
+    </Suspense>
   );
 }
