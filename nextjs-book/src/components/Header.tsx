@@ -35,7 +35,7 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
     {
       label: 'Progress',
       href: orgSlug ? `/org/${orgSlug}/progress` : '/progress',
-      match: (p: string) => p.includes('/progress')
+      match: (p: string) => p.includes('/progress') && !p.includes('/dashboard/progress')
     },
     {
       label: 'Resources',
@@ -49,7 +49,16 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
     navItems.push({
       label: 'Admin',
       href: orgSlug ? `/org/${orgSlug}/dashboard` : '/dashboard',
-      match: (p: string) => p.includes('/dashboard')
+      match: (p: string) => {
+        // Highlight Admin for all dashboard pages including /dashboard/progress
+        return p.includes('/dashboard') &&
+               (p.endsWith('/dashboard') || 
+                p.includes('/dashboard/team') ||
+                p.includes('/dashboard/content') ||
+                p.includes('/dashboard/billing') ||
+                p.includes('/dashboard/settings') ||
+                p.includes('/dashboard/progress'));
+      }
     });
   }
 

@@ -223,7 +223,7 @@ export default function ProgressDashboard() {
         )}
 
         {/* Organization Stats */}
-        <div className="mb-8 grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="mb-8 grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-blue-600">{progressData.organizationStats.totalUsers}</div>
             <div className="text-sm text-gray-600">Total Users</div>
@@ -243,10 +243,6 @@ export default function ProgressDashboard() {
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-indigo-600">{progressData.organizationStats.averageProgress}%</div>
             <div className="text-sm text-gray-600">Avg Progress</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <div className="text-2xl font-bold text-teal-600">{formatTimeSpent(progressData.organizationStats.totalTimeSpent)}</div>
-            <div className="text-sm text-gray-600">Total Time</div>
           </div>
         </div>
 
@@ -316,9 +312,6 @@ export default function ProgressDashboard() {
                     Chapters
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Time Spent
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Last Activity
                   </th>
                 </tr>
@@ -362,9 +355,6 @@ export default function ProgressDashboard() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       {user.completedChapters} / {user.totalChapters}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {formatTimeSpent(user.totalTimeSpent)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatLastActivity(user.lastLoginAt)}
