@@ -58,3 +58,28 @@ body {
 .prose blockquote {
   color: rgb(39 39 42) !important; /* zinc-800 */
 }
+
+/* Aurora animation for blob effects */
+@keyframes blob {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+  }
+  33% {
+    transform: scale(1.1) translate(30px, -50px);
+  }
+  66% {
+    transform: scale(0.9) translate(-20px, 20px);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite ease-in-out;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}

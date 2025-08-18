@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import LogoMark from "@/components/LogoMark";
+import { motion } from "framer-motion";
 
 type SubscriptionTier = 'STARTER' | 'PRO' | 'ENTERPRISE';
 type Industry = 'GENERAL' | 'HEALTHCARE' | 'FINANCE' | 'TECHNOLOGY' | 'EDUCATION' | 'MANUFACTURING' | 'GOVERNMENT' | 'NON_PROFIT';
@@ -26,20 +28,21 @@ const subscriptionTiers = [
   {
     id: 'STARTER' as const,
     name: 'Starter',
-    price: 29,
-    annualPrice: 19,
-    seats: 5,
+    price: null,
+    annualPrice: null,
+    seats: 25,
     popular: false,
-    features: ['Up to 5 team members', 'Interactive Python courses', 'Progress tracking', 'Basic support']
+    features: ['Up to 25 learners', 'Core Python curriculum', 'Interactive assignments', 'Basic progress tracking', 'Email support'],
+    isFree: true
   },
   {
     id: 'PRO' as const,
-    name: 'Pro',
+    name: 'Professional',
     price: 99,
-    annualPrice: 59,
-    seats: 25,
+    annualPrice: 79,
+    seats: 500,
     popular: true,
-    features: ['Up to 25 team members', 'All Starter features', 'Advanced analytics', 'Custom content upload', 'Priority support']
+    features: ['Up to 500 learners', 'Everything in Starter', 'Industry-specific content', 'Advanced analytics dashboard', 'Custom branding', 'Priority support']
   },
   {
     id: 'ENTERPRISE' as const,
@@ -48,7 +51,7 @@ const subscriptionTiers = [
     annualPrice: null,
     seats: null,
     popular: false,
-    features: ['500+ team members', 'Custom deployment', 'Dedicated support', 'SLA guarantee']
+    features: ['Unlimited learners', 'Everything in Professional', 'Custom integrations (LMS, SSO)', 'Dedicated success manager', 'White-label solution', '24/7 support']
   }
 ];
 
@@ -78,7 +81,7 @@ export default function OrganizationRegister() {
     username: '',
     password: '',
     confirmPassword: '',
-    subscriptionTier: 'STARTER',
+    subscriptionTier: 'PRO',
     billingPeriod: 'annual'
   });
 
@@ -156,30 +159,80 @@ export default function OrganizationRegister() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-4xl">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">Start Your Python Learning Journey</h2>
-          <p className="mt-2 text-gray-600">Create your organization and begin with a 14-day free trial</p>
+    <main className="relative min-h-screen bg-zinc-950 overflow-hidden">
+      {/* Aurora background effects */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -inset-[10px] opacity-50">
+          <div className="absolute top-0 left-1/4 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
+          <div className="absolute top-0 right-1/4 w-72 h-72 bg-violet-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-1/3 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
         </div>
+      </div>
+      
+      {/* Grid pattern overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
 
-        <div className="mt-8 bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+      {/* Navigation */}
+      <motion.nav 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative z-50 border-b border-white/10 bg-zinc-950/80 backdrop-blur-xl"
+      >
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="flex h-16 items-center justify-between">
+            <div className="flex items-center gap-8">
+              <Link href="/" className="flex items-center gap-3">
+                <LogoMark className="h-6 w-6 text-white" variant="brackets" />
+                <span className="text-lg font-semibold text-white">Interactive Coding</span>
+              </Link>
+            </div>
+            <div className="hidden sm:flex items-center gap-6">
+              <Link href="/demo-healthcare" className="text-sm text-zinc-400 hover:text-white transition-colors">Healthcare</Link>
+              <Link href="/demo-finance" className="text-sm text-zinc-400 hover:text-white transition-colors">Finance</Link>
+              <Link href="/demo-university" className="text-sm text-zinc-400 hover:text-white transition-colors">Education</Link>
+              <Link href="/contact" className="text-sm text-zinc-400 hover:text-white transition-colors">Contact</Link>
+              <Link href="/login" className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition-colors">
+                Sign In
+              </Link>
+            </div>
+          </div>
+        </div>
+      </motion.nav>
+
+      <div className="relative z-10 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-4xl">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="text-center"
+          >
+            <h2 className="text-3xl font-bold text-white">Start Your Python Learning Journey</h2>
+            <p className="mt-2 text-zinc-300">Create your organization and begin with a 30-day free trial</p>
+          </motion.div>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="mt-8 bg-white/5 backdrop-blur-xl border border-white/10 py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10"
+          >
           <form className="space-y-6" onSubmit={handleSubmit}>
             {/* Subscription Tier Selection */}
             <div>
-              <label className="text-base font-medium text-gray-900">Choose Your Plan</label>
-              <p className="text-sm leading-5 text-gray-500">Start with 14-day free trial • No setup fees • 50% off annual plans</p>
+              <label className="text-base font-medium text-white">Choose Your Plan</label>
+              <p className="text-sm leading-5 text-zinc-300">Start with 30-day free trial • No setup fees • Save with annual plans</p>
               
               {/* Billing Period Toggle */}
               <div className="flex items-center justify-center mt-4 mb-6">
-                <div className="flex items-center bg-gray-100 rounded-lg p-1">
+                <div className="flex items-center bg-zinc-800/50 rounded-lg p-1">
                   <button
                     type="button"
                     onClick={() => setFormData(prev => ({ ...prev, billingPeriod: 'monthly' }))}
                     className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                       formData.billingPeriod === 'monthly'
                         ? 'bg-white text-zinc-900 shadow-sm'
-                        : 'text-zinc-600 hover:text-zinc-900'
+                        : 'text-zinc-300 hover:text-white'
                     }`}
                   >
                     Monthly
@@ -190,12 +243,12 @@ export default function OrganizationRegister() {
                     className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
                       formData.billingPeriod === 'annual'
                         ? 'bg-white text-zinc-900 shadow-sm'
-                        : 'text-zinc-600 hover:text-zinc-900'
+                        : 'text-zinc-300 hover:text-white'
                     }`}
                   >
                     Annual
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      Save up to 41%
+                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
+                      Save 20%
                     </span>
                   </button>
                 </div>
@@ -206,13 +259,14 @@ export default function OrganizationRegister() {
                   {subscriptionTiers.map((tier) => {
                     const currentPrice = formData.billingPeriod === 'annual' ? tier.annualPrice : tier.price;
                     const isEnterprise = tier.id === 'ENTERPRISE';
+                    const isStarter = tier.id === 'STARTER';
                     
                     return (
                       <div key={tier.id} className="relative">
                         {tier.popular && (
                           <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                            <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                              POPULAR
+                            <span className="bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                              Most Popular
                             </span>
                           </div>
                         )}
@@ -229,26 +283,31 @@ export default function OrganizationRegister() {
                           htmlFor={tier.id}
                           className={`cursor-pointer rounded-lg border p-6 flex flex-col h-full ${
                             formData.subscriptionTier === tier.id
-                              ? 'border-indigo-500 bg-indigo-50'
+                              ? 'border-cyan-500/50 bg-cyan-500/10'
                               : tier.popular
-                              ? 'border-indigo-200 bg-indigo-50'
-                              : 'border-gray-300 bg-white hover:bg-gray-50'
+                              ? 'border-indigo-400/50 bg-gradient-to-b from-indigo-900/20 to-white/5'
+                              : 'border-white/10 bg-white/5 hover:bg-white/10'
                           }`}
                         >
                           <div className="flex items-center justify-between mb-3">
-                            <div className="text-lg font-bold text-zinc-900">{tier.name}</div>
+                            <div className="text-lg font-bold text-white">{tier.name}</div>
                             <div className="text-right">
                               {isEnterprise ? (
-                                <div className="text-sm font-medium text-zinc-900">Custom</div>
+                                <div className="text-sm font-medium text-white">Custom</div>
+                              ) : isStarter ? (
+                                <>
+                                  <div className="text-xl font-bold text-white">Free</div>
+                                  <div className="text-sm text-zinc-300">for 30 days</div>
+                                </>
                               ) : (
                                 <>
-                                  <div className="text-xl font-bold text-zinc-900">
+                                  <div className="text-xl font-bold text-white">
                                     ${currentPrice}
                                   </div>
-                                  <div className="text-sm text-zinc-600">/month</div>
+                                  <div className="text-sm text-zinc-300">/month</div>
                                   {formData.billingPeriod === 'annual' && tier.price && (
-                                    <div className="text-xs text-green-600 font-medium">
-                                      Save ${(tier.price - tier.annualPrice!) * 12}/year
+                                    <div className="text-xs text-green-400 font-medium">
+                                      ${tier.price}/month billed annually
                                     </div>
                                   )}
                                 </>
@@ -258,16 +317,16 @@ export default function OrganizationRegister() {
                           
                           <div className="mb-4">
                             {isEnterprise ? (
-                              <div className="text-sm text-zinc-600">Contact us for pricing</div>
+                              <div className="text-sm text-zinc-300">Contact us for pricing</div>
                             ) : (
-                              <div className="text-sm text-zinc-600">{tier.seats} team members</div>
+                              <div className="text-sm text-zinc-300">{tier.seats} learners</div>
                             )}
                           </div>
                           
-                          <ul className="space-y-2 text-sm text-zinc-700 flex-grow">
+                          <ul className="space-y-2 text-sm text-zinc-300 flex-grow">
                             {tier.features.map((feature, index) => (
                               <li key={index} className="flex items-start">
-                                <svg className="h-4 w-4 text-green-500 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <svg className="h-4 w-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
                                 {feature}
@@ -276,10 +335,10 @@ export default function OrganizationRegister() {
                           </ul>
                           
                           {isEnterprise && (
-                            <div className="mt-4 pt-4 border-t border-gray-200">
+                            <div className="mt-4 pt-4 border-t border-white/10">
                               <Link
                                 href="/contact"
-                                className="text-indigo-600 hover:text-indigo-500 text-sm font-medium"
+                                className="text-cyan-400 hover:text-cyan-300 text-sm font-medium"
                               >
                                 Contact Sales →
                               </Link>
@@ -296,11 +355,11 @@ export default function OrganizationRegister() {
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {/* Organization Details */}
               <div className="sm:col-span-2">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Organization Details</h3>
+                <h3 className="text-lg font-medium text-white mb-4">Organization Details</h3>
               </div>
               
               <div>
-                <label htmlFor="organizationName" className="block text-sm font-medium text-zinc-700">
+                <label htmlFor="organizationName" className="block text-sm font-medium text-white">
                   Organization Name *
                 </label>
                 <input
@@ -310,13 +369,13 @@ export default function OrganizationRegister() {
                   required
                   value={formData.organizationName}
                   onChange={handleInputChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 bg-zinc-800/50 border border-white/10 placeholder-zinc-400 text-white rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                   placeholder="Acme Healthcare"
                 />
               </div>
 
               <div>
-                <label htmlFor="organizationSlug" className="block text-sm font-medium text-zinc-700">
+                <label htmlFor="organizationSlug" className="block text-sm font-medium text-white">
                   URL Slug *
                 </label>
                 <input
@@ -326,14 +385,14 @@ export default function OrganizationRegister() {
                   required
                   value={formData.organizationSlug}
                   onChange={handleInputChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 bg-zinc-800/50 border border-white/10 placeholder-zinc-400 text-white rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                   placeholder="acme-healthcare"
                 />
-                <p className="mt-1 text-xs text-gray-500">Used in your organization URL</p>
+                <p className="mt-1 text-xs text-zinc-400">Used in your organization URL</p>
               </div>
 
               <div>
-                <label htmlFor="industry" className="block text-sm font-medium text-zinc-700">
+                <label htmlFor="industry" className="block text-sm font-medium text-white">
                   Industry *
                 </label>
                 <select
@@ -341,7 +400,7 @@ export default function OrganizationRegister() {
                   name="industry"
                   value={formData.industry}
                   onChange={handleInputChange}
-                  className="mt-1 block w-full px-3 py-2 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 block w-full px-3 py-2 bg-zinc-800/50 border border-white/10 text-white rounded-md shadow-sm focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                 >
                   {industries.map((industry) => (
                     <option key={industry.value} value={industry.value}>
@@ -352,7 +411,7 @@ export default function OrganizationRegister() {
               </div>
 
               <div>
-                <label htmlFor="website" className="block text-sm font-medium text-zinc-700">
+                <label htmlFor="website" className="block text-sm font-medium text-white">
                   Website
                 </label>
                 <input
@@ -361,18 +420,18 @@ export default function OrganizationRegister() {
                   type="url"
                   value={formData.website}
                   onChange={handleInputChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 bg-zinc-800/50 border border-white/10 placeholder-zinc-400 text-white rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                   placeholder="https://acme.com"
                 />
               </div>
 
               {/* Owner Details */}
               <div className="sm:col-span-2">
-                <h3 className="text-lg font-medium text-gray-900 mb-4 mt-6">Your Details</h3>
+                <h3 className="text-lg font-medium text-white mb-4 mt-6">Your Details</h3>
               </div>
 
               <div>
-                <label htmlFor="firstName" className="block text-sm font-medium text-zinc-700">
+                <label htmlFor="firstName" className="block text-sm font-medium text-white">
                   First Name *
                 </label>
                 <input
@@ -382,12 +441,12 @@ export default function OrganizationRegister() {
                   required
                   value={formData.firstName}
                   onChange={handleInputChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 bg-zinc-800/50 border border-white/10 placeholder-zinc-400 text-white rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="lastName" className="block text-sm font-medium text-zinc-700">
+                <label htmlFor="lastName" className="block text-sm font-medium text-white">
                   Last Name *
                 </label>
                 <input
@@ -397,12 +456,12 @@ export default function OrganizationRegister() {
                   required
                   value={formData.lastName}
                   onChange={handleInputChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 bg-zinc-800/50 border border-white/10 placeholder-zinc-400 text-white rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-zinc-700">
+                <label htmlFor="email" className="block text-sm font-medium text-white">
                   Email *
                 </label>
                 <input
@@ -412,12 +471,12 @@ export default function OrganizationRegister() {
                   required
                   value={formData.email}
                   onChange={handleInputChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 bg-zinc-800/50 border border-white/10 placeholder-zinc-400 text-white rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                 />
               </div>
 
               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-zinc-700">
+                <label htmlFor="username" className="block text-sm font-medium text-white">
                   Username *
                 </label>
                 <input
@@ -427,13 +486,13 @@ export default function OrganizationRegister() {
                   required
                   value={formData.username}
                   onChange={handleInputChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 bg-zinc-800/50 border border-white/10 placeholder-zinc-400 text-white rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                   placeholder="johndoe"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
+                <label htmlFor="password" className="block text-sm font-medium text-white">
                   Password *
                 </label>
                 <input
@@ -443,13 +502,13 @@ export default function OrganizationRegister() {
                   required
                   value={formData.password}
                   onChange={handleInputChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 bg-zinc-800/50 border border-white/10 placeholder-zinc-400 text-white rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                   placeholder="Minimum 8 characters"
                 />
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-zinc-700">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-white">
                   Confirm Password *
                 </label>
                 <input
@@ -459,14 +518,14 @@ export default function OrganizationRegister() {
                   required
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
-                  className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                  className="mt-1 appearance-none relative block w-full px-3 py-2 bg-zinc-800/50 border border-white/10 placeholder-zinc-400 text-white rounded-md focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                 />
               </div>
             </div>
 
             {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="text-sm text-red-800">{error}</div>
+              <div className="rounded-md bg-red-900/20 border border-red-500/30 p-4">
+                <div className="text-sm text-red-400">{error}</div>
               </div>
             )}
 
@@ -474,23 +533,24 @@ export default function OrganizationRegister() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-zinc-900 bg-white hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 {isLoading ? 'Creating Organization...' : 'Start Free Trial'}
               </button>
             </div>
 
             <div className="text-center">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-zinc-300">
                 Already have an account?{' '}
-                <Link href="/" className="font-medium text-blue-600 hover:text-blue-500">
+                <Link href="/login" className="font-medium text-cyan-400 hover:text-cyan-300">
                   Sign in
                 </Link>
               </p>
             </div>
           </form>
+          </motion.div>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
