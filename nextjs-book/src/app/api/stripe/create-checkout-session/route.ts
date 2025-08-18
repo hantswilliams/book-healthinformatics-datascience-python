@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { prisma } from '@/lib/db';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { Database } from '@/lib/supabase-types';
 import { stripe, getTierConfig } from '@/lib/stripe-server';
 import { z } from 'zod';
 
@@ -12,14 +12,48 @@ const checkoutSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
     
-    if (!session?.user) {
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get user with organization details
+    const { data: userWithOrg, error: userError } = await supabase
+      .from('users')
+      .select(`
+        *,
+        organization:organizations(*)
+      `)
+      .eq('id', user.id)
+      .eq('is_active', true)
+      .single();
+
+    if (userError || !userWithOrg || !userWithOrg.organization) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
+    }
+
     // Only organization owners can manage billing
-    if (session.user.role !== 'OWNER') {
+    if (userWithOrg.role !== 'OWNER') {
       return NextResponse.json(
         { error: 'Only organization owners can manage billing' },
         { status: 403 }
@@ -30,48 +64,24 @@ export async function POST(request: NextRequest) {
     const { organizationId, subscriptionTier } = checkoutSchema.parse(body);
 
     // Verify user owns this organization
-    if (session.user.organizationId !== organizationId) {
+    if (userWithOrg.organization.id !== organizationId) {
       return NextResponse.json(
         { error: 'Unauthorized access to organization' },
         { status: 403 }
       );
     }
 
-    // Get organization details
-    const organization = await prisma.organization.findUnique({
-      where: { id: organizationId },
-      include: {
-        users: {
-          where: { role: 'OWNER' },
-          select: { email: true, firstName: true, lastName: true }
-        }
-      }
-    });
-
-    if (!organization) {
-      return NextResponse.json(
-        { error: 'Organization not found' },
-        { status: 404 }
-      );
-    }
-
-    const owner = organization.users[0];
-    if (!owner) {
-      return NextResponse.json(
-        { error: 'Organization owner not found' },
-        { status: 404 }
-      );
-    }
+    const organization = userWithOrg.organization;
 
     const tierConfig = getTierConfig(subscriptionTier);
 
     // Create or retrieve Stripe customer
-    let customerId = organization.stripeCustomerId;
+    let customerId = organization.stripe_customer_id;
     
     if (!customerId) {
       const customer = await stripe.customers.create({
-        email: owner.email,
-        name: `${owner.firstName} ${owner.lastName}`,
+        email: userWithOrg.email || user.email!,
+        name: `${userWithOrg.first_name || ''} ${userWithOrg.last_name || ''}`.trim() || user.email!,
         metadata: {
           organizationId: organization.id,
           organizationName: organization.name,
@@ -82,12 +92,19 @@ export async function POST(request: NextRequest) {
       customerId = customer.id;
       
       // Update organization with customer ID
-      await prisma.organization.update({
-        where: { id: organizationId },
-        data: { stripeCustomerId: customerId }
-      });
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({ stripe_customer_id: customerId })
+        .eq('id', organizationId);
+
+      if (updateError) {
+        console.error('Failed to update organization with Stripe customer ID:', updateError);
+      }
     }
 
+    // Get the base URL for redirect URLs
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    
     // Create checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -99,8 +116,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXTAUTH_URL}/onboarding/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXTAUTH_URL}/onboarding/payment?orgId=${organizationId}&cancelled=true`,
+      success_url: `${baseUrl}/onboarding/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/onboarding/payment?orgId=${organizationId}&cancelled=true`,
       subscription_data: {
         metadata: {
           organizationId: organization.id,
@@ -121,19 +138,23 @@ export async function POST(request: NextRequest) {
     });
 
     // Log billing event
-    await prisma.billingEvent.create({
-      data: {
-        organizationId: organization.id,
-        eventType: 'TRIAL_STARTED',
+    const { error: billingEventError } = await supabase
+      .from('billing_events')
+      .insert({
+        organization_id: organization.id,
+        event_type: 'TRIAL_STARTED',
         amount: tierConfig.amount,
         currency: 'usd',
-        metadata: JSON.stringify({
+        metadata: {
           checkoutSessionId: checkoutSession.id,
           subscriptionTier: subscriptionTier,
-          trialDays: 14
-        }),
-      }
-    });
+          trialDays: 30
+        },
+      });
+
+    if (billingEventError) {
+      console.error('Failed to log billing event:', billingEventError);
+    }
 
     return NextResponse.json({
       success: true,

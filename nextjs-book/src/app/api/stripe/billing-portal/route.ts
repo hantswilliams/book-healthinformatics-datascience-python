@@ -71,10 +71,13 @@ export async function POST(request: NextRequest) {
       }, { status: 503 });
     }
 
+    // Get the base URL for return URL
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    
     // Create billing portal session
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: organization.stripe_customer_id,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/org/${organization.slug}/dashboard/billing`,
+      return_url: `${baseUrl}/org/${organization.slug}/dashboard/billing`,
     });
 
     return NextResponse.json({

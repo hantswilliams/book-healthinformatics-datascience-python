@@ -10,49 +10,50 @@ export const getStripe = () => {
 };
 
 // Subscription tier pricing configuration (client-safe)
+// Aligned with main landing page pricing
 export const SUBSCRIPTION_TIERS = {
   STARTER: {
     id: 'STARTER',
     name: 'Starter',
-    amount: 2900, // $29.00 in cents
-    annualAmount: 1900, // $19.00 in cents (34% savings)
-    seats: 5,
+    amount: 0, // Free for 30 days
+    annualAmount: 0,
+    seats: 25,
     features: [
-      'Up to 5 team members',
-      'Interactive Python courses',
-      'Live code execution environment',
-      'Progress tracking',
-      'Basic support'
+      'Up to 25 learners',
+      'Core Python curriculum',
+      'Interactive assignments',
+      'Basic progress tracking',
+      'Email support'
     ]
   },
   PRO: {
     id: 'PRO',
-    name: 'Pro',
+    name: 'Professional',
     amount: 9900, // $99.00 in cents
-    annualAmount: 5900, // $59.00 in cents (40% savings)
-    seats: 25,
+    annualAmount: 7900, // $79.00 in cents (20% savings)
+    seats: 500,
     features: [
-      'Up to 25 team members',
-      'All Starter features',
-      'Advanced analytics & reporting',
-      'Custom content upload',
-      'Priority support',
-      'Team collaboration tools'
+      'Up to 500 learners',
+      'Everything in Starter',
+      'Industry-specific content',
+      'Advanced analytics dashboard',
+      'Custom branding',
+      'Priority support'
     ]
   },
   ENTERPRISE: {
     id: 'ENTERPRISE',
     name: 'Enterprise',
-    amount: 0, // Contact for pricing
+    amount: 0, // Custom pricing
     annualAmount: 0,
     seats: 999999, // "unlimited"
     features: [
-      '500+ team members',
-      'All Organization features',
-      'Dedicated account manager',
-      'Custom deployment options',
-      'SLA guarantee',
-      'Advanced security controls'
+      'Unlimited learners',
+      'Everything in Professional',
+      'Custom integrations (LMS, SSO)',
+      'Dedicated success manager',
+      'White-label solution',
+      '24/7 support'
     ]
   }
 } as const;

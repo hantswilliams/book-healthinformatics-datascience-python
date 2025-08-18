@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { stripe, verifyWebhookSignature } from '@/lib/stripe-server';
-import { prisma } from '@/lib/db';
+import { createClient } from '@supabase/supabase-js';
+import { Database } from '@/lib/supabase-types';
 import Stripe from 'stripe';
+
+// Create Supabase client for webhook use (service key for admin access)
+const supabase = createClient<Database>(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(request: NextRequest) {
   try {
@@ -71,6 +78,8 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   console.log('Checkout completed:', session.id);
   
   const organizationId = session.metadata?.organizationId;
+  const subscriptionTier = session.metadata?.subscriptionTier as 'STARTER' | 'PRO' | 'ENTERPRISE';
+  
   if (!organizationId) {
     console.error('No organization ID in checkout session metadata');
     return;
@@ -80,29 +89,43 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     // Get the subscription
     const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
     
+    // Calculate max seats based on tier
+    const maxSeats = subscriptionTier === 'STARTER' ? 25 : subscriptionTier === 'PRO' ? 500 : 999999;
+    
     // Update organization with subscription details
-    await prisma.organization.update({
-      where: { id: organizationId },
-      data: {
-        stripeSubscriptionId: subscription.id,
-        subscriptionStatus: 'TRIAL', // Will be updated when subscription becomes active
-        subscriptionStartedAt: new Date(subscription.created * 1000),
-        subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
-      }
-    });
+    const { error: updateError } = await supabase
+      .from('organizations')
+      .update({
+        stripe_subscription_id: subscription.id,
+        subscription_status: subscription.status === 'trialing' ? 'TRIAL' : 'ACTIVE',
+        subscription_tier: subscriptionTier || 'PRO', // Default to PRO since checkout was for paid plan
+        max_seats: maxSeats,
+        subscription_started_at: new Date(subscription.created * 1000).toISOString(),
+        subscription_ends_at: new Date(subscription.current_period_end * 1000).toISOString(),
+      })
+      .eq('id', organizationId);
+
+    if (updateError) {
+      console.error('Error updating organization:', updateError);
+    }
 
     // Log billing event
-    await prisma.billingEvent.create({
-      data: {
-        organizationId,
-        eventType: 'SUBSCRIPTION_CREATED',
-        stripeEventId: session.id,
-        metadata: JSON.stringify({
+    const { error: billingError } = await supabase
+      .from('billing_events')
+      .insert({
+        organization_id: organizationId,
+        event_type: 'SUBSCRIPTION_CREATED',
+        stripe_event_id: session.id,
+        metadata: {
           subscriptionId: subscription.id,
-          checkoutSessionId: session.id
-        }),
-      }
-    });
+          checkoutSessionId: session.id,
+          tier: subscriptionTier
+        },
+      });
+
+    if (billingError) {
+      console.error('Error creating billing event:', billingError);
+    }
     
   } catch (error) {
     console.error('Error handling checkout completed:', error);
@@ -120,31 +143,39 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 
   try {
     const subscriptionTier = subscription.metadata?.subscriptionTier as 'STARTER' | 'PRO' | 'ENTERPRISE';
-    const maxSeats = subscriptionTier === 'STARTER' ? 5 : subscriptionTier === 'PRO' ? 25 : 999;
+    const maxSeats = subscriptionTier === 'STARTER' ? 25 : subscriptionTier === 'PRO' ? 500 : 999999;
     
-    await prisma.organization.update({
-      where: { id: organizationId },
-      data: {
-        stripeSubscriptionId: subscription.id,
-        subscriptionStatus: subscription.status === 'trialing' ? 'TRIAL' : 'ACTIVE',
-        subscriptionTier: subscriptionTier || 'STARTER',
-        maxSeats,
-        subscriptionStartedAt: new Date(subscription.created * 1000),
-        subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
-      }
-    });
+    const { error: updateError } = await supabase
+      .from('organizations')
+      .update({
+        stripe_subscription_id: subscription.id,
+        subscription_status: subscription.status === 'trialing' ? 'TRIAL' : 'ACTIVE',
+        subscription_tier: subscriptionTier || 'STARTER',
+        max_seats: maxSeats,
+        subscription_started_at: new Date(subscription.created * 1000).toISOString(),
+        subscription_ends_at: new Date(subscription.current_period_end * 1000).toISOString(),
+      })
+      .eq('id', organizationId);
 
-    await prisma.billingEvent.create({
-      data: {
-        organizationId,
-        eventType: 'SUBSCRIPTION_CREATED',
-        metadata: JSON.stringify({
+    if (updateError) {
+      console.error('Error updating organization:', updateError);
+    }
+
+    const { error: billingError } = await supabase
+      .from('billing_events')
+      .insert({
+        organization_id: organizationId,
+        event_type: 'SUBSCRIPTION_CREATED',
+        metadata: {
           subscriptionId: subscription.id,
           status: subscription.status,
           tier: subscriptionTier
-        }),
-      }
-    });
+        },
+      });
+
+    if (billingError) {
+      console.error('Error creating billing event:', billingError);
+    }
     
   } catch (error) {
     console.error('Error handling subscription created:', error);
@@ -162,7 +193,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 
   try {
     const subscriptionTier = subscription.metadata?.subscriptionTier as 'STARTER' | 'PRO' | 'ENTERPRISE';
-    const maxSeats = subscriptionTier === 'STARTER' ? 5 : subscriptionTier === 'PRO' ? 25 : 999;
+    const maxSeats = subscriptionTier === 'STARTER' ? 25 : subscriptionTier === 'PRO' ? 500 : 999999;
     
     // Map Stripe status to our enum
     let status: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'UNPAID';
@@ -187,27 +218,36 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
         status = 'ACTIVE';
     }
     
-    await prisma.organization.update({
-      where: { id: organizationId },
-      data: {
-        subscriptionStatus: status,
-        subscriptionTier: subscriptionTier || 'STARTER',
-        maxSeats,
-        subscriptionEndsAt: new Date(subscription.current_period_end * 1000),
-      }
-    });
+    const { error: updateError } = await supabase
+      .from('organizations')
+      .update({
+        subscription_status: status,
+        subscription_tier: subscriptionTier || 'STARTER',
+        max_seats: maxSeats,
+        subscription_ends_at: new Date(subscription.current_period_end * 1000).toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', organizationId);
 
-    await prisma.billingEvent.create({
-      data: {
-        organizationId,
-        eventType: 'SUBSCRIPTION_UPDATED',
-        metadata: JSON.stringify({
+    if (updateError) {
+      console.error('Error updating organization:', updateError);
+    }
+
+    const { error: billingError } = await supabase
+      .from('billing_events')
+      .insert({
+        organization_id: organizationId,
+        event_type: 'SUBSCRIPTION_UPDATED',
+        metadata: {
           subscriptionId: subscription.id,
           status: subscription.status,
           tier: subscriptionTier
-        }),
-      }
-    });
+        },
+      });
+
+    if (billingError) {
+      console.error('Error creating billing event:', billingError);
+    }
     
   } catch (error) {
     console.error('Error handling subscription updated:', error);
@@ -224,24 +264,33 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   }
 
   try {
-    await prisma.organization.update({
-      where: { id: organizationId },
-      data: {
-        subscriptionStatus: 'CANCELED',
-        subscriptionEndsAt: new Date(subscription.ended_at! * 1000),
-      }
-    });
+    const { error: updateError } = await supabase
+      .from('organizations')
+      .update({
+        subscription_status: 'CANCELED',
+        subscription_ends_at: new Date(subscription.ended_at! * 1000).toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', organizationId);
 
-    await prisma.billingEvent.create({
-      data: {
-        organizationId,
-        eventType: 'SUBSCRIPTION_CANCELED',
-        metadata: JSON.stringify({
+    if (updateError) {
+      console.error('Error updating organization:', updateError);
+    }
+
+    const { error: billingError } = await supabase
+      .from('billing_events')
+      .insert({
+        organization_id: organizationId,
+        event_type: 'SUBSCRIPTION_CANCELED',
+        metadata: {
           subscriptionId: subscription.id,
           endedAt: subscription.ended_at
-        }),
-      }
-    });
+        },
+      });
+
+    if (billingError) {
+      console.error('Error creating billing event:', billingError);
+    }
     
   } catch (error) {
     console.error('Error handling subscription deleted:', error);
@@ -262,34 +311,50 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   }
 
   try {
-    // Update organization status to active if it was in trial
-    const organization = await prisma.organization.findUnique({
-      where: { id: organizationId }
-    });
+    // Get current organization status
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .select('subscription_status')
+      .eq('id', organizationId)
+      .single();
 
-    if (organization?.subscriptionStatus === 'TRIAL') {
-      await prisma.organization.update({
-        where: { id: organizationId },
-        data: {
-          subscriptionStatus: 'ACTIVE',
-        }
-      });
+    if (orgError) {
+      console.error('Error fetching organization:', orgError);
     }
 
-    await prisma.billingEvent.create({
-      data: {
-        organizationId,
-        eventType: 'PAYMENT_SUCCEEDED',
+    // Update organization status to active if it was in trial
+    if (organization?.subscription_status === 'TRIAL') {
+      const { error: updateError } = await supabase
+        .from('organizations')
+        .update({
+          subscription_status: 'ACTIVE',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', organizationId);
+
+      if (updateError) {
+        console.error('Error updating organization status:', updateError);
+      }
+    }
+
+    const { error: billingError } = await supabase
+      .from('billing_events')
+      .insert({
+        organization_id: organizationId,
+        event_type: 'PAYMENT_SUCCEEDED',
         amount: invoice.amount_paid,
         currency: invoice.currency,
-        stripeEventId: invoice.id,
-        metadata: JSON.stringify({
+        stripe_event_id: invoice.id,
+        metadata: {
           invoiceId: invoice.id,
           subscriptionId: subscription.id,
           amountPaid: invoice.amount_paid
-        }),
-      }
-    });
+        },
+      });
+
+    if (billingError) {
+      console.error('Error creating billing event:', billingError);
+    }
     
   } catch (error) {
     console.error('Error handling payment succeeded:', error);
@@ -310,20 +375,24 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
   }
 
   try {
-    await prisma.billingEvent.create({
-      data: {
-        organizationId,
-        eventType: 'PAYMENT_FAILED',
+    const { error: billingError } = await supabase
+      .from('billing_events')
+      .insert({
+        organization_id: organizationId,
+        event_type: 'PAYMENT_FAILED',
         amount: invoice.amount_due,
         currency: invoice.currency,
-        stripeEventId: invoice.id,
-        metadata: JSON.stringify({
+        stripe_event_id: invoice.id,
+        metadata: {
           invoiceId: invoice.id,
           subscriptionId: subscription.id,
           attemptCount: invoice.attempt_count
-        }),
-      }
-    });
+        },
+      });
+
+    if (billingError) {
+      console.error('Error creating billing event:', billingError);
+    }
     
   } catch (error) {
     console.error('Error handling payment failed:', error);
