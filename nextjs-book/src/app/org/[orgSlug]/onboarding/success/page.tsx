@@ -2,13 +2,13 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSupabase } from '@/lib/SupabaseProvider';
 import Link from 'next/link';
 
 function OnboardingSuccessForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, status } = useSession();
+  const { user: supabaseUser, userProfile, organization, loading } = useSupabase();
   
   const sessionId = searchParams.get('session_id');
   const [isLoading, setIsLoading] = useState(true);
@@ -16,15 +16,15 @@ function OnboardingSuccessForm() {
   const [subscriptionDetails, setSubscriptionDetails] = useState<any>(null);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (loading) return;
     
-    if (!session) {
+    if (!supabaseUser || !userProfile) {
       router.push('/login');
       return;
     }
 
     if (!sessionId) {
-      router.push('/dashboard');
+      router.push(`/org/${organization?.slug || 'dashboard'}/dashboard`);
       return;
     }
 
@@ -41,13 +41,13 @@ function OnboardingSuccessForm() {
     };
 
     verifySession();
-  }, [session, status, sessionId, router]);
+  }, [supabaseUser, userProfile, organization, loading, sessionId, router]);
 
   const handleContinue = () => {
-    router.push('/dashboard');
+    router.push(`/org/${organization?.slug || 'dashboard'}/dashboard`);
   };
 
-  if (status === 'loading' || isLoading) {
+  if (loading || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -171,13 +171,13 @@ function OnboardingSuccessForm() {
         </div>
 
         {/* Organization Info */}
-        {session && (
+        {userProfile && organization && (
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Signed in as <span className="font-medium">{session.user.firstName} {session.user.lastName}</span>
+              Signed in as <span className="font-medium">{userProfile.first_name} {userProfile.last_name}</span>
             </p>
             <p className="text-xs text-gray-500">
-              {session.user.organizationName} • {session.user.role}
+              {organization.name} • {userProfile.role}
             </p>
           </div>
         )}
