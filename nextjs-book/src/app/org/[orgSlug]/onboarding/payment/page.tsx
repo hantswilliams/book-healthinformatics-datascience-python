@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useSupabase } from '@/lib/SupabaseProvider';
 import { getStripe, SUBSCRIPTION_TIERS, formatPrice } from '@/lib/stripe';
 
 type SubscriptionTier = keyof typeof SUBSCRIPTION_TIERS;
@@ -10,7 +10,7 @@ type SubscriptionTier = keyof typeof SUBSCRIPTION_TIERS;
 function PaymentOnboardingForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { data: session, status } = useSession();
+  const { user, userProfile, organization, loading } = useSupabase();
   
   const organizationId = searchParams.get('orgId');
   const cancelled = searchParams.get('cancelled') === 'true';
@@ -20,9 +20,9 @@ function PaymentOnboardingForm() {
   const [selectedTier, setSelectedTier] = useState<SubscriptionTier>('STARTER');
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (loading) return;
     
-    if (!session) {
+    if (!user || !userProfile) {
       router.push('/login');
       return;
     }
@@ -33,15 +33,15 @@ function PaymentOnboardingForm() {
     }
     
     // Check if user is the owner of this organization
-    if (session.user.organizationId !== organizationId || session.user.role !== 'OWNER') {
-      router.push('/dashboard');
+    if (organization?.id !== organizationId || userProfile.role !== 'OWNER') {
+      router.push(`/org/${organization?.slug || 'dashboard'}/dashboard`);
       return;
     }
 
     if (cancelled) {
       setError('Payment was cancelled. You can try again or continue with the trial.');
     }
-  }, [session, status, organizationId, cancelled, router]);
+  }, [user, userProfile, organization, loading, organizationId, cancelled, router]);
 
   const handleSubscribe = async (tier: SubscriptionTier) => {
     setIsLoading(true);
@@ -91,7 +91,7 @@ function PaymentOnboardingForm() {
     router.push('/dashboard');
   };
 
-  if (status === 'loading' || !session) {
+  if (loading || !user || !userProfile) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -110,7 +110,7 @@ function PaymentOnboardingForm() {
             Complete Your Setup
           </h1>
           <p className="mt-4 text-xl text-gray-600">
-            Welcome to {session.user.organizationName}! Choose your plan to get started.
+            Welcome to {organization?.name || 'your organization'}! Choose your plan to get started.
           </p>
           <div className="mt-4 bg-blue-50 border border-blue-200 rounded-md p-4 inline-block">
             <p className="text-blue-800 font-medium">✨ Start with a 14-day free trial</p>
