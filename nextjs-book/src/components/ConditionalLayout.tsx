@@ -12,7 +12,7 @@ export default function ConditionalLayout({ children }: ConditionalLayoutProps) 
   const pathname = usePathname();
   
   // Check if current path is a landing page
-  const isLandingPage = pathname === '/' || pathname?.startsWith('/landing-') || pathname?.startsWith('/demo-') || pathname === '/contact' || pathname === '/register/organization';
+  const isLandingPage = pathname === '/' || pathname?.startsWith('/landing-') || pathname?.startsWith('/demo-') || pathname === '/contact' || pathname === '/register/organization' || pathname === '/login' || pathname?.includes('/login');
   
   // If it's a landing page, render children directly without the main layout
   if (isLandingPage) {

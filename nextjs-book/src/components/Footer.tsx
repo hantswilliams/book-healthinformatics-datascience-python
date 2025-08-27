@@ -33,20 +33,6 @@ export default function Footer() {
             <Link href="/terms" className="text-zinc-600 transition-colors hover:text-zinc-900">
               Terms
             </Link>
-            <div className="border-l border-zinc-300 pl-6 ml-2">
-              <span className="text-zinc-400 text-xs font-medium">INDUSTRY DEMOS:</span>
-              <div className="flex gap-4 mt-1">
-                <Link href="/landing-v1" className="text-teal-600 transition-colors hover:text-teal-700">
-                  🩺 Healthcare
-                </Link>
-                <Link href="/landing-v2" className="text-green-600 transition-colors hover:text-green-700">
-                  💰 Finance
-                </Link>
-                <Link href="/landing-v3" className="text-amber-600 transition-colors hover:text-amber-700">
-                  🎓 Education
-                </Link>
-              </div>
-            </div>
           </nav>
 
           {/* Meta */}

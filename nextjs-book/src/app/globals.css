@@ -5,11 +5,152 @@
   --foreground: #171717;
 }
 
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+.light {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+/* Theme-specific styles */
+.light {
+  background-color: white;
+}
+
+.dark {
+  background-color: rgb(9 9 11); /* zinc-950 */
+}
+
+/* Light theme overrides - but not for login pages */
+.light .bg-zinc-950:not(.login-page) {
+  background-color: white !important;
+}
+
+/* Login page should always have white background regardless of theme */
+.login-page {
+  background-color: white !important;
+}
+
+.login-page * {
+  color: inherit !important;
+}
+
+/* Override theme-based background for login pages */
+html:has(.login-page) {
+  background-color: white !important;
+}
+
+body:has(.login-page) {
+  background-color: white !important;
+}
+
+/* More specific overrides for login pages */
+.login-page,
+.login-page * {
+  background-color: inherit;
+}
+
+/* Ensure login page is never affected by dark theme */
+.dark .login-page {
+  background-color: white !important;
+}
+
+.light .login-page {
+  background-color: white !important;
+}
+
+.light .text-white {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+.light .text-zinc-400 {
+  color: rgb(82 82 91) !important; /* zinc-600 */
+}
+
+.light .text-zinc-300 {
+  color: rgb(82 82 91) !important; /* zinc-600 */
+}
+
+.light .border-white\/10 {
+  border-color: rgb(228 228 231) !important; /* zinc-200 */
+}
+
+.light .border-white\/20 {
+  border-color: rgb(228 228 231) !important; /* zinc-200 */
+}
+
+.light .bg-white\/5 {
+  background-color: rgb(244 244 245) !important; /* zinc-100 */
+}
+
+.light .bg-white\/10 {
+  background-color: rgb(228 228 231) !important; /* zinc-200 */
+}
+
+.light .text-white\/70 {
+  color: rgb(82 82 91) !important; /* zinc-600 */
+}
+
+/* Background effects visibility */
+.light .aurora-dark {
+  display: none !important;
+}
+
+.dark .aurora-light {
+  display: none !important;
+}
+
+.light .aurora-light {
+  display: block !important;
+}
+
+.dark .aurora-dark {
+  display: block !important;
+}
+
+/* Navigation overrides for light theme */
+.light .bg-zinc-950\/80 {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Navigation link hover states in light mode */
+.light .text-zinc-400:hover {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+.light .text-white:hover {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+/* Button overrides for light theme */
+.light .bg-white {
+  background-color: rgb(24 24 27) !important; /* zinc-900 */
+  color: white !important;
+}
+
+.light .bg-white:hover {
+  background-color: rgb(39 39 42) !important; /* zinc-800 */
+}
+
+/* Ensure indigo buttons maintain their color in all themes */
+.bg-indigo-600 {
+  background-color: rgb(79 70 229) !important; /* indigo-600 */
+  color: white !important;
+}
+
+.bg-indigo-600:hover {
+  background-color: rgb(67 56 202) !important; /* indigo-700 */
+  color: white !important;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +164,18 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Override body background for login pages */
+body:has(.login-page) {
+  background: white !important;
+  color: rgb(24 24 27) !important;
+}
+
+/* Fallback for browsers that don't support :has() */
+.login-page-body {
+  background: white !important;
+  color: rgb(24 24 27) !important;
 }
 
 /* Make default text colors darker for better readability using zinc colors */

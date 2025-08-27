@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import PythonDemo from '@/components/PythonDemo';
 import LogoMark from "@/components/LogoMark";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useSupabase } from '@/lib/SupabaseProvider';
 import { motion } from "framer-motion";
 
@@ -26,11 +26,20 @@ export default function Home() {
   return (
     <main className="relative min-h-screen bg-zinc-950 overflow-hidden">
       {/* Aurora background effects */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="aurora-dark absolute inset-0 overflow-hidden">
         <div className="absolute -inset-[10px] opacity-50">
           <div className="absolute top-0 left-1/4 w-72 h-72 bg-indigo-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob"></div>
           <div className="absolute top-0 right-1/4 w-72 h-72 bg-violet-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-2000"></div>
           <div className="absolute -bottom-8 left-1/3 w-72 h-72 bg-cyan-500 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-blob animation-delay-4000"></div>
+        </div>
+      </div>
+      
+      {/* Light mode background effects */}
+      <div className="aurora-light absolute inset-0 overflow-hidden">
+        <div className="absolute -inset-[10px] opacity-30">
+          <div className="absolute top-0 left-1/4 w-72 h-72 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-blob"></div>
+          <div className="absolute top-0 right-1/4 w-72 h-72 bg-violet-200 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-blob animation-delay-2000"></div>
+          <div className="absolute -bottom-8 left-1/3 w-72 h-72 bg-cyan-200 rounded-full mix-blend-multiply filter blur-xl opacity-50 animate-blob animation-delay-4000"></div>
         </div>
       </div>
       
@@ -55,10 +64,9 @@ export default function Home() {
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-6">
-              <Link href="/demo-healthcare" className="text-sm text-zinc-400 hover:text-white transition-colors">Healthcare</Link>
-              <Link href="/demo-finance" className="text-sm text-zinc-400 hover:text-white transition-colors">Finance</Link>
-              <Link href="/demo-university" className="text-sm text-zinc-400 hover:text-white transition-colors">Education</Link>
-              <Link href="/contact" className="text-sm text-zinc-400 hover:text-white transition-colors">Contact</Link>
+              {/* <Link href="/contact" className="text-sm text-zinc-400 hover:text-white transition-colors">Contact</Link> */}
+              <ThemeToggle />
+              <Link href="/login" className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white backdrop-blur hover:bg-white/10 transition-colors">Log in</Link>
               <Link href="/register/organization" className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100 transition-colors">
                 Get Started
               </Link>
@@ -77,29 +85,29 @@ export default function Home() {
             transition={{ delay: 0.1 }}
             className="mx-auto max-w-4xl text-center"
           >
-            <div className="mb-4 w-fit mx-auto rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold text-white/70 shadow-sm backdrop-blur">
+            <div className="mb-4 w-fit mx-auto rounded-full border border-white/10 dark:border-white/10 light:border-zinc-200 bg-white/5 dark:bg-white/5 light:bg-zinc-100 px-3 py-1 text-[11px] font-semibold text-white/70 dark:text-white/70 light:text-zinc-600 shadow-sm backdrop-blur">
               Interactive Learning Platform
             </div>
-            <h1 className="text-5xl font-extrabold leading-tight tracking-tight text-white sm:text-6xl">
+            <h1 className="text-5xl font-extrabold leading-tight tracking-tight text-white dark:text-white light:text-zinc-900 sm:text-6xl">
               <span className="block">Build interactive coding</span>
               <span className="block">training programs</span>
               <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-cyan-400 bg-clip-text text-transparent">for any industry</span>
             </h1>
-            <p className="mt-6 text-xl leading-8 text-zinc-300 max-w-3xl mx-auto">
+            <p className="mt-6 text-xl leading-8 text-zinc-300 dark:text-zinc-300 light:text-zinc-600 max-w-3xl mx-auto">
               Create, deliver, and track hands-on coding lessons with live, in-browser execution and real-time feedback. Start with Python—scale to SQL, JavaScript, and more.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link href="/register/organization" className="group inline-flex items-center justify-center rounded-lg bg-white px-8 py-4 text-base font-semibold text-zinc-900 shadow-lg transition-all hover:bg-zinc-100 hover:shadow-xl">
+              <Link href="/register/organization" className="group inline-flex items-center justify-center rounded-lg bg-white dark:bg-white light:bg-zinc-900 px-8 py-4 text-base font-semibold text-zinc-900 dark:text-zinc-900 light:text-white shadow-lg transition-all hover:bg-zinc-100 dark:hover:bg-zinc-100 light:hover:bg-zinc-800 hover:shadow-xl">
                 Start free trial
                 <svg className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>
-              <Link href="/contact" className="inline-flex items-center justify-center rounded-lg border border-white/20 bg-white/5 px-8 py-4 text-base font-semibold text-white backdrop-blur hover:bg-white/10 transition-colors">
+              <Link href="/contact" className="inline-flex items-center justify-center rounded-lg border border-white/20 dark:border-white/20 light:border-zinc-200 bg-white/5 dark:bg-white/5 light:bg-zinc-100 px-8 py-4 text-base font-semibold text-white dark:text-white light:text-zinc-900 backdrop-blur hover:bg-white/10 dark:hover:bg-white/10 light:hover:bg-zinc-200 transition-colors">
                 Talk to us
               </Link>
             </div>
-            <p className="mt-6 text-sm text-zinc-400">14‑day free trial • No credit card required • SOC2-ready architecture</p>
+            <p className="mt-6 text-sm text-zinc-400 dark:text-zinc-400 light:text-zinc-500">14‑day free trial • No credit card required • SOC2-ready architecture</p>
           </motion.div>
 
         </section>
@@ -113,18 +121,14 @@ export default function Home() {
             transition={{ delay: 0.1 }}
             className="mb-16 text-center"
           >
-            <h2 className="text-3xl font-bold text-white">Everything you need to train your team</h2>
-            <p className="mt-4 text-xl text-zinc-300">From content creation to performance tracking</p>
+            <h2 className="text-3xl font-bold text-white dark:text-white light:text-zinc-900">Everything you need to train your team</h2>
+            <p className="mt-4 text-xl text-zinc-300 dark:text-zinc-300 light:text-zinc-600">From content creation to performance tracking</p>
           </motion.div>
           
           <div className="grid gap-8 md:grid-cols-3">
             {/* Bring Your Own Content */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="group rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 transition-all hover:bg-white/10"
+            <div
+              className="group rounded-2xl border border-white/10 dark:border-white/10 light:border-zinc-200 bg-white/5 dark:bg-white/5 light:bg-zinc-50 backdrop-blur-sm p-8 transition-all hover:bg-white/10 dark:hover:bg-white/10 light:hover:bg-zinc-100"
             >
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-violet-500">
                 <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -133,17 +137,13 @@ export default function Home() {
                   <path strokeWidth="1.5" strokeLinecap="round" d="M9 13h6M9 17h6" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-white">Bring Your Own Content</h3>
-              <p className="mt-3 text-zinc-300">Transform your existing lessons into interactive coding experiences with live execution.</p>
-            </motion.div>
+              <h3 className="text-xl font-semibold text-white dark:text-white light:text-zinc-900">Bring Your Own Content</h3>
+              <p className="mt-3 text-zinc-300 dark:text-zinc-300 light:text-zinc-600">Transform your existing lessons into interactive coding experiences with live execution.</p>
+            </div>
 
             {/* Track Team Progress */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="group rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 transition-all hover:bg-white/10"
+            <div
+              className="group rounded-2xl border border-white/10 dark:border-white/10 light:border-zinc-200 bg-white/5 dark:bg-white/5 light:bg-zinc-50 backdrop-blur-sm p-8 transition-all hover:bg-white/10 dark:hover:bg-white/10 light:hover:bg-zinc-100"
             >
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500">
                 <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -151,17 +151,13 @@ export default function Home() {
                   <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M7 16l3-3 4 4 7-7" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-white">Track Team Progress</h3>
-              <p className="mt-3 text-zinc-300">Monitor completion, performance, and engagement with built‑in analytics.</p>
-            </motion.div>
+              <h3 className="text-xl font-semibold text-white dark:text-white light:text-zinc-900">Track Team Progress</h3>
+              <p className="mt-3 text-zinc-300 dark:text-zinc-300 light:text-zinc-600">Monitor completion, performance, and engagement with built‑in analytics.</p>
+            </div>
 
             {/* Enterprise Ready */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.3 }}
-              className="group rounded-2xl border border-white/10 bg-white/5 backdrop-blur-sm p-8 transition-all hover:bg-white/10"
+            <div
+              className="group rounded-2xl border border-white/10 dark:border-white/10 light:border-zinc-200 bg-white/5 dark:bg-white/5 light:bg-zinc-50 backdrop-blur-sm p-8 transition-all hover:bg-white/10 dark:hover:bg-white/10 light:hover:bg-zinc-100"
             >
               <div className="mb-6 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-cyan-500 to-indigo-500">
                 <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -169,9 +165,9 @@ export default function Home() {
                   <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4" />
                 </svg>
               </div>
-              <h3 className="text-xl font-semibold text-white">Enterprise Ready</h3>
-              <p className="mt-3 text-zinc-300">SSO, audit logs, and role‑based access control ready for scale.</p>
-            </motion.div>
+              <h3 className="text-xl font-semibold text-white dark:text-white light:text-zinc-900">Enterprise Ready</h3>
+              <p className="mt-3 text-zinc-300 dark:text-zinc-300 light:text-zinc-600">SSO, audit logs, and role‑based access control ready for scale.</p>
+            </div>
           </div>
         </section>
 
@@ -191,9 +187,9 @@ export default function Home() {
 
             <div className="grid gap-6 md:grid-cols-3">
               {[
-                {title:'Healthcare Analytics', emoji:'🩺', description:'Build patient analysis systems and medical data pipelines', link:'/demo-healthcare', gradient:'from-teal-500/20 to-cyan-500/20'},
-                {title:'Financial Analysis', emoji:'💰', description:'Create trading algorithms and portfolio management tools', link:'/demo-finance', gradient:'from-green-500/20 to-emerald-500/20'},
-                {title:'University Programs', emoji:'🎓', description:'Develop CS curricula with interactive coding assignments', link:'/demo-university', gradient:'from-indigo-500/20 to-violet-500/20'}
+                {title:'Healthcare Analytics', emoji:'', description:'Build patient analysis systems and medical data pipelines', link:'/demo-healthcare', gradient:'from-teal-500/20 to-cyan-500/20'},
+                {title:'Financial Analysis', emoji:'', description:'Create trading algorithms and portfolio management tools', link:'/demo-finance', gradient:'from-green-500/20 to-emerald-500/20'},
+                {title:'University Programs', emoji:'', description:'Develop CS curricula with interactive coding assignments', link:'/demo-university', gradient:'from-indigo-500/20 to-violet-500/20'}
               ].map((t,idx)=> (
                 <motion.div
                   key={idx}
@@ -394,13 +390,8 @@ export default function Home() {
             </div>
             <div className="mt-12 border-t border-white/10 pt-8 text-center">
               <p className="text-zinc-300">
-                <strong className="text-white">All plans include:</strong> Free 30-day trial • No setup fees • Cancel anytime • SOC2 Type II compliance
+                <strong className="text-white">All plans include:</strong> Free 30-day trial • No setup fees • Cancel anytime
               </p>
-              <div className="mt-4 flex items-center justify-center gap-6 text-sm text-zinc-400">
-                <span>🏥 HIPAA compliant</span>
-                <span>📊 SEC/FINRA ready</span>
-                <span>🎓 FERPA aligned</span>
-              </div>
             </div>
           </motion.div>
         </section>

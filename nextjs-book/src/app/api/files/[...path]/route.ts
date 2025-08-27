@@ -1,22 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { Database } from '@/lib/supabase-types';
 import { getFileContent } from '@/lib/file-storage';
 import path from 'path';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { path: string[] } }
+  { params }: { params: Promise<{ path: string[] }> }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const cookieStore = await cookies();
     
-    if (!session?.user) {
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll();
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          },
+        },
+      }
+    );
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const resolvedParams = await params;
+
     // Reconstruct the file path
-    const filePath = path.join('uploads', 'books', ...params.path);
+    const filePath = path.join('uploads', 'books', ...resolvedParams.path);
     
     // Basic security check - ensure path is within uploads/books
     if (!filePath.startsWith('uploads/books/')) {
