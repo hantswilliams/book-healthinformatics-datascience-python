@@ -18,6 +18,7 @@ const chapterSchema = z.object({
   emoji: z.string(),
   order: z.number(),
   defaultExecutionMode: z.enum(['SHARED', 'ISOLATED']).default('SHARED'),
+  packages: z.array(z.string()).optional(),
   sections: z.array(sectionSchema)
 });
 
@@ -178,8 +179,11 @@ export async function POST(request: NextRequest) {
         python_url: '',   // Legacy field - empty for new enhanced chapters
         is_published: true,
         estimated_minutes: estimatedMinutes,
-        default_execution_mode: chapterData.defaultExecutionMode
+        default_execution_mode: chapterData.defaultExecutionMode,
+        packages: JSON.stringify(chapterData.packages || [])
       });
+      
+      console.log('CREATE API: Creating chapter:', chapterData.title, 'with packages:', chapterData.packages);
 
       // Create sections for this chapter
       for (const sectionData of chapterData.sections) {

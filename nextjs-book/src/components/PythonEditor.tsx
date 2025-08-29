@@ -7,17 +7,33 @@ import { usePyodide } from '@/lib/usePyodide';
 interface PythonEditorProps {
   initialCode?: string;
   onCodeRun?: (code: string, success: boolean) => void;
+  chapterId?: string; // For loading chapter-specific packages
 }
 
 export default function PythonEditor({ 
   initialCode = '', 
-  onCodeRun
+  onCodeRun,
+  chapterId
 }: PythonEditorProps) {
   const [code, setCode] = useState(initialCode);
   const [output, setOutput] = useState('');
   const [isRunning, setIsRunning] = useState(false);
+  const [currentlyLoadingPackage, setCurrentlyLoadingPackage] = useState<string>('');
   const editorRef = useRef<{ addAction: (action: { id: string; label: string; keybindings: number[]; run: () => void }) => void } | null>(null);
-  const { runPython, isLoading: pyodideLoading } = usePyodide();
+  
+  // Configure Pyodide with chapter-specific packages
+  const { runPython, isLoading: pyodideLoading, loadingState } = usePyodide({
+    chapterId,
+    onPackageLoadStart: (packageName: string) => {
+      setCurrentlyLoadingPackage(packageName);
+    },
+    onPackageLoadComplete: (packageName: string, success: boolean, error?: string) => {
+      setCurrentlyLoadingPackage('');
+      if (!success && error) {
+        setOutput(prev => prev + `\nWarning: Failed to load ${packageName}: ${error}`);
+      }
+    }
+  });
 
   useEffect(() => {
     if (initialCode) {
@@ -131,9 +147,66 @@ export default function PythonEditor({
       </div>
       
       <div className="p-6 bg-gray-50">
-        <h4 className="text-sm font-medium text-gray-900 mb-2">Output Console</h4>
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-medium text-gray-900">Output Console</h4>
+          {loadingState.loadedPackages.length > 0 && (
+            <div className="flex items-center space-x-2 text-xs text-green-600">
+              <span>📦</span>
+              <span>{loadingState.loadedPackages.length} packages loaded</span>
+            </div>
+          )}
+        </div>
+
+        {/* Package Loading Status */}
+        {(pyodideLoading || currentlyLoadingPackage || loadingState.loadingPackages.length > 0) && (
+          <div className="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
+            <div className="flex items-center space-x-2 text-sm text-blue-800">
+              <div className="animate-spin w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full"></div>
+              {pyodideLoading && !currentlyLoadingPackage ? (
+                <span>Initializing Python environment...</span>
+              ) : currentlyLoadingPackage ? (
+                <span>Loading {currentlyLoadingPackage}...</span>
+              ) : loadingState.loadingPackages.length > 0 ? (
+                <span>Loading packages: {loadingState.loadingPackages.join(', ')}</span>
+              ) : (
+                <span>Getting ready...</span>
+              )}
+            </div>
+            
+            {loadingState.totalEstimatedTime > 0 && (
+              <div className="mt-2">
+                <div className="w-full bg-blue-200 rounded-full h-1.5">
+                  <div 
+                    className="bg-blue-600 h-1.5 rounded-full transition-all duration-500" 
+                    style={{ 
+                      width: `${Math.min(100, (loadingState.currentProgress / loadingState.totalEstimatedTime) * 100)}%` 
+                    }}
+                  ></div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Failed Packages Warning */}
+        {loadingState.failedPackages.length > 0 && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-3">
+            <div className="text-sm text-yellow-800">
+              <span className="font-medium">Warning:</span> Some packages failed to load:
+            </div>
+            <ul className="mt-1 text-xs text-yellow-700">
+              {loadingState.failedPackages.map((pkg, index) => (
+                <li key={index}>• {pkg.name}: {pkg.error}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <pre className="bg-white border border-gray-200 rounded-md p-4 text-sm font-mono text-gray-800 overflow-auto max-h-48 whitespace-pre-wrap">
-          {pyodideLoading ? 'Loading Python environment...' : output || 'No output yet. Run some code!'}
+          {pyodideLoading || loadingState.loadingPackages.length > 0 ? 
+            'Python environment is loading...' : 
+            output || 'No output yet. Run some code!'
+          }
         </pre>
       </div>
     </div>

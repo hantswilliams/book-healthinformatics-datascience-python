@@ -31,6 +31,7 @@ export async function GET(
         display_order,
         estimated_minutes,
         default_execution_mode,
+        packages,
         book:books!inner(
           id,
           title,
@@ -120,6 +121,7 @@ export async function GET(
       order: chapter.display_order,
       estimatedMinutes: chapter.estimated_minutes,
       defaultExecutionMode: chapter.default_execution_mode?.toLowerCase() || 'shared',
+      packages: chapter.packages || [],
       bookTitle: chapter.book.title,
       sections: chapter.sections
         .sort((a: any, b: any) => a.display_order - b.display_order)

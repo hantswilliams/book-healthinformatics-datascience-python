@@ -133,6 +133,7 @@ export async function PUT(
           markdown_url: '', // Required field, empty for enhanced chapters
           python_url: '', // Required field, empty for enhanced chapters  
           default_execution_mode: (chapterData.defaultExecutionMode || 'shared').toString().toUpperCase(),
+          packages: JSON.stringify(chapterData.packages || []),
           book_id: bookId
         })
         .select('*')

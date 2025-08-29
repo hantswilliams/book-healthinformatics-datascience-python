@@ -25,6 +25,7 @@ interface EnhancedChapter {
   emoji: string;
   defaultExecutionMode: 'shared' | 'isolated';
   sections: EnhancedSection[];
+  packages?: string[];
   order: number;
 }
 
@@ -89,6 +90,12 @@ export default function EditEnhancedPage() {
       }
       
       const book = data.book;
+      console.log('Loaded book data:', book);
+      console.log('Book chapters:', book.chapters);
+      book.chapters?.forEach((chapter: any, index: number) => {
+        console.log(`Chapter ${index}:`, chapter.title, 'packages:', chapter.packages);
+      });
+      
       setOriginalBookId(book.id);
       
       // Set book form data
@@ -137,6 +144,7 @@ export default function EditEnhancedPage() {
       emoji: '📖',
       defaultExecutionMode: 'shared',
       sections: [],
+      packages: [],
       order: chapters.length
     };
     setChapters([...chapters, newChapter]);
@@ -187,6 +195,7 @@ export default function EditEnhancedPage() {
           emoji: chapter.emoji,
           order: index,
           defaultExecutionMode: chapter.defaultExecutionMode,
+          packages: chapter.packages || [],
           sections: chapter.sections
             .sort((a, b) => a.order - b.order)
             .map((section, sectionIndex) => ({
@@ -796,7 +805,7 @@ export default function EditEnhancedPage() {
                           color: '#6b7280',
                           fontSize: '12px'
                         }}>
-                          {chapter.sections.length} section{chapter.sections.length !== 1 ? 's' : ''} • {chapter.defaultExecutionMode} mode
+                          {chapter.sections.length} section{chapter.sections.length !== 1 ? 's' : ''} • {chapter.packages?.length || 0} package{chapter.packages?.length !== 1 ? 's' : ''} • {chapter.defaultExecutionMode} mode
                         </span>
                       </div>
                       {chapter.sections.length > 0 && (

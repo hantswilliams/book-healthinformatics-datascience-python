@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/SupabaseProvider';
 import MonacoCodeBlock from './MonacoCodeBlock';
+import PackageSelector from './PackageSelector';
 
 // Enhanced interfaces with execution modes
 interface EnhancedSection {
@@ -23,6 +24,7 @@ interface EnhancedChapter {
   emoji: string;
   defaultExecutionMode: 'shared' | 'isolated';
   sections: EnhancedSection[];
+  packages?: string[];
   order: number;
 }
 
@@ -48,6 +50,7 @@ export default function EnhancedChapterBuilder({
       emoji: '📖',
       defaultExecutionMode: 'shared',
       sections: [],
+      packages: [],
       order: 0
     }
   );
@@ -58,6 +61,7 @@ export default function EnhancedChapterBuilder({
   const [pasteContent, setPasteContent] = useState('');
   const [pasteTargetIndex, setPasteTargetIndex] = useState<number>(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [showPackageManager, setShowPackageManager] = useState(false);
 
   // Helper functions
   const [sectionIdCounter, setSectionIdCounter] = useState(0);
@@ -66,6 +70,7 @@ export default function EnhancedChapterBuilder({
   useEffect(() => {
     if (initialChapter && initialChapter.id !== chapter.id) {
       console.log('EnhancedChapterBuilder switching from', chapter.title, 'to', initialChapter.title);
+      console.log('New chapter packages:', initialChapter.packages);
       setChapter(initialChapter);
     }
   }, [initialChapter, chapter.id]);
@@ -209,6 +214,18 @@ export default function EnhancedChapterBuilder({
       shared: { icon: '🔗', label: 'Shared State', color: 'bg-blue-100 text-blue-800' },
       isolated: { icon: '🔒', label: 'Isolated State', color: 'bg-green-100 text-green-800' }
     }[mode];
+  };
+
+  // Package management functions
+  const handlePackagesChange = (packages: string[]) => {
+    console.log('EnhancedChapterBuilder: Packages changed to:', packages);
+    const updatedChapter = { ...chapter, packages };
+    setChapter(updatedChapter);
+    
+    // Notify parent component of the change
+    if (onChapterUpdate) {
+      onChapterUpdate(updatedChapter);
+    }
   };
 
   return (
@@ -516,16 +533,70 @@ export default function EnhancedChapterBuilder({
 
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ fontSize: '13px', color: 'var(--muted)' }}>
-            {chapter.sections.length} sections • Default execution: {chapter.defaultExecutionMode}
+            {chapter.sections.length} sections • {chapter.packages?.length || 0} packages • Default execution: {chapter.defaultExecutionMode}
           </div>
-          <button
-            className="action-button primary"
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            {isEditing ? 'Preview' : 'Edit'}
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              className="action-button"
+              onClick={() => setShowPackageManager(!showPackageManager)}
+            >
+              📦 Packages ({chapter.packages?.length || 0})
+            </button>
+            <button
+              className="action-button primary"
+              onClick={() => setIsEditing(!isEditing)}
+            >
+              {isEditing ? 'Preview' : 'Edit'}
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Current Packages Display */}
+      {(() => {
+        const packagesArray = Array.isArray(chapter.packages) ? chapter.packages : 
+                             typeof chapter.packages === 'string' ? JSON.parse(chapter.packages || '[]') : [];
+        return packagesArray.length > 0 && (
+          <div style={{ 
+            background: '#f8fafc', 
+            padding: '12px 16px', 
+            border: '1px solid #e2e8f0', 
+            borderRadius: '8px',
+            marginBottom: '16px'
+          }}>
+            <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '8px', color: '#374151' }}>
+              Required Packages:
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {packagesArray.map((pkg) => (
+                <span
+                  key={pkg}
+                  style={{
+                    background: '#e0e7ff',
+                    color: '#3730a3',
+                    padding: '4px 8px',
+                    borderRadius: '4px',
+                    fontSize: '13px',
+                    fontWeight: '500'
+                  }}
+                >
+                  📦 {pkg}
+                </span>
+              ))}
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* Package Manager */}
+      {showPackageManager && (
+        <div className="chapter-header">
+          <PackageSelector
+            selectedPackages={chapter.packages || []}
+            onPackagesChange={handlePackagesChange}
+          />
+        </div>
+      )}
 
       {/* Sections */}
       <div className="section-list">

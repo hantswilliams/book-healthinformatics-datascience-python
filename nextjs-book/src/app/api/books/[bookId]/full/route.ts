@@ -43,6 +43,7 @@ export async function GET(
           emoji,
           display_order,
           default_execution_mode,
+          packages,
           sections (
             id,
             title,
@@ -84,25 +85,29 @@ export async function GET(
       tags: book.tags ? JSON.parse(book.tags) : [],
       chapters: (book.chapters || [])
         .sort((a: any, b: any) => a.display_order - b.display_order)
-        .map((chapter: any) => ({
-          id: chapter.id,
-          title: chapter.title,
-          emoji: chapter.emoji,
-          order: chapter.display_order - 1, // Convert to 0-based index for UI
-          defaultExecutionMode: chapter.default_execution_mode?.toLowerCase() || 'shared',
-          sections: (chapter.sections || [])
-            .sort((a: any, b: any) => a.display_order - b.display_order)
-            .map((section: any) => ({
-              id: section.id,
-              type: section.type.toLowerCase() as 'markdown' | 'python',
-              title: section.title || '',
-              content: section.content,
-              order: section.display_order - 1, // Convert to 0-based index for UI
-              executionMode: section.execution_mode?.toLowerCase() || 'inherit',
-              dependsOn: section.depends_on ? JSON.parse(section.depends_on) : [],
-              isEditing: false
-            }))
-        }))
+        .map((chapter: any) => {
+          console.log('API: Processing chapter:', chapter.title, 'packages from DB:', chapter.packages);
+          return {
+            id: chapter.id,
+            title: chapter.title,
+            emoji: chapter.emoji,
+            order: chapter.display_order - 1, // Convert to 0-based index for UI
+            defaultExecutionMode: chapter.default_execution_mode?.toLowerCase() || 'shared',
+            packages: chapter.packages || [],
+            sections: (chapter.sections || [])
+              .sort((a: any, b: any) => a.display_order - b.display_order)
+              .map((section: any) => ({
+                id: section.id,
+                type: section.type.toLowerCase() as 'markdown' | 'python',
+                title: section.title || '',
+                content: section.content,
+                order: section.display_order - 1, // Convert to 0-based index for UI
+                executionMode: section.execution_mode?.toLowerCase() || 'inherit',
+                dependsOn: section.depends_on ? JSON.parse(section.depends_on) : [],
+                isEditing: false
+              }))
+          };
+        })
     };
 
     return NextResponse.json({ book: enhancedBook });

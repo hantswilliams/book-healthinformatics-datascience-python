@@ -25,6 +25,7 @@ interface EnhancedChapter {
   emoji: string;
   defaultExecutionMode: 'shared' | 'isolated';
   sections: EnhancedSection[];
+  packages?: string[];
   order: number;
 }
 
@@ -71,6 +72,7 @@ export default function CreateEnhancedBook() {
       emoji: '📖',
       defaultExecutionMode: 'shared',
       sections: [],
+      packages: [],
       order: chapters.length
     };
     setChapters([...chapters, newChapter]);
@@ -113,14 +115,18 @@ export default function CreateEnhancedBook() {
       }
 
       // Convert to API format
+      console.log('Frontend: Preparing chapters for API:', chapters);
       const chaptersData = chapters
         .sort((a, b) => a.order - b.order)
-        .map((chapter, index) => ({
-          title: chapter.title,
-          emoji: chapter.emoji,
-          order: index + 1,
-          defaultExecutionMode: chapter.defaultExecutionMode.toUpperCase() as 'SHARED' | 'ISOLATED',
-          sections: chapter.sections
+        .map((chapter, index) => {
+          console.log(`Frontend: Chapter ${index}:`, chapter.title, 'packages:', chapter.packages);
+          return {
+            title: chapter.title,
+            emoji: chapter.emoji,
+            order: index + 1,
+            defaultExecutionMode: chapter.defaultExecutionMode.toUpperCase() as 'SHARED' | 'ISOLATED',
+            packages: chapter.packages || [],
+            sections: chapter.sections
             .sort((a, b) => a.order - b.order)
             .map((section, sectionIndex) => ({
               title: section.title || `Section ${sectionIndex + 1}`,
@@ -130,7 +136,8 @@ export default function CreateEnhancedBook() {
               executionMode: section.executionMode.toUpperCase() as 'SHARED' | 'ISOLATED' | 'INHERIT',
               dependsOn: section.dependsOn || []
             }))
-        }));
+          };
+        });
 
       const bookData = {
         ...bookForm,

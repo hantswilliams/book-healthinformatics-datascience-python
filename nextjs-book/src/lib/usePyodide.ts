@@ -1,58 +1,183 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createClient } from '@/lib/supabase-client';
 import type { PyodideInstance } from '@/types';
 
-export const usePyodide = () => {
+interface PyodideConfig {
+  chapterId?: string;
+  packages?: string[];
+  onPackageLoadStart?: (packageName: string) => void;
+  onPackageLoadComplete?: (packageName: string, success: boolean, error?: string) => void;
+}
+
+interface PyodideLoadingState {
+  isLoading: boolean;
+  loadingPackages: string[];
+  loadedPackages: string[];
+  failedPackages: { name: string; error: string }[];
+  totalEstimatedTime: number;
+  currentProgress: number;
+}
+
+export const usePyodide = (config?: PyodideConfig) => {
   const [pyodide, setPyodide] = useState<PyodideInstance | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loadingState, setLoadingState] = useState<PyodideLoadingState>({
+    isLoading: true,
+    loadingPackages: [],
+    loadedPackages: [],
+    failedPackages: [],
+    totalEstimatedTime: 0,
+    currentProgress: 0
+  });
   const [error, setError] = useState<string | null>(null);
+  const supabase = createClient();
+
+  // Load chapter packages from database
+  const loadChapterPackages = useCallback(async (chapterId: string): Promise<string[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('chapters')
+        .select('packages')
+        .eq('id', chapterId)
+        .single();
+
+      if (error) throw error;
+
+      return data?.packages || [];
+    } catch (err) {
+      console.error('Error loading chapter packages:', err);
+      return [];
+    }
+  }, [supabase]);
+
+  // Load packages dynamically
+  const loadPackages = useCallback(async (
+    pyodideInstance: PyodideInstance, 
+    packages: string[]
+  ) => {
+    const startTime = Date.now();
+    
+    setLoadingState(prev => ({
+      ...prev,
+      loadingPackages: [...packages],
+      totalEstimatedTime: packages.reduce((sum, pkg) => {
+        // Estimate load time based on package
+        const estimateMap: { [key: string]: number } = {
+          'pandas': 3000, 'matplotlib': 3000, 'numpy': 2000, 'scipy': 4000,
+          'scikit-learn': 5000, 'plotly': 2000, 'seaborn': 2000
+        };
+        return sum + (estimateMap[pkg] || 1000);
+      }, 0)
+    }));
+
+    for (const packageName of packages) {
+      try {
+        config?.onPackageLoadStart?.(packageName);
+        
+        setLoadingState(prev => ({
+          ...prev,
+          loadingPackages: prev.loadingPackages.filter(name => name !== packageName),
+          currentProgress: Date.now() - startTime
+        }));
+
+        // Try to load from Pyodide first, then fall back to micropip
+        try {
+          await pyodideInstance.loadPackage(packageName);
+        } catch {
+          // If Pyodide package loading fails, try micropip
+          await pyodideInstance.loadPackage('micropip');
+          const micropip = pyodideInstance.pyimport('micropip');
+          await micropip.install(packageName);
+        }
+
+        setLoadingState(prev => ({
+          ...prev,
+          loadedPackages: [...prev.loadedPackages, packageName]
+        }));
+
+        config?.onPackageLoadComplete?.(packageName, true);
+
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+        
+        setLoadingState(prev => ({
+          ...prev,
+          loadingPackages: prev.loadingPackages.filter(name => name !== packageName),
+          failedPackages: [...prev.failedPackages, { name: packageName, error: errorMessage }]
+        }));
+
+        config?.onPackageLoadComplete?.(packageName, false, errorMessage);
+
+        console.warn(`Failed to load package ${packageName}:`, errorMessage);
+      }
+    }
+  }, [config, supabase]);
 
   useEffect(() => {
     const loadPyodide = async () => {
       try {
+        setLoadingState(prev => ({ ...prev, isLoading: true }));
+
         // Load Pyodide script dynamically
+        let pyodideInstance: PyodideInstance;
+        
         if (!window.loadPyodide) {
           const script = document.createElement('script');
           script.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js';
-          script.onload = async () => {
-            const pyodideInstance = await window.loadPyodide();
-            await pyodideInstance.loadPackage('micropip');
-            await pyodideInstance.loadPackage(['pandas', 'matplotlib', 'numpy']);
-            
-            // Replace input() with JS prompt()
-            pyodideInstance.globals.set('input', (promptText: string) => 
-              prompt(promptText) || ''
-            );
-            
-            setPyodide(pyodideInstance);
-            setIsLoading(false);
-          };
-          script.onerror = () => {
-            setError('Failed to load Pyodide');
-            setIsLoading(false);
-          };
-          document.head.appendChild(script);
-        } else {
-          const pyodideInstance = await window.loadPyodide();
-          await pyodideInstance.loadPackage('micropip');
-          await pyodideInstance.loadPackage(['pandas', 'matplotlib', 'numpy']);
           
-          pyodideInstance.globals.set('input', (promptText: string) => 
-            prompt(promptText) || ''
-          );
-          
-          setPyodide(pyodideInstance);
-          setIsLoading(false);
+          await new Promise<void>((resolve, reject) => {
+            script.onload = () => resolve();
+            script.onerror = () => reject(new Error('Failed to load Pyodide'));
+            document.head.appendChild(script);
+          });
         }
+
+        pyodideInstance = await window.loadPyodide();
+        
+        // Always load micropip
+        await pyodideInstance.loadPackage('micropip');
+        
+        // Replace input() with JS prompt()
+        pyodideInstance.globals.set('input', (promptText: string) => 
+          prompt(promptText) || ''
+        );
+
+        // Determine which packages to load
+        let packagesToLoad: string[] = [];
+
+        if (config?.packages) {
+          // Use explicitly provided packages
+          packagesToLoad = config.packages;
+        } else if (config?.chapterId) {
+          // Load packages for specific chapter
+          packagesToLoad = await loadChapterPackages(config.chapterId);
+        } else {
+          // Default packages (backward compatibility)
+          packagesToLoad = ['numpy', 'pandas', 'matplotlib'];
+        }
+
+        // Load packages
+        if (packagesToLoad.length > 0) {
+          await loadPackages(pyodideInstance, packagesToLoad);
+        }
+
+        setPyodide(pyodideInstance);
+        setLoadingState(prev => ({
+          ...prev,
+          isLoading: false,
+          loadingPackages: [],
+          currentProgress: prev.totalEstimatedTime
+        }));
+
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error');
-        setIsLoading(false);
+        setLoadingState(prev => ({ ...prev, isLoading: false }));
       }
     };
 
     loadPyodide();
-  }, []);
+  }, [config?.chapterId, loadChapterPackages, loadPackages]);
 
   const runPython = useCallback(async (code: string): Promise<{ output: string; error?: string }> => {
     if (!pyodide) {
@@ -107,7 +232,8 @@ export const usePyodide = () => {
 
   return {
     pyodide,
-    isLoading,
+    isLoading: loadingState.isLoading,
+    loadingState,
     error,
     runPython
   };
