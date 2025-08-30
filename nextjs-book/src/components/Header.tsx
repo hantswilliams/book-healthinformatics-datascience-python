@@ -116,8 +116,7 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
               </div>
               
               <div className="flex items-center space-x-2 sm:space-x-4">
-                {/* can turn the theme toggle back on once issues fixed */}
-                {/* <ThemeToggle /> */}
+                <ThemeToggle />
 
                 {/* Notifications button - hidden on very small screens */}
                 <button className="hidden sm:block text-zinc-600 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-300 transition">
