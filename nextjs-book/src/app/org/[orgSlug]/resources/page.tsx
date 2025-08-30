@@ -52,18 +52,18 @@ export default function ResourcesPage() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="text-center mb-12">
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">Learning Resources</h1>
-        <p className="text-xl text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Learning Resources</h1>
+        <p className="text-xl text-gray-600 dark:text-zinc-300">
           Helpful links and resources to enhance your Python and healthcare data science journey
         </p>
       </div>
 
       {/* Python Resources */}
       <div className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Python & Data Science</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Python & Data Science</h2>
         <div className="grid md:grid-cols-2 gap-6">
           {pythonResources.map((resource, index) => (
-            <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div key={index} className="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
               <div className="flex items-start justify-between mb-3">
                 <span className="inline-block px-2 py-1 bg-indigo-100 text-indigo-800 text-xs font-medium rounded">
                   {resource.category}
@@ -93,10 +93,10 @@ export default function ResourcesPage() {
 
       {/* Healthcare Resources */}
       <div className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Healthcare & Medical Informatics</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Healthcare & Medical Informatics</h2>
         <div className="grid md:grid-cols-2 gap-6">
           {healthcareResources.map((resource, index) => (
-            <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div key={index} className="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
               <div className="flex items-start justify-between mb-3">
                 <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
                   {resource.category}

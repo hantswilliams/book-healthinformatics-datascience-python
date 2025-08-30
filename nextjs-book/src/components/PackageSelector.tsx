@@ -135,7 +135,8 @@ export default function PackageSelector({
                   borderRadius: '6px',
                   fontSize: '14px',
                   outline: 'none',
-                  backgroundColor: disabled ? '#f9fafb' : 'white'
+                  backgroundColor: disabled ? '#f9fafb' : 'white',
+                  color: '#111827'
                 }}
               />
               <div style={{

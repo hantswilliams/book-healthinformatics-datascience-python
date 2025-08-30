@@ -226,7 +226,7 @@ export default function EditCoursePage() {
               <span>Edit Course</span>
             </nav>
             <h1 className="text-2xl font-bold text-gray-900">Edit Course</h1>
-            <p className="text-sm text-gray-600 mt-1">Update basic metadata for this course.</p>
+            <p className="text-sm text-gray-600 mt-1">Update basic metadata for this course in the below fields.</p>
           </div>
           <div className="flex items-center space-x-3">
             <Link href={`/org/${orgSlug}/dashboard/content/${bookId}/edit-enhanced`} className="inline-flex items-center px-3 py-2 rounded-md text-sm bg-blue-600 text-white hover:bg-blue-700">
@@ -245,39 +245,39 @@ export default function EditCoursePage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-            <input value={form.title || ''} onChange={e=>updateField('title', e.target.value)} className="w-full rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm" />
+            <input value={form.title || ''} onChange={e=>updateField('title', e.target.value)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}} />
           </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea value={form.description || ''} onChange={e=>updateField('description', e.target.value)} rows={4} className="w-full rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm" />
+              <textarea value={form.description || ''} onChange={e=>updateField('description', e.target.value)} rows={4} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}} />
             </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-              <select value={form.difficulty || ''} onChange={e=>updateField('difficulty', e.target.value)} className="w-full rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+              <select value={form.difficulty || ''} onChange={e=>updateField('difficulty', e.target.value)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}}>
                 <option value="">Select</option>
                 {difficultyOptions.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <select value={form.category || ''} onChange={e=>updateField('category', e.target.value)} className="w-full rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm">
+              <select value={form.category || ''} onChange={e=>updateField('category', e.target.value)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}}>
                 <option value="">Select</option>
                 {categoryOptions.map(c => <option key={c} value={c}>{c.replace('_',' ')}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Hours</label>
-              <input type="number" min={1} max={100} value={form.estimatedHours || ''} onChange={e=>updateField('estimatedHours', e.target.value ? Number(e.target.value) : undefined)} className="w-full rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm" />
+              <input type="number" min={1} max={100} value={form.estimatedHours || ''} onChange={e=>updateField('estimatedHours', e.target.value ? Number(e.target.value) : undefined)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}} />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
             <div className="flex items-center space-x-2 mb-2">
-              <input value={tagInput} onChange={e=>setTagInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); addTag(); } }} placeholder="Add a tag and press Enter" className="flex-1 rounded-md border-gray-300 focus:ring-blue-500 focus:border-blue-500 text-sm" />
+              <input value={tagInput} onChange={e=>setTagInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); addTag(); } }} placeholder="Add a tag and press Enter" className="flex-1 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}} />
               <button type="button" onClick={addTag} className="px-3 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">Add</button>
             </div>
             {form.tags && form.tags.length > 0 && (
@@ -293,7 +293,7 @@ export default function EditCoursePage() {
           </div>
 
           <div className="pt-4 flex justify-end space-x-3">
-            <Link href={`/org/${orgSlug}/dashboard/content`} className="inline-flex items-center px-4 py-2 rounded-md border border-gray-300 bg-white text-sm hover:bg-gray-50">Cancel</Link>
+            <Link href={`/org/${orgSlug}/dashboard/content`} className="inline-flex items-center px-4 py-2 rounded-md bg-white text-sm hover:bg-gray-50" style={{border: '1px solid #6b7280', color: '#111827'}}>Cancel</Link>
             <button type="submit" disabled={saving} className="inline-flex items-center px-6 py-2 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50">
               {saving && <span className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>}
               {saving ? 'Saving...' : 'Save Changes'}
@@ -359,8 +359,8 @@ export default function EditCoursePage() {
                     <span className="text-xs text-gray-500">{ch.sections.length} sections</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <button onClick={() => moveChapter(cIdx, -1)} disabled={cIdx===0 || reorderSaving} className="px-2 py-1 text-xs border rounded disabled:opacity-40">Up</button>
-                    <button onClick={() => moveChapter(cIdx, 1)} disabled={cIdx===chapters.length-1 || reorderSaving} className="px-2 py-1 text-xs border rounded disabled:opacity-40">Down</button>
+                    <button onClick={() => moveChapter(cIdx, -1)} disabled={cIdx===0 || reorderSaving} className="px-2 py-1 text-xs border rounded disabled:opacity-40" style={{color: '#111827'}}>Up</button>
+                    <button onClick={() => moveChapter(cIdx, 1)} disabled={cIdx===chapters.length-1 || reorderSaving} className="px-2 py-1 text-xs border rounded disabled:opacity-40" style={{color: '#111827'}}>Down</button>
                   </div>
                 </div>
                 {ch.sections.length > 0 && (
@@ -373,8 +373,8 @@ export default function EditCoursePage() {
                           <span className={`text-[10px] px-1.5 py-0.5 rounded border ${s.type === 'PYTHON' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>{s.type}</span>
                         </div>
                         <div className="flex items-center space-x-1">
-                          <button onClick={() => moveSection(ch.id, sIdx, -1)} disabled={sIdx===0 || reorderSaving} className="px-2 py-1 text-[10px] border rounded disabled:opacity-40">Up</button>
-                          <button onClick={() => moveSection(ch.id, sIdx, 1)} disabled={sIdx===ch.sections.length-1 || reorderSaving} className="px-2 py-1 text-[10px] border rounded disabled:opacity-40">Down</button>
+                          <button onClick={() => moveSection(ch.id, sIdx, -1)} disabled={sIdx===0 || reorderSaving} className="px-2 py-1 text-[10px] border rounded disabled:opacity-40" style={{color: '#111827'}}>Up</button>
+                          <button onClick={() => moveSection(ch.id, sIdx, 1)} disabled={sIdx===ch.sections.length-1 || reorderSaving} className="px-2 py-1 text-[10px] border rounded disabled:opacity-40" style={{color: '#111827'}}>Down</button>
                         </div>
                       </div>
                     ))}

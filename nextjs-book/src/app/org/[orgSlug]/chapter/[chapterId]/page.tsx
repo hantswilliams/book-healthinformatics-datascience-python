@@ -137,8 +137,8 @@ export default function ChapterPage({ params }: ChapterPageProps) {
   if (!chapter) {
     return (
       <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-12 xl:px-12">
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-          <p className="text-gray-600">Chapter not found</p>
+        <div className="bg-gray-50 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-xl p-6 text-center">
+          <p className="text-gray-600 dark:text-zinc-300">Chapter not found</p>
         </div>
       </div>
     );
@@ -147,16 +147,16 @@ export default function ChapterPage({ params }: ChapterPageProps) {
   return (
     <div className="-mx-4 px-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 xl:-mx-12 xl:px-12 space-y-8">
       {/* Chapter Header */}
-      <div className="bg-white shadow-sm rounded-xl p-6">
+      <div className="bg-white dark:bg-zinc-800 shadow-sm rounded-xl p-6">
         <div className="flex items-center space-x-2 mb-2">
           <span className="text-2xl">{chapter.emoji}</span>
-          <h1 className="text-2xl font-bold text-gray-900">{chapter.title}</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{chapter.title}</h1>
         </div>
         {chapter.bookTitle && (
-          <p className="text-sm text-gray-600">From: {chapter.bookTitle}</p>
+          <p className="text-sm text-gray-600 dark:text-zinc-300">From: {chapter.bookTitle}</p>
         )}
         {chapter.estimatedMinutes && (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-zinc-300">
             Estimated time: {chapter.estimatedMinutes} minutes
           </p>
         )}
@@ -196,11 +196,11 @@ export default function ChapterPage({ params }: ChapterPageProps) {
 
       {/* Chapter Sections */}
       {chapter.sections.map((section, index) => (
-        <div key={section.id} className="bg-white shadow-sm rounded-xl overflow-hidden">
+        <div key={section.id} className="bg-white dark:bg-zinc-800 shadow-sm rounded-xl overflow-hidden">
           {section.title && (
-            <div className="border-b border-gray-100 bg-white p-6">
+            <div className="border-b border-gray-100 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-6">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <h2 className="text-lg font-semibold text-zinc-900">
+                <h2 className="text-lg font-semibold text-zinc-900 dark:text-white">
                   {section.title}
                 </h2>
                 {section.type === 'python' && section.executionMode && (
@@ -237,7 +237,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
           )}
           <div className="p-6">
             {section.type === 'markdown' ? (
-              <div className="prose prose-zinc max-w-none">
+              <div className="prose prose-zinc dark:prose-invert max-w-none">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -245,7 +245,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                       const isInline = !className;
                       return isInline ? (
                         <code
-                          className="bg-gray-100 text-zinc-800 px-1 py-0.5 rounded text-sm font-mono"
+                          className="bg-gray-100 dark:bg-zinc-700 text-zinc-800 dark:text-zinc-200 px-1 py-0.5 rounded text-sm font-mono"
                           {...props}
                         >
                           {children}
@@ -260,17 +260,17 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                       );
                     },
                     h1: ({ children }) => (
-                      <h1 className="text-3xl font-bold text-zinc-900 mb-6 border-b border-gray-200 pb-2">
+                      <h1 className="text-3xl font-bold text-zinc-900 dark:text-white mb-6 border-b border-gray-200 dark:border-zinc-700 pb-2">
                         {children}
                       </h1>
                     ),
                     h2: ({ children }) => (
-                      <h2 className="text-2xl font-semibold text-zinc-900 mt-8 mb-4">
+                      <h2 className="text-2xl font-semibold text-zinc-900 dark:text-white mt-8 mb-4">
                         {children}
                       </h2>
                     ),
                     h3: ({ children }) => (
-                      <h3 className="text-xl font-semibold text-zinc-900 mt-6 mb-3">
+                      <h3 className="text-xl font-semibold text-zinc-900 dark:text-white mt-6 mb-3">
                         {children}
                       </h3>
                     )

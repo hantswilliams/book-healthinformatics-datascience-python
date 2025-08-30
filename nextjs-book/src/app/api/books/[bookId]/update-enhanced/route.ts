@@ -119,9 +119,9 @@ export async function PUT(
     for (const chapterData of bookData.chapters) {
       console.log('Creating chapter:', chapterData.title, 'with execution mode:', chapterData.defaultExecutionMode);
       
-      // Use existing chapter ID if available, otherwise create predictable ID
+      // Use existing chapter ID if available, otherwise generate new UUID
       const existingChapter = existingChaptersByOrder.get(chapterData.order);
-      const chapterId = existingChapter?.id || chapterData.id || `${bookSlug}-chapter-${chapterData.order + 1}`;
+      const chapterId = existingChapter?.id || chapterData.id || crypto.randomUUID();
       
       const { data: chapter, error: chapterError } = await supabase
         .from('chapters')

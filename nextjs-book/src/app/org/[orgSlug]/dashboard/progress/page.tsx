@@ -161,10 +161,10 @@ export default function ProgressDashboard() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading progress data...</p>
+          <p className="mt-4 text-gray-600 dark:text-zinc-200">Loading progress data...</p>
         </div>
       </div>
     );
@@ -172,9 +172,9 @@ export default function ProgressDashboard() {
 
   if (!progressData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">No progress data available</p>
+          <p className="text-gray-600 dark:text-zinc-200">No progress data available</p>
         </div>
       </div>
     );
@@ -183,7 +183,7 @@ export default function ProgressDashboard() {
   const sortedUsers = getSortedUsers();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
       {/* Header */}
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

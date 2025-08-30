@@ -139,60 +139,60 @@ export default function ProgressPage() {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Progress</h1>
-        <p className="text-gray-600">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Your Progress</h1>
+        <p className="text-gray-600 dark:text-zinc-300">
           Track your learning journey through the Python for Healthcare course
         </p>
       </div>
 
       {/* Progress Overview */}
       <div className="grid md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
               <span className="text-2xl">📚</span>
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">{completedBooks}</h3>
-              <p className="text-sm text-gray-600">Books Completed</p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{completedBooks}</h3>
+              <p className="text-sm text-gray-600 dark:text-zinc-300">Books Completed</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
               <span className="text-2xl">✅</span>
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">{completedChapters}</h3>
-              <p className="text-sm text-gray-600">Chapters Completed</p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{completedChapters}</h3>
+              <p className="text-sm text-gray-600 dark:text-zinc-300">Chapters Completed</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
               <span className="text-2xl">🏃‍♂️</span>
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">{totalExercises}</h3>
-              <p className="text-sm text-gray-600">Total Exercises</p>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">{totalExercises}</h3>
+              <p className="text-sm text-gray-600 dark:text-zinc-300">Total Exercises</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+        <div className="bg-white dark:bg-zinc-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700">
           <div className="flex items-center">
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <span className="text-2xl">🎯</span>
             </div>
             <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {totalExercises > 0 ? Math.round((correctExercises / totalExercises) * 100) : 0}%
               </h3>
-              <p className="text-sm text-gray-600">Success Rate</p>
+              <p className="text-sm text-gray-600 dark:text-zinc-300">Success Rate</p>
             </div>
           </div>
         </div>
@@ -218,8 +218,8 @@ export default function ProgressPage() {
                     <div className="flex items-center">
                       <span className="text-2xl mr-4">📚</span>
                       <div>
-                        <h2 className="text-xl font-bold text-gray-900">{book.title}</h2>
-                        <p className="text-sm text-gray-600 mt-1">{book.description}</p>
+                        <h2 className="text-xl font-bold text-gray-900 dark:text-white">{book.title}</h2>
+                        <p className="text-sm text-gray-600 dark:text-zinc-300 mt-1">{book.description}</p>
                         <div className="flex items-center space-x-4 mt-2">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${
                             book.difficulty === 'BEGINNER' ? 'bg-green-100 text-green-800' :
@@ -241,8 +241,8 @@ export default function ProgressPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl font-bold text-gray-900">{bookCompletionPercentage}%</div>
-                      <div className="text-sm text-gray-600">{completedBookChapters.length}/{book.chapters.length} chapters</div>
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">{bookCompletionPercentage}%</div>
+                      <div className="text-sm text-gray-600 dark:text-zinc-300">{completedBookChapters.length}/{book.chapters.length} chapters</div>
                       {isBookCompleted && (
                         <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center mt-2 ml-auto">
                           <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,7 +289,7 @@ export default function ProgressPage() {
                           <div className="flex items-center">
                             <span className="text-lg mr-3">{chapter.emoji}</span>
                             <div>
-                              <h3 className="font-medium text-gray-900">{chapter.title}</h3>
+                              <h3 className="font-medium text-gray-900 dark:text-white">{chapter.title}</h3>
                               <div className="flex items-center space-x-3 mt-1">
                                 <span className={`text-xs px-2 py-1 rounded ${
                                   isCompleted 
@@ -307,7 +307,7 @@ export default function ProgressPage() {
                                   </span>
                                 )}
                                 {!isCompleted && chapterExercises.length > 0 && (
-                                  <span className="text-xs text-gray-600">
+                                  <span className="text-xs text-gray-600 dark:text-zinc-300">
                                     {chapterExercises.filter(e => e.isCorrect).length}/{chapterExercises.length} exercises correct
                                   </span>
                                 )}
@@ -338,24 +338,24 @@ export default function ProgressPage() {
             );
           })
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+          <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700 p-8 text-center">
             <div className="text-gray-400 text-4xl mb-4">📚</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Books Available</h3>
-            <p className="text-gray-600">Contact your administrator to get access to learning materials.</p>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No Books Available</h3>
+            <p className="text-gray-600 dark:text-zinc-300">Contact your administrator to get access to learning materials.</p>
           </div>
         )}
       </div>
 
       {/* Recent Exercises */}
       {exercises.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-8">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Recent Exercises</h2>
+        <div className="bg-white dark:bg-zinc-800 rounded-xl shadow-sm border border-gray-100 dark:border-zinc-700 p-6 mt-8">
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">Recent Exercises</h2>
           <div className="space-y-3">
             {exercises.slice(0, 5).map((exercise) => (
               <div key={exercise.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-lg">
                 <div>
-                  <h4 className="font-medium text-gray-900">{exercise.title}</h4>
-                  <p className="text-sm text-gray-600">
+                  <h4 className="font-medium text-gray-900 dark:text-white">{exercise.title}</h4>
+                  <p className="text-sm text-gray-600 dark:text-zinc-300">
                     Chapter {exercise.chapterId.replace('chapter', '')} • {exercise.attempts} attempt{exercise.attempts !== 1 ? 's' : ''}
                   </p>
                 </div>

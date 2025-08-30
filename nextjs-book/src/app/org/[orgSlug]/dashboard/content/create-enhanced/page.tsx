@@ -212,12 +212,12 @@ export default function CreateEnhancedBook() {
                   Content
                 </Link>
                 <span style={{ color: '#6b7280', margin: '0 8px' }}>/</span>
-                <span style={{ color: '#6b7280', fontSize: '14px' }}>Enhanced Builder</span>
+                <span style={{ color: '#6b7280', fontSize: '14px' }}>Builder</span>
               </nav>
-              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 'bold' }}>
-                Enhanced Course Builder
+              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 'bold', color: '#111827' }}>
+                 Course Builder
               </h1>
-              <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: '14px' }}>
+              <p style={{ margin: '4px 0 0 0', color: '#000000ff', fontSize: '14px' }}>
                 Step {step} of 3: {
                   step === 1 ? 'Course Information' : 
                   step === 2 ? 'Build Chapters' : 
@@ -284,7 +284,8 @@ export default function CreateEnhancedBook() {
                       border: '1px solid #d1d5db',
                       borderRadius: '8px',
                       fontSize: '16px',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      color: '#111827'
                     }}
                     placeholder="Enter course title"
                   />
@@ -311,7 +312,8 @@ export default function CreateEnhancedBook() {
                       borderRadius: '8px',
                       fontSize: '16px',
                       boxSizing: 'border-box',
-                      resize: 'vertical'
+                      resize: 'vertical',
+                      color: '#111827'
                     }}
                     placeholder="Brief description of the course"
                   />
@@ -337,7 +339,8 @@ export default function CreateEnhancedBook() {
                         border: '1px solid #d1d5db',
                         borderRadius: '8px',
                         fontSize: '16px',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        color: '#111827'
                       }}
                     >
                       {difficultyOptions.map((option) => (
@@ -367,7 +370,8 @@ export default function CreateEnhancedBook() {
                         border: '1px solid #d1d5db',
                         borderRadius: '8px',
                         fontSize: '16px',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        color: '#111827'
                       }}
                     >
                       {categoryOptions.map((option) => (
@@ -400,7 +404,8 @@ export default function CreateEnhancedBook() {
                         border: '1px solid #d1d5db',
                         borderRadius: '8px',
                         fontSize: '16px',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        color: '#111827'
                       }}
                     />
                   </div>
@@ -426,7 +431,8 @@ export default function CreateEnhancedBook() {
                       border: '1px solid #d1d5db',
                       borderRadius: '8px',
                       fontSize: '16px',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      color: '#111827'
                     }}
                     placeholder="python, data analysis, beginner"
                   />
@@ -626,10 +632,10 @@ export default function CreateEnhancedBook() {
               borderBottom: '1px solid #e5e7eb',
               background: '#f9fafb'
             }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#111827' }}>
                 Review & Create
               </h3>
-              <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: '14px' }}>
+              <p style={{ margin: '4px 0 0 0', color: '#111827', fontSize: '14px' }}>
                 Review your course structure before creating
               </p>
             </div>
@@ -637,7 +643,7 @@ export default function CreateEnhancedBook() {
             <div style={{ padding: '24px' }}>
               {/* Course Summary */}
               <div style={{ marginBottom: '24px' }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#111827' }}>
                   Course Details
                 </h4>
                 <div style={{
@@ -647,7 +653,8 @@ export default function CreateEnhancedBook() {
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                   gap: '12px',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  color: '#111827'
                 }}>
                   <div><strong>Title:</strong> {bookForm.title}</div>
                   <div><strong>Difficulty:</strong> {bookForm.difficulty}</div>
@@ -664,7 +671,7 @@ export default function CreateEnhancedBook() {
 
               {/* Chapter Structure */}
               <div style={{ marginBottom: '24px' }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#111827' }}>
                   Chapter Structure ({chapters.length} chapters, {chapters.reduce((sum, ch) => sum + ch.sections.length, 0)} sections)
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -678,7 +685,8 @@ export default function CreateEnhancedBook() {
                         display: 'flex',
                         alignItems: 'center',
                         marginBottom: '8px',
-                        fontSize: '14px'
+                        fontSize: '14px',
+                        color: '#111827'
                       }}>
                         <span style={{ fontSize: '18px', marginRight: '8px' }}>{chapter.emoji}</span>
                         <span style={{ fontWeight: '600' }}>
@@ -699,7 +707,7 @@ export default function CreateEnhancedBook() {
                               display: 'flex',
                               alignItems: 'center',
                               fontSize: '13px',
-                              color: '#6b7280'
+                              color: '#111827'
                             }}>
                               <span style={{ fontSize: '16px', marginRight: '8px' }}>
                                 {section.type === 'python' ? '🐍' : '📝'}

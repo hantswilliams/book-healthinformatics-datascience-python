@@ -19,7 +19,7 @@ interface EnhancedSection {
 }
 
 interface EnhancedChapter {
-  id: string;
+  id?: string;
   title: string;
   emoji: string;
   defaultExecutionMode: 'shared' | 'isolated';
@@ -68,12 +68,12 @@ export default function EnhancedChapterBuilder({
 
   // Sync with initialChapter prop changes (when different chapter is selected)
   useEffect(() => {
-    if (initialChapter && initialChapter.id !== chapter.id) {
+    if (initialChapter && initialChapter.id && initialChapter.id !== chapter.id) {
       console.log('EnhancedChapterBuilder switching from', chapter.title, 'to', initialChapter.title);
       console.log('New chapter packages:', initialChapter.packages);
       setChapter(initialChapter);
     }
-  }, [initialChapter, chapter.id]);
+  }, [initialChapter?.id, chapter?.id]);
 
   // Update parent when chapter changes (debounced to prevent infinite loops)
   useEffect(() => {
@@ -554,9 +554,22 @@ export default function EnhancedChapterBuilder({
 
       {/* Current Packages Display */}
       {(() => {
-        const packagesArray = Array.isArray(chapter.packages) ? chapter.packages : 
-                             typeof chapter.packages === 'string' ? JSON.parse(chapter.packages || '[]') : [];
-        return packagesArray.length > 0 && (
+        let packagesArray = [];
+        try {
+          if (Array.isArray(chapter.packages)) {
+            packagesArray = chapter.packages;
+          } else if (typeof chapter.packages === 'string') {
+            packagesArray = chapter.packages ? JSON.parse(chapter.packages) : [];
+          } else if (chapter.packages) {
+            console.warn('Unexpected packages format:', typeof chapter.packages, chapter.packages);
+            packagesArray = [];
+          }
+        } catch (error) {
+          console.error('Error parsing packages:', error);
+          packagesArray = [];
+        }
+        
+        return Array.isArray(packagesArray) && packagesArray.length > 0 && (
           <div style={{ 
             background: '#f8fafc', 
             padding: '12px 16px', 
@@ -568,9 +581,9 @@ export default function EnhancedChapterBuilder({
               Required Packages:
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {packagesArray.map((pkg) => (
+              {packagesArray.map((pkg, index) => (
                 <span
-                  key={pkg}
+                  key={`pkg-${index}-${pkg}`}
                   style={{
                     background: '#e0e7ff',
                     color: '#3730a3',

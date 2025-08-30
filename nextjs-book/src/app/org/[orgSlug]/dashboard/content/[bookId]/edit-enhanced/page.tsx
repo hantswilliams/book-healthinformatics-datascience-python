@@ -294,37 +294,33 @@ export default function EditEnhancedPage() {
   ];
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div className="min-h-screen bg-white dark:bg-zinc-900">
       {/* Header */}
-      <div style={{ 
-        background: 'white', 
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        padding: '0 20px'
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px 0' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="bg-white dark:bg-zinc-800 shadow-sm border-b border-gray-200 dark:border-zinc-700 px-5">
+        <div className="max-w-6xl mx-auto py-5">
+          <div className="flex justify-between items-center">
             <div>
-              <nav style={{ marginBottom: '8px' }}>
+              <nav className="mb-2">
                 <Link 
                   href={`/org/${orgSlug}/dashboard`}
-                  style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px' }}
+                  className="text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300 no-underline text-sm"
                 >
                   Dashboard
                 </Link>
-                <span style={{ color: '#6b7280', margin: '0 8px' }}>/</span>
+                <span className="text-gray-500 dark:text-zinc-400 mx-2">/</span>
                 <Link 
                   href={`/org/${orgSlug}/dashboard/content`}
-                  style={{ color: '#6b7280', textDecoration: 'none', fontSize: '14px' }}
+                  className="text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300 no-underline text-sm"
                 >
                   Content
                 </Link>
-                <span style={{ color: '#6b7280', margin: '0 8px' }}>/</span>
-                <span style={{ color: '#6b7280', fontSize: '14px' }}>Edit Course</span>
+                <span className="text-gray-500 dark:text-zinc-400 mx-2">/</span>
+                <span className="text-gray-500 dark:text-zinc-400 text-sm">Edit Course</span>
               </nav>
-              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 'bold' }}>
+              <h1 className="m-0 text-2xl font-bold text-gray-900 dark:text-zinc-100">
                 Enhanced Course Editor
               </h1>
-              <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: '14px' }}>
+              <p className="mt-1 text-gray-500 dark:text-zinc-400 text-sm">
                 Step {step} of 3: {
                   step === 1 ? 'Course Information' : 
                   step === 2 ? 'Edit Chapters' : 
@@ -377,7 +373,7 @@ export default function EditEnhancedPage() {
                     fontSize: '14px', 
                     fontWeight: '500', 
                     marginBottom: '6px',
-                    color: '#374151'
+                    color: '#16191dff'
                   }}>
                     Course Title *
                   </label>
@@ -391,7 +387,8 @@ export default function EditEnhancedPage() {
                       border: '1px solid #d1d5db',
                       borderRadius: '8px',
                       fontSize: '16px',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      color: '#111827'
                     }}
                     placeholder="Enter course title"
                   />
@@ -418,7 +415,8 @@ export default function EditEnhancedPage() {
                       borderRadius: '8px',
                       fontSize: '16px',
                       boxSizing: 'border-box',
-                      resize: 'vertical'
+                      resize: 'vertical',
+                      color: '#111827'
                     }}
                     placeholder="Brief description of the course"
                   />
@@ -444,7 +442,8 @@ export default function EditEnhancedPage() {
                         border: '1px solid #d1d5db',
                         borderRadius: '8px',
                         fontSize: '16px',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        color: '#111827'
                       }}
                     >
                       {difficultyOptions.map((option) => (
@@ -474,7 +473,8 @@ export default function EditEnhancedPage() {
                         border: '1px solid #d1d5db',
                         borderRadius: '8px',
                         fontSize: '16px',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        color: '#111827'
                       }}
                     >
                       {categoryOptions.map((option) => (
@@ -507,7 +507,8 @@ export default function EditEnhancedPage() {
                         border: '1px solid #d1d5db',
                         borderRadius: '8px',
                         fontSize: '16px',
-                        boxSizing: 'border-box'
+                        boxSizing: 'border-box',
+                        color: '#111827'
                       }}
                     />
                   </div>
@@ -533,7 +534,8 @@ export default function EditEnhancedPage() {
                       border: '1px solid #d1d5db',
                       borderRadius: '8px',
                       fontSize: '16px',
-                      boxSizing: 'border-box'
+                      boxSizing: 'border-box',
+                      color: '#111827'
                     }}
                     placeholder="python, data analysis, beginner"
                   />
@@ -742,10 +744,10 @@ export default function EditEnhancedPage() {
               borderBottom: '1px solid #e5e7eb',
               background: '#f9fafb'
             }}>
-              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
+              <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#111827' }}>
                 Review & Update
               </h3>
-              <p style={{ margin: '4px 0 0 0', color: '#6b7280', fontSize: '14px' }}>
+              <p style={{ margin: '4px 0 0 0', color: '#111827', fontSize: '14px' }}>
                 Review your course changes before updating
               </p>
             </div>
@@ -753,7 +755,7 @@ export default function EditEnhancedPage() {
             <div style={{ padding: '24px' }}>
               {/* Course Summary */}
               <div style={{ marginBottom: '24px' }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#111827' }}>
                   Course Details
                 </h4>
                 <div style={{
@@ -763,7 +765,8 @@ export default function EditEnhancedPage() {
                   display: 'grid',
                   gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
                   gap: '12px',
-                  fontSize: '14px'
+                  fontSize: '14px',
+                  color: '#111827'
                 }}>
                   <div><strong>Title:</strong> {bookForm.title}</div>
                   <div><strong>Difficulty:</strong> {bookForm.difficulty}</div>
@@ -780,7 +783,7 @@ export default function EditEnhancedPage() {
 
               {/* Chapter Structure */}
               <div style={{ marginBottom: '24px' }}>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500' }}>
+                <h4 style={{ margin: '0 0 12px 0', fontSize: '16px', fontWeight: '500', color: '#111827' }}>
                   Chapter Structure ({chapters.length} chapters, {chapters.reduce((sum, ch) => sum + ch.sections.length, 0)} sections)
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -794,7 +797,8 @@ export default function EditEnhancedPage() {
                         display: 'flex',
                         alignItems: 'center',
                         marginBottom: '8px',
-                        fontSize: '14px'
+                        fontSize: '14px',
+                        color: '#111827'
                       }}>
                         <span style={{ fontSize: '18px', marginRight: '8px' }}>{chapter.emoji}</span>
                         <span style={{ fontWeight: '600' }}>
@@ -815,7 +819,7 @@ export default function EditEnhancedPage() {
                               display: 'flex',
                               alignItems: 'center',
                               fontSize: '13px',
-                              color: '#6b7280'
+                              color: '#111827'
                             }}>
                               <span style={{ fontSize: '16px', marginRight: '8px' }}>
                                 {section.type === 'python' ? '🐍' : '📝'}

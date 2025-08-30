@@ -11,7 +11,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "🐍 Interactive Coding Platform",
+  title: "Interactive Coding Platform",
   description: "Interactive Python learning platform for professionals across healthcare, finance, data science, and more",
 };
 

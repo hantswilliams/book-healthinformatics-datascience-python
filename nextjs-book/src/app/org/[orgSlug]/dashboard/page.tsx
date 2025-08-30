@@ -152,10 +152,10 @@ export default function Dashboard() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+          <p className="mt-4 text-gray-600 dark:text-zinc-200">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -163,10 +163,10 @@ export default function Dashboard() {
 
   if (!user || !userProfile || !userOrganization || !subscriptionStatus || !organizationStats) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Access Denied</h2>
-          <p className="mt-2 text-gray-600">Unable to load dashboard</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">Access Denied</h2>
+          <p className="mt-2 text-gray-600 dark:text-zinc-200">Unable to load dashboard</p>
           {error && <p className="mt-2 text-red-600">{error}</p>}
         </div>
       </div>
@@ -176,14 +176,14 @@ export default function Dashboard() {
   const { permissions } = subscriptionStatus;
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa]">
+    <div className="min-h-screen bg-[#f7f8fa] dark:bg-zinc-900">
       {/* Header */}
-      <div className="border-b border-zinc-200 bg-white/60 backdrop-blur supports-[backdrop-filter]:bg-white/50">
+      <div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/60 dark:bg-zinc-800/60 backdrop-blur supports-[backdrop-filter]:bg-white/50 dark:supports-[backdrop-filter]:bg-zinc-800/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">{userOrganization.name}</h1>
-              <p className="mt-1 text-sm text-zinc-600">Welcome back, {userProfile.first_name || user.email?.split('@')[0]}. Here's your overview.</p>
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">{userOrganization.name}</h1>
+              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">Welcome back, {userProfile.first_name || user.email?.split('@')[0]}. Here's your overview.</p>
             </div>
             <div className="flex items-center gap-3">
               <Badge tone={statusTone(userOrganization.subscription_status).tone}>

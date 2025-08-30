@@ -13,7 +13,7 @@ export default function ThemeToggle() {
 
   if (!mounted) {
     return (
-      <div className="rounded-lg border border-white/20 bg-white/5 p-2 w-9 h-9">
+      <div className="rounded-lg border border-gray-300 dark:border-white/20 bg-gray-100 dark:bg-white/5 p-2 w-9 h-9">
         {/* Loading placeholder */}
       </div>
     );
@@ -22,7 +22,7 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="rounded-lg border border-white/20 bg-white/5 p-2 text-white backdrop-blur hover:bg-white/10 transition-colors"
+      className="rounded-lg border border-gray-300 dark:border-white/20 bg-gray-100 dark:bg-white/5 p-2 text-gray-700 dark:text-white backdrop-blur hover:bg-gray-200 dark:hover:bg-white/10 transition-colors"
       aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
     >
       {theme === 'light' ? (

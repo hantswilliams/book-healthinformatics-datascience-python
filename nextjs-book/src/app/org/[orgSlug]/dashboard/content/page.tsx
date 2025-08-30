@@ -213,16 +213,16 @@ export default function ContentManagement() {
   const marketplaceBooks = books.filter(book => !book.organizationId);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
       {/* Header */}
-      <div className="bg-white shadow">
+      <div className="bg-white dark:bg-zinc-800 shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
               <nav className="flex" aria-label="Breadcrumb">
                 <ol className="inline-flex items-center space-x-1 md:space-x-3">
                   <li className="inline-flex items-center">
-                    <Link href={`/org/${orgSlug}/dashboard`} className="text-gray-500 hover:text-zinc-700">
+                    <Link href={`/org/${orgSlug}/dashboard`} className="text-gray-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300">
                       Dashboard
                     </Link>
                   </li>
@@ -231,24 +231,25 @@ export default function ContentManagement() {
                       <svg className="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>
-                      <span className="ml-1 text-gray-500">Content</span>
+                      <span className="ml-1 text-gray-500 dark:text-zinc-400">Content</span>
                     </div>
                   </li>
                 </ol>
               </nav>
-              <h1 className="mt-2 text-3xl font-bold text-gray-900">Content Management</h1>
-              <p className="mt-1 text-sm text-gray-600">
+              <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-zinc-100">Content Management</h1>
+              <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
                 Manage your organization's learning content and access to marketplace courses
               </p>
             </div>
-            {['OWNER', 'ADMIN'].includes(userProfile?.role || '') && (
-              <div className="flex gap-3">
+            <div className="flex items-center gap-3">
+              {['OWNER', 'ADMIN'].includes(userProfile?.role || '') && (
+                <div className="flex gap-3">
                 <Link
                   href={`/org/${orgSlug}/dashboard/content/create-enhanced`}
                   className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center gap-2"
                 >
                   <span>🚀</span>
-                  Enhanced Builder
+                  Builder
                 </Link>
                 <Link
                   href={`/org/${orgSlug}/dashboard/content/create`}
@@ -256,8 +257,9 @@ export default function ContentManagement() {
                 >
                   Upload Files
                 </Link>
-              </div>
-            )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -278,10 +280,6 @@ export default function ContentManagement() {
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-green-600">{organizationBooks.length}</div>
             <div className="text-sm text-gray-600">Organization Courses</div>
-          </div>
-          <div className="bg-white p-4 rounded-lg shadow">
-            <div className="text-2xl font-bold text-purple-600">{marketplaceBooks.length}</div>
-            <div className="text-sm text-gray-600">Marketplace Courses</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-orange-600">
@@ -314,16 +312,6 @@ export default function ContentManagement() {
                 }`}
               >
                 Organization Courses ({organizationBooks.length})
-              </button>
-              <button
-                onClick={() => setFilter('marketplace')}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                  filter === 'marketplace'
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-zinc-700 hover:border-gray-300'
-                }`}
-              >
-                Marketplace Courses ({marketplaceBooks.length})
               </button>
             </nav>
           </div>
