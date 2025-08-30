@@ -65,7 +65,7 @@ export default function Home() {
             </div>
             <div className="hidden sm:flex items-center gap-6">
               {/* <Link href="/contact" className="text-sm text-zinc-400 hover:text-white transition-colors">Contact</Link> */}
-              <ThemeToggle />
+              {/* <ThemeToggle /> */}
               <Link href="/login" className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white backdrop-blur hover:bg-white/10 transition-colors">Log in</Link>
               <Link href="/register/organization" className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100 transition-colors">
                 Get Started

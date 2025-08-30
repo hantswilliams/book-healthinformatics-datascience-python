@@ -12,30 +12,21 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeName>('dark'); // Default to dark since landing page is dark
+  const theme: ThemeName = 'dark'; // Force dark mode for testing
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // Check for saved theme preference or default to system preference
-    const savedTheme = localStorage.getItem('theme') as ThemeName;
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-      setTheme(savedTheme);
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-      setTheme('light');
-    }
   }, []);
 
   useEffect(() => {
     if (mounted) {
-      localStorage.setItem('theme', theme);
-      
-      // Apply theme classes to document root
+      // Always apply dark theme
       document.documentElement.classList.remove('light', 'dark');
-      document.documentElement.classList.add(theme);
+      document.documentElement.classList.add('dark');
       
-      // Apply CSS custom properties
-      const themeConfig = themes[theme];
+      // Apply CSS custom properties for dark theme
+      const themeConfig = themes.dark;
       const customProperties = generateCSSCustomProperties(themeConfig);
       
       // Set CSS custom properties on document root
@@ -43,10 +34,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         document.documentElement.style.setProperty(property, value);
       });
     }
-  }, [theme, mounted]);
+  }, [mounted]);
 
+  // Disable theme toggling for now
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    // No-op for testing purposes
   };
 
   // Prevent hydration mismatch
@@ -58,7 +50,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     <ThemeContext.Provider value={{ 
       theme, 
       toggleTheme, 
-      themeConfig: themes[theme]
+      themeConfig: themes.dark
     }}>
       {children}
     </ThemeContext.Provider>
