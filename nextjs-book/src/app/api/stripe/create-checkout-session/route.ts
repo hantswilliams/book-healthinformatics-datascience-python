@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get the base URL for redirect URLs
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
     
     // Create checkout session
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -116,8 +116,8 @@ export async function POST(request: NextRequest) {
         },
       ],
       mode: 'subscription',
-      success_url: `${baseUrl}/onboarding/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${baseUrl}/onboarding/payment?orgId=${organizationId}&cancelled=true`,
+      success_url: `${baseUrl}/org/${organization.slug}/onboarding/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${baseUrl}/org/${organization.slug}/onboarding/payment?orgId=${organizationId}&cancelled=true`,
       subscription_data: {
         metadata: {
           organizationId: organization.id,
