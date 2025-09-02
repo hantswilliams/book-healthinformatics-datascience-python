@@ -163,7 +163,9 @@ export default function Sidebar({ books, loading, className = '', onClose }: Sid
                       className="w-full flex items-center justify-between px-3 py-2 text-left rounded-lg hover:bg-zinc-50  transition"
                     >
                       <div className="flex items-center">
-                        <span className="text-lg mr-2">📚</span>
+                        <svg className="w-5 h-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
                         <div>
                           <div className="font-semibold text-zinc-900  text-sm">{book.title}</div>
                           <div className="text-xs text-zinc-500 ">{book.chapters.length} chapters</div>
@@ -199,7 +201,9 @@ export default function Sidebar({ books, loading, className = '', onClose }: Sid
                                   : 'text-zinc-600  hover:bg-zinc-100  hover:text-zinc-900 '
                               }`}
                             >
-                              <span className="text-base mr-2">{chapter.emoji}</span>
+                              <svg className="w-4 h-4 text-gray-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
                               <span className="truncate">{chapter.title}</span>
                             </Link>
                           );
@@ -212,7 +216,11 @@ export default function Sidebar({ books, loading, className = '', onClose }: Sid
             </div>
           ) : (
             <div className="text-center py-8">
-              <div className="text-zinc-400  text-4xl mb-2">📚</div>
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-2 mx-auto">
+                <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
               <p className="text-zinc-500  text-sm">No courses available</p>
               <p className="text-zinc-400  text-xs mt-1">Contact your administrator</p>
             </div>

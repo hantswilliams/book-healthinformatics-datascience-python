@@ -21,31 +21,31 @@ export default function ResourcesPage() {
       category: "Tools"
     },
     {
-      title: "Healthcare Data Science on Kaggle",
-      description: "Real healthcare datasets and competitions",
-      url: "https://www.kaggle.com/datasets?search=healthcare",
-      category: "Healthcare Data"
+      title: "NumPy Documentation",
+      description: "Comprehensive guide to numerical computing with Python",
+      url: "https://numpy.org/doc/stable/",
+      category: "Scientific Computing"
     }
   ];
 
-  const healthcareResources = [
+  const programmingResources = [
     {
-      title: "HL7 FHIR",
-      description: "Healthcare interoperability standard",
-      url: "https://www.hl7.org/fhir/",
-      category: "Standards"
+      title: "Python Package Index (PyPI)",
+      description: "Repository of Python packages and libraries",
+      url: "https://pypi.org/",
+      category: "Packages"
     },
     {
-      title: "CMS Public Datasets",
-      description: "Centers for Medicare & Medicaid Services data",
-      url: "https://www.cms.gov/Research-Statistics-Data-and-Systems",
-      category: "Public Data"
+      title: "Real Python Tutorials",
+      description: "High-quality Python tutorials and guides",
+      url: "https://realpython.com/",
+      category: "Tutorials"
     },
     {
-      title: "Medical Imaging in Python",
-      description: "Working with medical images using Python",
-      url: "https://pydicom.github.io/",
-      category: "Medical Imaging"
+      title: "Python Best Practices",
+      description: "PEP 8 style guide for Python code",
+      url: "https://peps.python.org/pep-0008/",
+      category: "Best Practices"
     }
   ];
 
@@ -54,7 +54,7 @@ export default function ResourcesPage() {
       <div className="text-center mb-12">
         <h1 className="text-3xl font-bold text-gray-900 mb-4">Learning Resources</h1>
         <p className="text-xl text-gray-600">
-          Helpful links and resources to enhance your Python and healthcare data science journey
+          Helpful links and resources to enhance your Python programming journey
         </p>
       </div>
 
@@ -91,14 +91,14 @@ export default function ResourcesPage() {
         </div>
       </div>
 
-      {/* Healthcare Resources */}
+      {/* Programming Resources */}
       <div className="mb-12">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Healthcare & Medical Informatics</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-6">Programming & Development</h2>
         <div className="grid md:grid-cols-2 gap-6">
-          {healthcareResources.map((resource, index) => (
+          {programmingResources.map((resource, index) => (
             <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
               <div className="flex items-start justify-between mb-3">
-                <span className="inline-block px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+                <span className="inline-block px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded">
                   {resource.category}
                 </span>
               </div>

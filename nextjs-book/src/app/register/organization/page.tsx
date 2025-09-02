@@ -146,19 +146,14 @@ export default function OrganizationRegister() {
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-3">
+              <div className="flex items-center gap-3">
                 <LogoMark className="h-6 w-6 text-white" variant="brackets" />
                 <span className="text-lg font-semibold text-white">Interactive Coding</span>
-              </Link>
+              </div>
             </div>
             <div className="hidden sm:flex items-center gap-6">
-              <Link href="/demo-healthcare" className="text-sm text-zinc-400 hover:text-white transition-colors">Healthcare</Link>
-              <Link href="/demo-finance" className="text-sm text-zinc-400 hover:text-white transition-colors">Finance</Link>
-              <Link href="/demo-university" className="text-sm text-zinc-400 hover:text-white transition-colors">Education</Link>
-              <Link href="/contact" className="text-sm text-zinc-400 hover:text-white transition-colors">Contact</Link>
-              <Link href="/login" className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white hover:bg-white/10 transition-colors">
-                Sign In
-              </Link>
+              {/* <ThemeToggle /> */}
+              <Link href="/login" className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white backdrop-blur hover:bg-white/10 transition-colors">Log in</Link>
             </div>
           </div>
         </div>
@@ -173,7 +168,7 @@ export default function OrganizationRegister() {
             className="text-center"
           >
             <h2 className="text-3xl font-bold text-white">Start Your Coding Learning Journey</h2>
-            <p className="mt-2 text-zinc-300">Create your organization and begin with a 14-day free trial</p>
+            <p className="mt-2 text-zinc-300">Create your organization and get started</p>
           </motion.div>
 
           <motion.div 
@@ -186,8 +181,8 @@ export default function OrganizationRegister() {
             {/* Free Trial Notice */}
             <div className="bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 border border-cyan-500/20 rounded-lg p-6">
               <div className="text-center">
-                <h3 className="text-lg font-semibold text-white mb-2">Start Your Free Trial</h3>
-                <p className="text-zinc-300 text-sm mb-4">Get started with our Starter plan for free</p>
+                <h3 className="text-lg font-semibold text-white mb-2">Start Your Organization</h3>
+                <p className="text-zinc-300 text-sm mb-4">Get started with our Starter plan</p>
                 <div className="flex items-center justify-center space-x-6 text-sm">
                   <div className="flex items-center text-zinc-300">
                     <svg className="h-4 w-4 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -199,13 +194,13 @@ export default function OrganizationRegister() {
                     <svg className="h-4 w-4 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    14-day free trial
+                    Interactive coding platform
                   </div>
                   <div className="flex items-center text-zinc-300">
                     <svg className="h-4 w-4 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    $29/month after trial
+                    $27/month
                   </div>
                 </div>
               </div>
@@ -394,7 +389,7 @@ export default function OrganizationRegister() {
                 disabled={isLoading}
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-zinc-900 bg-white hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                {isLoading ? 'Creating Organization...' : 'Start Free Trial'}
+                {isLoading ? 'Creating Organization...' : 'Create Organization'}
               </button>
             </div>
 

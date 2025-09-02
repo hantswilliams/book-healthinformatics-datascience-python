@@ -76,7 +76,7 @@ export default function ContactPage() {
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Message Sent!</h2>
             <p className="text-zinc-300 mb-6">
-              Thanks for reaching out. Our team will get back to you within 24 hours to discuss your Enterprise needs.
+              Thanks for reaching out. We'll get back to you soon.
             </p>
             <Link
               href="/"
@@ -119,10 +119,7 @@ export default function ContactPage() {
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-6">
-              <Link href="/demo-healthcare" className="text-sm text-zinc-400 hover:text-white transition-colors">Healthcare</Link>
-              <Link href="/demo-finance" className="text-sm text-zinc-400 hover:text-white transition-colors">Finance</Link>
-              <Link href="/demo-university" className="text-sm text-zinc-400 hover:text-white transition-colors">Education</Link>
-              <Link href="/contact" className="text-sm text-white">Contact</Link>
+              <Link href="/login" className="rounded-lg border border-white/20 bg-white/5 px-4 py-2 text-sm font-medium text-white backdrop-blur hover:bg-white/10 transition-colors">Log in</Link>
               <Link href="/register/organization" className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100 transition-colors">
                 Get Started
               </Link>
@@ -139,19 +136,14 @@ export default function ContactPage() {
           transition={{ delay: 0.1 }}
           className="text-center"
         >
-          <h1 className="text-4xl font-bold text-white sm:text-5xl">Enterprise Solutions</h1>
+          <h1 className="text-4xl font-bold text-white sm:text-5xl">Contact</h1>
           <p className="mt-6 text-xl text-zinc-300 max-w-3xl mx-auto">
-            Ready to scale Python training across your large organization? Let's discuss a custom solution that fits your needs.
+            Have questions or need help getting started? We'd love to hear from you.
           </p>
         </motion.div>
 
-        <div className="mt-12 max-w-lg mx-auto lg:max-w-none lg:grid lg:grid-cols-2 lg:gap-8">
-          {/* Contact Form */}
+        <div className="mt-12 max-w-lg mx-auto">
           <div>
-            <h2 className="text-2xl font-bold text-white sm:text-3xl">Get in Touch</h2>
-            <p className="mt-3 text-lg leading-6 text-zinc-300">
-              Tell us about your organization and training requirements. We'll create a tailored proposal for you.
-            </p>
             <div className="mt-9">
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
@@ -242,16 +234,17 @@ export default function ContactPage() {
                       className="mt-1 block w-full bg-zinc-800/50 border border-white/10 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 px-3 py-2 text-white"
                     >
                       <option value="">Select team size</option>
-                      <option value="500-1000">500-1,000 members</option>
-                      <option value="1000-5000">1,000-5,000 members</option>
-                      <option value="5000+">5,000+ members</option>
+                      <option value="1-10">1-10 people</option>
+                      <option value="11-25">11-25 people</option>
+                      <option value="26-100">26-100 people</option>
+                      <option value="100+">100+ people</option>
                     </select>
                   </div>
                 </div>
 
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-white">
-                    Tell us about your training needs
+                    Message
                   </label>
                   <textarea
                     name="message"
@@ -260,7 +253,7 @@ export default function ContactPage() {
                     value={formData.message}
                     onChange={handleInputChange}
                     className="mt-1 block w-full bg-zinc-800/50 border border-white/10 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 px-3 py-2 text-white placeholder-zinc-400"
-                    placeholder="What kind of Python training are you looking to deliver? Any specific requirements or integration needs?"
+                    placeholder="How can we help you?"
                   />
                 </div>
 
@@ -280,86 +273,6 @@ export default function ContactPage() {
                   </button>
                 </div>
               </form>
-            </div>
-          </div>
-
-          {/* Enterprise Benefits */}
-          <div className="mt-12 lg:mt-0">
-            <h2 className="text-2xl font-bold text-white">Enterprise Features</h2>
-            <p className="mt-3 text-lg leading-6 text-zinc-300">
-              Everything you need to train large technical teams at scale.
-            </p>
-            <div className="mt-8 space-y-6">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500 text-white">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-white">Unlimited Team Members</h3>
-                  <p className="mt-2 text-base text-zinc-300">
-                    Train as many employees as you need, from small departments to company-wide initiatives.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500 text-white">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-white">Advanced Security</h3>
-                  <p className="mt-2 text-base text-zinc-300">
-                    SSO integration, audit logs, and enterprise-grade security controls to meet your compliance requirements.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500 text-white">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192L5.636 18.364M12 12h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-white">Custom Deployment</h3>
-                  <p className="mt-2 text-base text-zinc-300">
-                    On-premises deployment, private cloud, or hybrid solutions tailored to your infrastructure.
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-md bg-cyan-500 text-white">
-                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                </div>
-                <div className="ml-4">
-                  <h3 className="text-lg font-medium text-white">Dedicated Support</h3>
-                  <p className="mt-2 text-base text-zinc-300">
-                    Dedicated account manager, priority support, and SLA guarantees to ensure your success.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-8 p-6 bg-cyan-500/10 border border-cyan-500/20 rounded-lg">
-              <h3 className="text-lg font-medium text-cyan-400">Quick Response</h3>
-              <p className="mt-2 text-sm text-cyan-300">
-                We typically respond to Enterprise inquiries within 2 hours during business hours.
-              </p>
             </div>
           </div>
         </div>

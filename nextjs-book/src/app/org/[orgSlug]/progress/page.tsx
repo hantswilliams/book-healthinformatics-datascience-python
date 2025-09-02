@@ -141,59 +141,39 @@ export default function ProgressPage() {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Progress</h1>
         <p className="text-gray-600">
-          Track your learning journey through the Python for Healthcare course
+          Track your learning journey through the Python courses
         </p>
       </div>
 
       {/* Progress Overview */}
       <div className="grid md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">📚</span>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">{completedBooks}</h3>
-              <p className="text-sm text-gray-600">Books Completed</p>
-            </div>
+        <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-6 rounded-xl shadow-sm border border-indigo-200">
+          <div className="text-center">
+            <h3 className="text-3xl font-bold text-indigo-700">{completedBooks}</h3>
+            <p className="text-sm font-medium text-indigo-600 mt-1">Books Completed</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">✅</span>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">{completedChapters}</h3>
-              <p className="text-sm text-gray-600">Chapters Completed</p>
-            </div>
+        <div className="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-xl shadow-sm border border-green-200">
+          <div className="text-center">
+            <h3 className="text-3xl font-bold text-green-700">{completedChapters}</h3>
+            <p className="text-sm font-medium text-green-600 mt-1">Chapters Completed</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">🏃‍♂️</span>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">{totalExercises}</h3>
-              <p className="text-sm text-gray-600">Total Exercises</p>
-            </div>
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-xl shadow-sm border border-blue-200">
+          <div className="text-center">
+            <h3 className="text-3xl font-bold text-blue-700">{totalExercises}</h3>
+            <p className="text-sm font-medium text-blue-600 mt-1">Total Exercises</p>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">🎯</span>
-            </div>
-            <div className="ml-4">
-              <h3 className="text-2xl font-bold text-gray-900">
-                {totalExercises > 0 ? Math.round((correctExercises / totalExercises) * 100) : 0}%
-              </h3>
-              <p className="text-sm text-gray-600">Success Rate</p>
-            </div>
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-6 rounded-xl shadow-sm border border-purple-200">
+          <div className="text-center">
+            <h3 className="text-3xl font-bold text-purple-700">
+              {totalExercises > 0 ? Math.round((correctExercises / totalExercises) * 100) : 0}
+            </h3>
+            <p className="text-sm font-medium text-purple-600 mt-1">Success Rate</p>
           </div>
         </div>
       </div>
@@ -216,7 +196,9 @@ export default function ProgressPage() {
                 }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center">
-                      <span className="text-2xl mr-4">📚</span>
+                      <svg className="w-8 h-8 text-indigo-600 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
                       <div>
                         <h2 className="text-xl font-bold text-gray-900">{book.title}</h2>
                         <p className="text-sm text-gray-600 mt-1">{book.description}</p>
@@ -287,7 +269,9 @@ export default function ProgressPage() {
                           }`}
                         >
                           <div className="flex items-center">
-                            <span className="text-lg mr-3">{chapter.emoji}</span>
+                            <svg className="w-5 h-5 text-gray-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
                             <div>
                               <h3 className="font-medium text-gray-900">{chapter.title}</h3>
                               <div className="flex items-center space-x-3 mt-1">
@@ -339,7 +323,11 @@ export default function ProgressPage() {
           })
         ) : (
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-            <div className="text-gray-400 text-4xl mb-4">📚</div>
+            <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-4 mx-auto">
+              <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+            </div>
             <h3 className="text-lg font-medium text-gray-900 mb-2">No Books Available</h3>
             <p className="text-gray-600">Contact your administrator to get access to learning materials.</p>
           </div>
