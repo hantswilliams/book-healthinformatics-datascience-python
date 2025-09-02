@@ -74,12 +74,6 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [user, userProfile, userOrganization, authLoading, router]);
 
-  // Auto-sync billing data if needed
-  useEffect(() => {
-    if (subscriptionStatus?.organization && !subscriptionStatus.organization.hasStripeCustomer) {
-      autoSyncBillingIfNeeded();
-    }
-  }, [subscriptionStatus]);
 
   const fetchDashboardData = async () => {
     try {
@@ -111,26 +105,6 @@ export default function Dashboard() {
     }
   };
 
-  const autoSyncBillingIfNeeded = async () => {
-    try {
-      console.log('🔄 Auto-syncing billing data...');
-      const response = await fetch('/api/billing/apply-latest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          console.log('✅ Auto-sync successful:', data.data);
-          // Refresh subscription data
-          fetchDashboardData();
-        }
-      }
-    } catch (error) {
-      console.log('⚠️ Auto-sync failed (non-critical):', error);
-    }
-  };
 
   // Show loading screen while auth is initializing or redirect is happening
   if (authLoading || (!user || !userProfile || !userOrganization)) {

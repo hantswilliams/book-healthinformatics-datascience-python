@@ -69,46 +69,6 @@ export async function GET(request: NextRequest) {
       updated_at: organization.updated_at,
     });
 
-    // Auto-sync: Check if billing events are newer than organization data
-    const { data: latestBillingEvent } = await supabase
-      .from('billing_events')
-      .select('*')
-      .eq('organization_id', organization.id)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (latestBillingEvent && organization.updated_at) {
-      const orgUpdated = new Date(organization.updated_at);
-      const eventCreated = new Date(latestBillingEvent.created_at);
-      
-      if (eventCreated > orgUpdated) {
-        console.log('🔄 Auto-syncing: Billing event is newer than org data');
-        
-        // Parse metadata and update organization
-        const metadata = typeof latestBillingEvent.metadata === 'string' 
-          ? JSON.parse(latestBillingEvent.metadata) 
-          : latestBillingEvent.metadata;
-
-        const subscriptionTier = metadata?.subscriptionTier as 'STARTER' | 'PRO' || 'STARTER';
-        const maxSeats = subscriptionTier === 'STARTER' ? 25 : 500;
-
-        console.log('📊 Auto-applying tier:', subscriptionTier, 'with seats:', maxSeats);
-
-        await supabase
-          .from('organizations')
-          .update({
-            subscription_tier: subscriptionTier,
-            max_seats: maxSeats,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', organization.id);
-
-        // Update local organization object for response
-        organization.subscription_tier = subscriptionTier;
-        organization.max_seats = maxSeats;
-      }
-    }
     
     // Count active users in the organization
     const { count: userCount } = await supabase
