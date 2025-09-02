@@ -1,1 +1,1 @@
-# Intro to Python for Health Informatics 
+# Intro to Python for Health Informatics. 
