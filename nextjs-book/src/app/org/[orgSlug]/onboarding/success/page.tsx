@@ -102,21 +102,13 @@ function OnboardingSuccessForm() {
           </div>
           
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
-            Welcome to Python Interactive!
+            Welcome to Coding Interactive!
           </h2>
           
           <p className="mt-4 text-lg text-gray-600">
             Your subscription has been set up successfully!
           </p>
           
-          <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <div className="text-sm text-blue-800">
-              <p className="font-semibold">🎉 Your 14-day free trial has started!</p>
-              <p className="mt-1">
-                Explore all features and invite your team members. No charges until your trial ends.
-              </p>
-            </div>
-          </div>
         </div>
 
         <div className="bg-white shadow rounded-lg p-6">
