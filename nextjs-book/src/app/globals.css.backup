@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+body.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+}
+
+body.light {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+/* Theme-specific styles */
+body.light {
+  background-color: white;
+}
+
+body.dark:not(:has(.login-page)) {
+  background-color: rgb(9 9 11); /* zinc-950 */
+}
+
+/* Ensure login page stays white regardless of theme */
+.login-page {
+  background-color: white !important;
+}
+
+/* Prevent theme CSS variables from affecting login page */
+.login-page,
+.login-page * {
+  --color-background: white !important;
+  background-color: white !important;
+}
+
+/* Light theme overrides - but not for login pages */
+body.light .bg-zinc-950:not(.login-page) {
+  background-color: white !important;
+}
+
+
+body.light .text-white {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+body.light .text-zinc-400 {
+  color: rgb(82 82 91) !important; /* zinc-600 */
+}
+
+body.light .text-zinc-300 {
+  color: rgb(82 82 91) !important; /* zinc-600 */
+}
+
+body.light .border-white\/10 {
+  border-color: rgb(228 228 231) !important; /* zinc-200 */
+}
+
+body.light .border-white\/20 {
+  border-color: rgb(228 228 231) !important; /* zinc-200 */
+}
+
+body.light .bg-white\/5 {
+  background-color: rgb(244 244 245) !important; /* zinc-100 */
+}
+
+body.light .bg-white\/10 {
+  background-color: rgb(228 228 231) !important; /* zinc-200 */
+}
+
+body.light .text-white\/70 {
+  color: rgb(82 82 91) !important; /* zinc-600 */
+}
+
+/* Background effects visibility */
+body.light .aurora-dark {
+  display: none !important;
+}
+
+body.dark .aurora-light {
+  display: none !important;
+}
+
+body.light .aurora-light {
+  display: block !important;
+}
+
+body.dark .aurora-dark {
+  display: block !important;
+}
+
+/* Navigation overrides for light theme */
+body.light .bg-zinc-950\/80 {
+  background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Navigation link hover states in light mode */
+body.light .text-zinc-400:hover {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+body.light .text-white:hover {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+/* Button overrides for light theme */
+body.light .bg-white {
+  background-color: rgb(24 24 27) !important; /* zinc-900 */
+  color: white !important;
+}
+
+body.light .bg-white:hover {
+  background-color: rgb(39 39 42) !important; /* zinc-800 */
+}
+
+/* Ensure indigo buttons maintain their color in all themes */
+.bg-indigo-600 {
+  background-color: rgb(79 70 229) !important; /* indigo-600 */
+  color: white !important;
+}
+
+.bg-indigo-600:hover {
+  background-color: rgb(67 56 202) !important; /* indigo-700 */
+  color: white !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body:not(.login-page *) {
+  background: white !important;
+  color: rgb(24 24 27) !important;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* Make default text colors darker for better readability using zinc colors */
+.text-zinc-600 {
+  color: rgb(24 24 27) !important; /* zinc-900 equivalent */
+}
+
+.text-zinc-500 {
+  color: rgb(39 39 42) !important; /* zinc-800 equivalent */
+}
+
+.text-zinc-700 {
+  color: rgb(24 24 27) !important; /* zinc-900 equivalent */
+}
+
+.text-zinc-400 {
+  color: rgb(63 63 70) !important; /* zinc-700 equivalent */
+}
+
+/* Prose styling for markdown content */
+.prose {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+.prose p {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+.prose li {
+  color: rgb(24 24 27) !important; /* zinc-900 */
+}
+
+.prose blockquote {
+  color: rgb(39 39 42) !important; /* zinc-800 */
+}
+
+/* Aurora animation for blob effects */
+@keyframes blob {
+  0%, 100% {
+    transform: scale(1) translate(0, 0);
+  }
+  33% {
+    transform: scale(1.1) translate(30px, -50px);
+  }
+  66% {
+    transform: scale(0.9) translate(-20px, 20px);
+  }
+}
+
+.animate-blob {
+  animation: blob 7s infinite ease-in-out;
+}
+
+.animation-delay-2000 {
+  animation-delay: 2s;
+}
+
+.animation-delay-4000 {
+  animation-delay: 4s;
+}

@@ -19,8 +19,8 @@ export function Card({ children, className = '', padding = 'md', hover = false, 
   return (
     <Tag
       className={[
-        'rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white/70 dark:bg-zinc-800/70 backdrop-blur-sm shadow-sm',
-        hover ? 'transition hover:shadow-md hover:border-indigo-200/70 dark:hover:border-indigo-400/70' : '',
+        'rounded-xl border border-zinc-100 bg-zinc-50/50 backdrop-blur-sm shadow-sm',
+        hover ? 'transition hover:shadow-md hover:border-indigo-200/70' : '',
         paddingMap[padding],
         className
       ].join(' ')}
@@ -41,10 +41,10 @@ export function StatCard({ label, value, icon, className = '' }: StatCardProps) 
   return (
     <Card padding="md" className={className}>
       <div className="flex items-center gap-4">
-        {icon && <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400">{icon}</div>}
+        {icon && <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50  text-indigo-600 ">{icon}</div>}
         <div className="min-w-0">
-          <p className="truncate text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{label}</p>
-          <p className="mt-1 text-lg font-semibold text-zinc-900 dark:text-zinc-100">{value}</p>
+          <p className="truncate text-xs font-medium uppercase tracking-wide text-zinc-500 ">{label}</p>
+          <p className="mt-1 text-lg font-semibold text-zinc-900 ">{value}</p>
         </div>
       </div>
     </Card>
@@ -64,7 +64,7 @@ const toneClasses: Record<string, { solid: string; subtle: string }> = {
   info: { solid: 'bg-sky-600 text-white', subtle: 'bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300' },
   warning: { solid: 'bg-amber-500 text-white', subtle: 'bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300' },
   danger: { solid: 'bg-rose-600 text-white', subtle: 'bg-rose-100 dark:bg-rose-900/50 text-rose-700 dark:text-rose-300' },
-  indigo: { solid: 'bg-indigo-600 text-white', subtle: 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300' },
+  indigo: { solid: 'bg-indigo-600 text-white', subtle: 'bg-indigo-100  text-indigo-700 dark:text-indigo-300' },
   purple: { solid: 'bg-violet-600 text-white', subtle: 'bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-300' }
 };
 

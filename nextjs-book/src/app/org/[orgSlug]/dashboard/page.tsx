@@ -74,6 +74,13 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [user, userProfile, userOrganization, authLoading, router]);
 
+  // Auto-sync billing data if needed
+  useEffect(() => {
+    if (subscriptionStatus?.organization && !subscriptionStatus.organization.hasStripeCustomer) {
+      autoSyncBillingIfNeeded();
+    }
+  }, [subscriptionStatus]);
+
   const fetchDashboardData = async () => {
     try {
       // Fetch both subscription status and organization stats in parallel
@@ -101,6 +108,27 @@ export default function Dashboard() {
       setError(err instanceof Error ? err.message : 'Failed to load dashboard');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const autoSyncBillingIfNeeded = async () => {
+    try {
+      console.log('🔄 Auto-syncing billing data...');
+      const response = await fetch('/api/billing/apply-latest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          console.log('✅ Auto-sync successful:', data.data);
+          // Refresh subscription data
+          fetchDashboardData();
+        }
+      }
+    } catch (error) {
+      console.log('⚠️ Auto-sync failed (non-critical):', error);
     }
   };
 
@@ -145,17 +173,16 @@ export default function Dashboard() {
     switch (tier) {
       case 'STARTER': return { tone: 'neutral', label: 'Starter' } as const;
       case 'PRO': return { tone: 'purple', label: 'Pro' } as const;
-      case 'ENTERPRISE': return { tone: 'indigo', label: 'Enterprise' } as const;
       default: return { tone: 'neutral', label: tier } as const;
     }
   };
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-zinc-200">Loading dashboard...</p>
+          <p className="mt-4 text-gray-600 ">Loading dashboard...</p>
         </div>
       </div>
     );
@@ -163,10 +190,10 @@ export default function Dashboard() {
 
   if (!user || !userProfile || !userOrganization || !subscriptionStatus || !organizationStats) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-zinc-900 flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">Access Denied</h2>
-          <p className="mt-2 text-gray-600 dark:text-zinc-200">Unable to load dashboard</p>
+          <h2 className="text-2xl font-bold text-gray-900 ">Access Denied</h2>
+          <p className="mt-2 text-gray-600 ">Unable to load dashboard</p>
           {error && <p className="mt-2 text-red-600">{error}</p>}
         </div>
       </div>
@@ -176,14 +203,14 @@ export default function Dashboard() {
   const { permissions } = subscriptionStatus;
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa] dark:bg-zinc-900">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/60 dark:bg-zinc-800/60 backdrop-blur supports-[backdrop-filter]:bg-white/50 dark:supports-[backdrop-filter]:bg-zinc-800/50">
+      <div className="border-b border-zinc-200  bg-zinc-50/80  backdrop-blur supports-[backdrop-filter]:bg-white/50 ">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">{userOrganization.name}</h1>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-300">Welcome back, {userProfile.first_name || user.email?.split('@')[0]}. Here's your overview.</p>
+              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 ">{userOrganization.name}</h1>
+              <p className="mt-1 text-sm text-zinc-600 ">Welcome back, {userProfile.first_name || user.email?.split('@')[0]}. Here's your overview.</p>
             </div>
             <div className="flex items-center gap-3">
               <Badge tone={statusTone(userOrganization.subscription_status).tone}>
@@ -259,7 +286,7 @@ export default function Dashboard() {
                   {['OWNER', 'ADMIN'].includes(userProfile?.role || '') && (
                     <Link
                       href={`/org/${orgSlug}/dashboard/team`}
-                      className="group relative rounded-xl border border-zinc-200 bg-white/60 p-4 backdrop-blur-sm transition hover:border-indigo-300 hover:shadow-md"
+                      className="group relative rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 backdrop-blur-sm transition hover:border-indigo-300 hover:shadow-md"
                     >
                       <div className="flex flex-col gap-3">
                         <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
@@ -276,7 +303,7 @@ export default function Dashboard() {
                   {permissions.canManageContent && (
                     <Link
                       href={`/org/${orgSlug}/dashboard/content`}
-                      className="group relative rounded-xl border border-zinc-200 bg-white/60 p-4 backdrop-blur-sm transition hover:border-indigo-300 hover:shadow-md"
+                      className="group relative rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 backdrop-blur-sm transition hover:border-indigo-300 hover:shadow-md"
                     >
                       <div className="flex flex-col gap-3">
                         <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
@@ -292,7 +319,7 @@ export default function Dashboard() {
 
                   <Link
                     href={`/org/${orgSlug}/dashboard/progress`}
-                    className="group relative rounded-xl border border-zinc-200 bg-white/60 p-4 backdrop-blur-sm transition hover:border-indigo-300 hover:shadow-md"
+                    className="group relative rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 backdrop-blur-sm transition hover:border-indigo-300 hover:shadow-md"
                   >
                     <div className="flex flex-col gap-3">
                       <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
@@ -308,7 +335,7 @@ export default function Dashboard() {
                   {permissions.canManageBilling && (
                     <Link
                       href={`/org/${orgSlug}/dashboard/billing`}
-                      className="group relative rounded-xl border border-zinc-200 bg-white/60 p-4 backdrop-blur-sm transition hover:border-indigo-300 hover:shadow-md"
+                      className="group relative rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 backdrop-blur-sm transition hover:border-indigo-300 hover:shadow-md"
                     >
                       <div className="flex flex-col gap-3">
                         <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">

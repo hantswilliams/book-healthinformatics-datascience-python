@@ -7,14 +7,13 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 });
 
 // Helper function to get tier configuration
-// Aligned with main landing page pricing
-export const getTierConfig = (tier: 'STARTER' | 'PRO' | 'ENTERPRISE') => {
+export const getTierConfig = (tier: 'STARTER' | 'PRO') => {
   const SUBSCRIPTION_TIERS = {
     STARTER: {
       id: 'STARTER',
       name: 'Starter',
-      priceId: process.env.STRIPE_STARTER_PRICE_ID || '', // Optional for free tier
-      amount: 0, // Free for 30 days
+      priceId: process.env.STRIPE_STARTER_PRICE_ID!,
+      amount: 2900, // $29.00 in cents
       seats: 25,
       features: [
         'Up to 25 learners',
@@ -27,7 +26,7 @@ export const getTierConfig = (tier: 'STARTER' | 'PRO' | 'ENTERPRISE') => {
     PRO: {
       id: 'PRO',
       name: 'Professional',
-      priceId: process.env.STRIPE_PRO_PRICE_ID || process.env.STRIPE_PROFESSIONAL_PRICE_ID!,
+      priceId: process.env.STRIPE_PRO_PRICE_ID!,
       amount: 9900, // $99.00 in cents
       seats: 500,
       features: [
@@ -37,21 +36,6 @@ export const getTierConfig = (tier: 'STARTER' | 'PRO' | 'ENTERPRISE') => {
         'Advanced analytics dashboard',
         'Custom branding',
         'Priority support'
-      ]
-    },
-    ENTERPRISE: {
-      id: 'ENTERPRISE',
-      name: 'Enterprise',
-      priceId: process.env.STRIPE_ENTERPRISE_PRICE_ID || '', // Custom pricing - contact sales
-      amount: 0, // Custom pricing
-      seats: 999999, // "unlimited"
-      features: [
-        'Unlimited learners',
-        'Everything in Professional',
-        'Custom integrations (LMS, SSO)',
-        'Dedicated success manager',
-        'White-label solution',
-        '24/7 support'
       ]
     }
   } as const;

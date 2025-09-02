@@ -12,27 +12,25 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<ThemeName>('dark'); // Default to dark since landing page is dark
+  const [theme, setTheme] = useState<ThemeName>('light'); // Force light mode
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    // Check for saved theme preference or default to system preference
-    const savedTheme = localStorage.getItem('theme') as ThemeName;
-    if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
-      setTheme(savedTheme);
-    } else if (window.matchMedia('(prefers-color-scheme: light)').matches) {
-      setTheme('light');
-    }
+    // Force light mode - ignore saved preferences
+    setTheme('light');
+    localStorage.setItem('theme', 'light');
   }, []);
 
   useEffect(() => {
     if (mounted) {
       localStorage.setItem('theme', theme);
       
-      // Apply theme classes to document root
-      document.documentElement.classList.remove('light', 'dark');
-      document.documentElement.classList.add(theme);
+      // Apply theme classes to body only if not already applied
+      if (!document.body.classList.contains(theme)) {
+        document.body.classList.remove('light', 'dark');
+        document.body.classList.add(theme);
+      }
       
       // Apply CSS custom properties
       const themeConfig = themes[theme];
@@ -46,7 +44,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme, mounted]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    // Force light mode - disable toggle
+    setTheme('light');
   };
 
   // Prevent hydration mismatch
@@ -70,9 +69,9 @@ export function useTheme() {
   if (context === undefined) {
     // Return a default context during SSR or when outside provider
     return {
-      theme: 'dark' as ThemeName,
+      theme: 'light' as ThemeName,
       toggleTheme: () => {},
-      themeConfig: themes.dark
+      themeConfig: themes.light
     };
   }
   return context;

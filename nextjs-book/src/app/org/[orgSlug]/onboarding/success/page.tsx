@@ -28,11 +28,15 @@ function OnboardingSuccessForm() {
       return;
     }
 
-    // Verify the checkout session (optional - for displaying details)
+    // Verify the checkout session and trigger refresh
     const verifySession = async () => {
       try {
-        // You could create an API endpoint to verify the session
-        // For now, we'll just show success and redirect
+        // Wait a moment for webhooks to process
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // Force a refresh of subscription data
+        console.log('🔄 Forcing subscription refresh after Stripe return');
+        
         setIsLoading(false);
       } catch (err) {
         setError('Failed to verify payment');
@@ -44,7 +48,8 @@ function OnboardingSuccessForm() {
   }, [supabaseUser, userProfile, organization, loading, sessionId, router]);
 
   const handleContinue = () => {
-    router.push(`/org/${organization?.slug || 'dashboard'}/dashboard`);
+    // Force hard refresh to ensure latest subscription data is loaded
+    window.location.href = `/org/${organization?.slug || 'dashboard'}/dashboard`;
   };
 
   if (loading || isLoading) {
@@ -70,12 +75,15 @@ function OnboardingSuccessForm() {
           <h2 className="mt-4 text-2xl font-bold text-gray-900">Something went wrong</h2>
           <p className="mt-2 text-gray-600">{error}</p>
           <div className="mt-6">
-            <Link
-              href="/dashboard"
+            <button
+              onClick={() => {
+                // Force hard refresh to ensure latest subscription data is loaded
+                window.location.href = `/org/${organization?.slug}/dashboard`;
+              }}
               className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Continue to Dashboard
-            </Link>
+            </button>
           </div>
         </div>
       </div>

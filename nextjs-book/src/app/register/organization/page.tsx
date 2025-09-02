@@ -6,7 +6,6 @@ import Link from 'next/link';
 import LogoMark from "@/components/LogoMark";
 import { motion } from "framer-motion";
 
-type SubscriptionTier = 'STARTER' | 'PRO' | 'ENTERPRISE';
 type Industry = 'GENERAL' | 'HEALTHCARE' | 'FINANCE' | 'TECHNOLOGY' | 'EDUCATION' | 'MANUFACTURING' | 'GOVERNMENT' | 'NON_PROFIT';
 
 interface FormData {
@@ -20,40 +19,8 @@ interface FormData {
   username: string;
   password: string;
   confirmPassword: string;
-  subscriptionTier: SubscriptionTier;
-  billingPeriod: 'monthly' | 'annual';
 }
 
-const subscriptionTiers = [
-  {
-    id: 'STARTER' as const,
-    name: 'Starter',
-    price: null,
-    annualPrice: null,
-    seats: 25,
-    popular: false,
-    features: ['Up to 25 learners', 'Core Python curriculum', 'Interactive assignments', 'Basic progress tracking', 'Email support'],
-    isFree: true
-  },
-  {
-    id: 'PRO' as const,
-    name: 'Professional',
-    price: 99,
-    annualPrice: 79,
-    seats: 500,
-    popular: true,
-    features: ['Up to 500 learners', 'Everything in Starter', 'Industry-specific content', 'Advanced analytics dashboard', 'Custom branding', 'Priority support']
-  },
-  {
-    id: 'ENTERPRISE' as const,
-    name: 'Enterprise',
-    price: null,
-    annualPrice: null,
-    seats: null,
-    popular: false,
-    features: ['Unlimited learners', 'Everything in Professional', 'Custom integrations (LMS, SSO)', 'Dedicated success manager', 'White-label solution', '24/7 support']
-  }
-];
 
 const industries = [
   { value: 'GENERAL', label: 'General' },
@@ -80,9 +47,7 @@ export default function OrganizationRegister() {
     email: '',
     username: '',
     password: '',
-    confirmPassword: '',
-    subscriptionTier: 'PRO',
-    billingPeriod: 'annual'
+    confirmPassword: ''
   });
 
   const generateSlug = (name: string) => {
@@ -138,8 +103,8 @@ export default function OrganizationRegister() {
           email: formData.email,
           username: formData.username,
           password: formData.password,
-          subscriptionTier: formData.subscriptionTier,
-          billingPeriod: formData.billingPeriod,
+          subscriptionTier: 'STARTER',
+          billingPeriod: 'monthly',
         }),
       });
 
@@ -207,8 +172,8 @@ export default function OrganizationRegister() {
             transition={{ delay: 0.1 }}
             className="text-center"
           >
-            <h2 className="text-3xl font-bold text-white">Start Your Python Learning Journey</h2>
-            <p className="mt-2 text-zinc-300">Create your organization and begin with a 30-day free trial</p>
+            <h2 className="text-3xl font-bold text-white">Start Your Coding Learning Journey</h2>
+            <p className="mt-2 text-zinc-300">Create your organization and begin with a 14-day free trial</p>
           </motion.div>
 
           <motion.div 
@@ -218,138 +183,32 @@ export default function OrganizationRegister() {
             className="mt-8 bg-white/5 backdrop-blur-xl border border-white/10 py-8 px-4 shadow-2xl sm:rounded-2xl sm:px-10"
           >
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Subscription Tier Selection */}
-            <div>
-              <label className="text-base font-medium text-white">Choose Your Plan</label>
-              <p className="text-sm leading-5 text-zinc-300">Start with 30-day free trial • No setup fees • Save with annual plans</p>
-              
-              {/* Billing Period Toggle */}
-              <div className="flex items-center justify-center mt-4 mb-6">
-                <div className="flex items-center bg-zinc-800/50 rounded-lg p-1">
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, billingPeriod: 'monthly' }))}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                      formData.billingPeriod === 'monthly'
-                        ? 'bg-white text-zinc-900 shadow-sm'
-                        : 'text-zinc-300 hover:text-white'
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, billingPeriod: 'annual' }))}
-                    className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${
-                      formData.billingPeriod === 'annual'
-                        ? 'bg-white text-zinc-900 shadow-sm'
-                        : 'text-zinc-300 hover:text-white'
-                    }`}
-                  >
-                    Annual
-                    <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400">
-                      Save 20%
-                    </span>
-                  </button>
+            {/* Free Trial Notice */}
+            <div className="bg-gradient-to-r from-cyan-500/10 to-indigo-500/10 border border-cyan-500/20 rounded-lg p-6">
+              <div className="text-center">
+                <h3 className="text-lg font-semibold text-white mb-2">Start Your Free Trial</h3>
+                <p className="text-zinc-300 text-sm mb-4">Get started with our Starter plan for free</p>
+                <div className="flex items-center justify-center space-x-6 text-sm">
+                  <div className="flex items-center text-zinc-300">
+                    <svg className="h-4 w-4 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Up to 25 learners
+                  </div>
+                  <div className="flex items-center text-zinc-300">
+                    <svg className="h-4 w-4 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    14-day free trial
+                  </div>
+                  <div className="flex items-center text-zinc-300">
+                    <svg className="h-4 w-4 text-green-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    $29/month after trial
+                  </div>
                 </div>
               </div>
-
-              <fieldset className="mt-4">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                  {subscriptionTiers.map((tier) => {
-                    const currentPrice = formData.billingPeriod === 'annual' ? tier.annualPrice : tier.price;
-                    const isEnterprise = tier.id === 'ENTERPRISE';
-                    const isStarter = tier.id === 'STARTER';
-                    
-                    return (
-                      <div key={tier.id} className="relative">
-                        {tier.popular && (
-                          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                            <span className="bg-gradient-to-r from-indigo-500 to-violet-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                              Most Popular
-                            </span>
-                          </div>
-                        )}
-                        <input
-                          id={tier.id}
-                          name="subscriptionTier"
-                          type="radio"
-                          value={tier.id}
-                          checked={formData.subscriptionTier === tier.id}
-                          onChange={handleInputChange}
-                          className="sr-only"
-                        />
-                        <label
-                          htmlFor={tier.id}
-                          className={`cursor-pointer rounded-lg border p-6 flex flex-col h-full ${
-                            formData.subscriptionTier === tier.id
-                              ? 'border-cyan-500/50 bg-cyan-500/10'
-                              : tier.popular
-                              ? 'border-indigo-400/50 bg-gradient-to-b from-indigo-900/20 to-white/5'
-                              : 'border-white/10 bg-white/5 hover:bg-white/10'
-                          }`}
-                        >
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="text-lg font-bold text-white">{tier.name}</div>
-                            <div className="text-right">
-                              {isEnterprise ? (
-                                <div className="text-sm font-medium text-white">Custom</div>
-                              ) : isStarter ? (
-                                <>
-                                  <div className="text-xl font-bold text-white">Free</div>
-                                  <div className="text-sm text-zinc-300">for 30 days</div>
-                                </>
-                              ) : (
-                                <>
-                                  <div className="text-xl font-bold text-white">
-                                    ${currentPrice}
-                                  </div>
-                                  <div className="text-sm text-zinc-300">/month</div>
-                                  {formData.billingPeriod === 'annual' && tier.price && (
-                                    <div className="text-xs text-green-400 font-medium">
-                                      ${tier.price}/month billed annually
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="mb-4">
-                            {isEnterprise ? (
-                              <div className="text-sm text-zinc-300">Contact us for pricing</div>
-                            ) : (
-                              <div className="text-sm text-zinc-300">{tier.seats} learners</div>
-                            )}
-                          </div>
-                          
-                          <ul className="space-y-2 text-sm text-zinc-300 flex-grow">
-                            {tier.features.map((feature, index) => (
-                              <li key={index} className="flex items-start">
-                                <svg className="h-4 w-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                                {feature}
-                              </li>
-                            ))}
-                          </ul>
-                          
-                          {isEnterprise && (
-                            <div className="mt-4 pt-4 border-t border-white/10">
-                              <Link
-                                href="/contact"
-                                className="text-cyan-400 hover:text-cyan-300 text-sm font-medium"
-                              >
-                                Contact Sales →
-                              </Link>
-                            </div>
-                          )}
-                        </label>
-                      </div>
-                    );
-                  })}
-                </div>
-              </fieldset>
             </div>
 
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">

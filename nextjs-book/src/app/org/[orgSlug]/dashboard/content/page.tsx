@@ -213,16 +213,16 @@ export default function ContentManagement() {
   const marketplaceBooks = books.filter(book => !book.organizationId);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white dark:bg-zinc-800 shadow">
+      <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
             <div>
               <nav className="flex" aria-label="Breadcrumb">
                 <ol className="inline-flex items-center space-x-1 md:space-x-3">
                   <li className="inline-flex items-center">
-                    <Link href={`/org/${orgSlug}/dashboard`} className="text-gray-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300">
+                    <Link href={`/org/${orgSlug}/dashboard`} className="text-gray-500 hover:text-zinc-700">
                       Dashboard
                     </Link>
                   </li>
@@ -231,13 +231,13 @@ export default function ContentManagement() {
                       <svg className="flex-shrink-0 h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
                         <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                       </svg>
-                      <span className="ml-1 text-gray-500 dark:text-zinc-400">Content</span>
+                      <span className="ml-1 text-gray-500">Content</span>
                     </div>
                   </li>
                 </ol>
               </nav>
-              <h1 className="mt-2 text-3xl font-bold text-gray-900 dark:text-zinc-100">Content Management</h1>
-              <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+              <h1 className="mt-2 text-3xl font-bold text-gray-900">Content Management</h1>
+              <p className="mt-1 text-sm text-gray-600">
                 Manage your organization's learning content and access to marketplace courses
               </p>
             </div>

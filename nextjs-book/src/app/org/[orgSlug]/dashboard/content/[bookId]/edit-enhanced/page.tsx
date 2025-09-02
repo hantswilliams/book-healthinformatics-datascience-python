@@ -294,33 +294,33 @@ export default function EditEnhancedPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white dark:bg-zinc-900">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-white dark:bg-zinc-800 shadow-sm border-b border-gray-200 dark:border-zinc-700 px-5">
+      <div className="bg-white shadow-sm border-b border-gray-200 px-5">
         <div className="max-w-6xl mx-auto py-5">
           <div className="flex justify-between items-center">
             <div>
               <nav className="mb-2">
                 <Link 
                   href={`/org/${orgSlug}/dashboard`}
-                  className="text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300 no-underline text-sm"
+                  className="text-gray-500 hover:text-gray-700 no-underline text-sm"
                 >
                   Dashboard
                 </Link>
-                <span className="text-gray-500 dark:text-zinc-400 mx-2">/</span>
+                <span className="text-gray-500 mx-2">/</span>
                 <Link 
                   href={`/org/${orgSlug}/dashboard/content`}
-                  className="text-gray-500 dark:text-zinc-400 hover:text-gray-700 dark:hover:text-zinc-300 no-underline text-sm"
+                  className="text-gray-500 hover:text-gray-700 no-underline text-sm"
                 >
                   Content
                 </Link>
-                <span className="text-gray-500 dark:text-zinc-400 mx-2">/</span>
-                <span className="text-gray-500 dark:text-zinc-400 text-sm">Edit Course</span>
+                <span className="text-gray-500 mx-2">/</span>
+                <span className="text-gray-500 text-sm">Edit Course</span>
               </nav>
-              <h1 className="m-0 text-2xl font-bold text-gray-900 dark:text-zinc-100">
+              <h1 className="m-0 text-2xl font-bold text-gray-900">
                 Enhanced Course Editor
               </h1>
-              <p className="mt-1 text-gray-500 dark:text-zinc-400 text-sm">
+              <p className="mt-1 text-gray-500 text-sm">
                 Step {step} of 3: {
                   step === 1 ? 'Course Information' : 
                   step === 2 ? 'Edit Chapters' : 

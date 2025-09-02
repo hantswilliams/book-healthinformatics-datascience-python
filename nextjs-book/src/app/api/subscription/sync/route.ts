@@ -67,11 +67,35 @@ export async function POST(request: NextRequest) {
     // Fetch current subscription from Stripe
     const subscription = await stripe.subscriptions.retrieve(organization.stripe_subscription_id);
     
-    // Determine subscription tier from Stripe metadata or price
-    const subscriptionTier = subscription.metadata?.subscriptionTier as 'STARTER' | 'PRO' | 'ENTERPRISE' || 'PRO';
+    console.log('🔍 Stripe subscription data:', {
+      id: subscription.id,
+      status: subscription.status,
+      trial_end: subscription.trial_end,
+      current_period_end: subscription.current_period_end,
+      metadata: subscription.metadata,
+      priceId: subscription.items.data[0]?.price?.id,
+    });
+    
+    // Determine subscription tier from Stripe metadata or price ID
+    let subscriptionTier: 'STARTER' | 'PRO' = 'PRO';
+    
+    if (subscription.metadata?.subscriptionTier) {
+      subscriptionTier = subscription.metadata.subscriptionTier as 'STARTER' | 'PRO';
+      console.log('📝 Using metadata tier:', subscriptionTier);
+    } else {
+      // Fallback: detect tier from price ID
+      const priceId = subscription.items.data[0]?.price?.id;
+      console.log('🔍 Detecting tier from price ID:', priceId);
+      if (priceId === process.env.STRIPE_STARTER_PRICE_ID) {
+        subscriptionTier = 'STARTER';
+      } else if (priceId === process.env.STRIPE_PRO_PRICE_ID) {
+        subscriptionTier = 'PRO';
+      }
+      console.log('📝 Detected tier:', subscriptionTier);
+    }
     
     // Calculate max seats
-    const maxSeats = subscriptionTier === 'STARTER' ? 25 : subscriptionTier === 'PRO' ? 500 : 999999;
+    const maxSeats = subscriptionTier === 'STARTER' ? 25 : 500;
     
     // Map Stripe status to our enum
     let status: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'UNPAID';
@@ -96,16 +120,29 @@ export async function POST(request: NextRequest) {
         status = 'ACTIVE';
     }
 
+    // Calculate trial end date if in trial
+    const trialEndsAt = subscription.trial_end 
+      ? new Date(subscription.trial_end * 1000).toISOString()
+      : null;
+
     // Update organization with current Stripe data
+    const updateData: any = {
+      subscription_status: status,
+      subscription_tier: subscriptionTier,
+      max_seats: maxSeats,
+      subscription_ends_at: new Date(subscription.current_period_end * 1000).toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    if (trialEndsAt) {
+      updateData.trial_ends_at = trialEndsAt;
+    }
+
+    console.log('📊 Updating organization with data:', updateData);
+
     const { error: updateError } = await supabase
       .from('organizations')
-      .update({
-        subscription_status: status,
-        subscription_tier: subscriptionTier,
-        max_seats: maxSeats,
-        subscription_ends_at: new Date(subscription.current_period_end * 1000).toISOString(),
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', organization.id);
 
     if (updateError) {

@@ -7,7 +7,7 @@ import { z } from 'zod';
 
 const checkoutSchema = z.object({
   organizationId: z.string().min(1),
-  subscriptionTier: z.enum(['STARTER', 'PRO', 'ENTERPRISE']),
+  subscriptionTier: z.enum(['STARTER', 'PRO']),
 });
 
 export async function POST(request: NextRequest) {

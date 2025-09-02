@@ -78,7 +78,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   console.log('Checkout completed:', session.id);
   
   const organizationId = session.metadata?.organizationId;
-  const subscriptionTier = session.metadata?.subscriptionTier as 'STARTER' | 'PRO' | 'ENTERPRISE';
+  const subscriptionTier = session.metadata?.subscriptionTier as 'STARTER' | 'PRO';
   
   if (!organizationId) {
     console.error('No organization ID in checkout session metadata');
@@ -90,7 +90,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
     
     // Calculate max seats based on tier
-    const maxSeats = subscriptionTier === 'STARTER' ? 25 : subscriptionTier === 'PRO' ? 500 : 999999;
+    const maxSeats = subscriptionTier === 'STARTER' ? 25 : 500;
     
     // Update organization with subscription details
     const { error: updateError } = await supabase
@@ -142,8 +142,8 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
   }
 
   try {
-    const subscriptionTier = subscription.metadata?.subscriptionTier as 'STARTER' | 'PRO' | 'ENTERPRISE';
-    const maxSeats = subscriptionTier === 'STARTER' ? 25 : subscriptionTier === 'PRO' ? 500 : 999999;
+    const subscriptionTier = subscription.metadata?.subscriptionTier as 'STARTER' | 'PRO';
+    const maxSeats = subscriptionTier === 'STARTER' ? 25 : 500;
     
     const { error: updateError } = await supabase
       .from('organizations')
@@ -192,8 +192,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   }
 
   try {
-    const subscriptionTier = subscription.metadata?.subscriptionTier as 'STARTER' | 'PRO' | 'ENTERPRISE';
-    const maxSeats = subscriptionTier === 'STARTER' ? 25 : subscriptionTier === 'PRO' ? 500 : 999999;
+    const subscriptionTier = subscription.metadata?.subscriptionTier as 'STARTER' | 'PRO';
+    const maxSeats = subscriptionTier === 'STARTER' ? 25 : 500;
     
     // Map Stripe status to our enum
     let status: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'UNPAID';

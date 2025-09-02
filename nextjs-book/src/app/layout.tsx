@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import ConditionalLayout from "@/components/ConditionalLayout";
 import { SupabaseProvider } from "@/lib/SupabaseProvider";
-import { ThemeProvider } from "@/lib/ThemeProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,14 +21,12 @@ export default async function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} font-sans antialiased`} suppressHydrationWarning={true}>
-        <ThemeProvider>
-          <SupabaseProvider>
-            <ConditionalLayout>
-              {children}
-            </ConditionalLayout>
-          </SupabaseProvider>
-        </ThemeProvider>
+      <body className={`${inter.variable} font-sans antialiased bg-white`} suppressHydrationWarning={true}>
+        <SupabaseProvider>
+          <ConditionalLayout>
+            {children}
+          </ConditionalLayout>
+        </SupabaseProvider>
       </body>
     </html>
   );

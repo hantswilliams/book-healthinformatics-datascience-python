@@ -80,7 +80,7 @@ export default function ResponsiveLayout({ chapters, children }: ResponsiveLayou
   };
 
   return (
-    <div className="h-screen bg-gray-50 dark:bg-zinc-900">
+    <div className="h-screen bg-white ">
       {user ? (
         <>
           {/* Mobile sidebar backdrop */}
@@ -113,7 +113,7 @@ export default function ResponsiveLayout({ chapters, children }: ResponsiveLayou
                 isSidebarOpen={isSidebarOpen}
               />
               
-              <div className="flex-1 overflow-auto bg-gray-50 dark:bg-zinc-900">
+              <div className="flex-1 overflow-auto bg-white ">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
                   {children}
                 </div>
@@ -125,7 +125,7 @@ export default function ResponsiveLayout({ chapters, children }: ResponsiveLayou
       ) : (
         <>
           <Header user={user} />
-          <div className="flex-1 overflow-auto bg-gray-50 dark:bg-zinc-900">
+          <div className="flex-1 overflow-auto bg-white ">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 lg:py-6">
               {children}
             </div>

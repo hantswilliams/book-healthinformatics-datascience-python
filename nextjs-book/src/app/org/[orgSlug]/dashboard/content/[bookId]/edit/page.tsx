@@ -245,39 +245,39 @@ export default function EditCoursePage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-            <input value={form.title || ''} onChange={e=>updateField('title', e.target.value)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}} />
+            <input value={form.title || ''} onChange={e=>updateField('title', e.target.value)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #b0b3b9ff'}} />
           </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-              <textarea value={form.description || ''} onChange={e=>updateField('description', e.target.value)} rows={4} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}} />
+              <textarea value={form.description || ''} onChange={e=>updateField('description', e.target.value)} rows={4} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #6b7280'}} />
             </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Difficulty</label>
-              <select value={form.difficulty || ''} onChange={e=>updateField('difficulty', e.target.value)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}}>
+              <select value={form.difficulty || ''} onChange={e=>updateField('difficulty', e.target.value)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #6b7280'}}>
                 <option value="">Select</option>
                 {difficultyOptions.map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-              <select value={form.category || ''} onChange={e=>updateField('category', e.target.value)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}}>
+              <select value={form.category || ''} onChange={e=>updateField('category', e.target.value)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #6b7280'}}>
                 <option value="">Select</option>
                 {categoryOptions.map(c => <option key={c} value={c}>{c.replace('_',' ')}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Estimated Hours</label>
-              <input type="number" min={1} max={100} value={form.estimatedHours || ''} onChange={e=>updateField('estimatedHours', e.target.value ? Number(e.target.value) : undefined)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}} />
+              <input type="number" min={1} max={100} value={form.estimatedHours || ''} onChange={e=>updateField('estimatedHours', e.target.value ? Number(e.target.value) : undefined)} className="w-full rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #6b7280'}} />
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
             <div className="flex items-center space-x-2 mb-2">
-              <input value={tagInput} onChange={e=>setTagInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); addTag(); } }} placeholder="Add a tag and press Enter" className="flex-1 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #d1d5db'}} />
+              <input value={tagInput} onChange={e=>setTagInput(e.target.value)} onKeyDown={e=>{ if(e.key==='Enter'){ e.preventDefault(); addTag(); } }} placeholder="Add a tag and press Enter" className="flex-1 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm" style={{color: '#111827', border: '1px solid #6b7280'}} />
               <button type="button" onClick={addTag} className="px-3 py-2 rounded-md bg-blue-600 text-white text-sm hover:bg-blue-700">Add</button>
             </div>
             {form.tags && form.tags.length > 0 && (

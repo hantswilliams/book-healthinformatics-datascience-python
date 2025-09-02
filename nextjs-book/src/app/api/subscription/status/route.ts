@@ -57,6 +57,59 @@ export async function GET(request: NextRequest) {
 
     const organization = userWithOrg.organization;
     
+    console.log('🏢 Organization data from DB:', {
+      id: organization.id,
+      name: organization.name,
+      subscription_status: organization.subscription_status,
+      subscription_tier: organization.subscription_tier,
+      max_seats: organization.max_seats,
+      trial_ends_at: organization.trial_ends_at,
+      subscription_ends_at: organization.subscription_ends_at,
+      stripe_subscription_id: organization.stripe_subscription_id,
+      updated_at: organization.updated_at,
+    });
+
+    // Auto-sync: Check if billing events are newer than organization data
+    const { data: latestBillingEvent } = await supabase
+      .from('billing_events')
+      .select('*')
+      .eq('organization_id', organization.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (latestBillingEvent && organization.updated_at) {
+      const orgUpdated = new Date(organization.updated_at);
+      const eventCreated = new Date(latestBillingEvent.created_at);
+      
+      if (eventCreated > orgUpdated) {
+        console.log('🔄 Auto-syncing: Billing event is newer than org data');
+        
+        // Parse metadata and update organization
+        const metadata = typeof latestBillingEvent.metadata === 'string' 
+          ? JSON.parse(latestBillingEvent.metadata) 
+          : latestBillingEvent.metadata;
+
+        const subscriptionTier = metadata?.subscriptionTier as 'STARTER' | 'PRO' || 'STARTER';
+        const maxSeats = subscriptionTier === 'STARTER' ? 25 : 500;
+
+        console.log('📊 Auto-applying tier:', subscriptionTier, 'with seats:', maxSeats);
+
+        await supabase
+          .from('organizations')
+          .update({
+            subscription_tier: subscriptionTier,
+            max_seats: maxSeats,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', organization.id);
+
+        // Update local organization object for response
+        organization.subscription_tier = subscriptionTier;
+        organization.max_seats = maxSeats;
+      }
+    }
+    
     // Count active users in the organization
     const { count: userCount } = await supabase
       .from('users')

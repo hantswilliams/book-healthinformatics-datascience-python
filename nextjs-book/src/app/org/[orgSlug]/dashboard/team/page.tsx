@@ -394,9 +394,9 @@ export default function TeamManagement() {
   const canInviteMore = orgInfo && orgInfo.currentSeats < orgInfo.maxSeats;
 
   return (
-    <div className="min-h-screen bg-[#f7f8fa] dark:bg-zinc-900">
+    <div className="min-h-screen bg-[#f7f8fa]">
       {/* Header */}
-      <div className="border-b border-zinc-200 dark:border-zinc-700 bg-white/60 dark:bg-zinc-800/60 backdrop-blur supports-[backdrop-filter]:bg-white/50 dark:supports-[backdrop-filter]:bg-zinc-800/50">
+      <div className="border-b border-zinc-200 bg-white/60 backdrop-blur supports-[backdrop-filter]:bg-white/50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-start justify-between py-6">
             <div>

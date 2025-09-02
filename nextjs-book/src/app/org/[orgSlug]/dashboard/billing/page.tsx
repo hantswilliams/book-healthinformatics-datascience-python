@@ -11,6 +11,8 @@ export default function BillingOverview() {
   const router = useRouter();
   const orgSlug = useOrgSlug();
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -50,7 +52,7 @@ export default function BillingOverview() {
     }
   };
 
-  const handleUpgrade = async (tier: 'PRO' | 'ENTERPRISE') => {
+  const handleUpgrade = async (tier: 'STARTER' | 'PRO') => {
     if (!supabaseOrg) return;
     
     setIsRedirecting(true);
@@ -77,6 +79,58 @@ export default function BillingOverview() {
     } catch (error) {
       console.error('Error creating checkout session:', error);
       setIsRedirecting(false);
+    }
+  };
+
+  const handleSyncSubscription = async () => {
+    setIsSyncing(true);
+    try {
+      const response = await fetch('/api/subscription/sync', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Subscription synced successfully:', data.data);
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        console.error('Failed to sync subscription:', data.error);
+      }
+    } catch (error) {
+      console.error('Error syncing subscription:', error);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const handleApplyLatestBilling = async () => {
+    setIsApplying(true);
+    try {
+      const response = await fetch('/api/billing/apply-latest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('Billing event applied successfully:', data.data);
+        // Refresh the page to show updated data
+        window.location.reload();
+      } else {
+        console.error('Failed to apply billing event:', data.error);
+      }
+    } catch (error) {
+      console.error('Error applying billing event:', error);
+    } finally {
+      setIsApplying(false);
     }
   };
 
@@ -120,18 +174,20 @@ export default function BillingOverview() {
           <p className="text-gray-600 mb-6">
             View your current plan, update payment methods, download invoices, and manage your subscription.
           </p>
-          <button
-            onClick={handleManageBilling}
-            disabled={isRedirecting}
-            className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center"
-          >
-            {isRedirecting ? (
-              <Loader2 className="w-4 h-4 animate-spin mr-2" />
-            ) : (
-              <ExternalLink className="w-4 h-4 mr-2" />
-            )}
-            Manage Billing
-          </button>
+          <div className="space-y-2">
+            <button
+              onClick={handleManageBilling}
+              disabled={isRedirecting}
+              className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center"
+            >
+              {isRedirecting ? (
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+              ) : (
+                <ExternalLink className="w-4 h-4 mr-2" />
+              )}
+              Manage Billing
+            </button>
+          </div>
         </div>
 
         {/* Upgrade Plan */}
@@ -140,25 +196,25 @@ export default function BillingOverview() {
             <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
               <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Upgrade Plan</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Change Plan</h2>
           </div>
           <p className="text-gray-600 mb-6">
             Get access to more learners, advanced features, and priority support.
           </p>
           <div className="space-y-3">
             <button
+              onClick={() => handleUpgrade('STARTER')}
+              disabled={isRedirecting}
+              className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              Starter - 25 users - $29/month
+            </button>
+            <button
               onClick={() => handleUpgrade('PRO')}
               disabled={isRedirecting}
               className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
-              Upgrade to Professional - $99/month
-            </button>
-            <button
-              onClick={() => handleUpgrade('ENTERPRISE')}
-              disabled={isRedirecting}
-              className="w-full border border-gray-300 hover:bg-gray-50 disabled:bg-gray-100 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Contact Sales for Enterprise
+              Professional 500 users - $99/month
             </button>
           </div>
         </div>

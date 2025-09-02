@@ -2,12 +2,10 @@
 
 import Link from 'next/link';
 import LogoMark from './LogoMark';
-import ThemeToggle from './ThemeToggle';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import { useSupabase } from '@/lib/SupabaseProvider';
-import { useThemeClasses, buildComponentClasses, componentStyles } from '@/lib/theme-utils';
 import type { User } from '@/types';
 
 interface HeaderProps {
@@ -20,7 +18,6 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
   const orgSlug = useOrgSlug();
   const pathname = usePathname();
   const { signOut, user: supabaseUser, userProfile } = useSupabase();
-  const themeClasses = useThemeClasses();
   
   // Use Supabase user profile for role checks
   const user = userProfile ? {
@@ -66,7 +63,7 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
   }
 
   return (
-    <div className="sticky top-0 z-50 border-b border-zinc-200/70 dark:border-zinc-700/70 bg-white/70 dark:bg-zinc-900/70 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:supports-[backdrop-filter]:bg-zinc-900/60">
+    <div className="sticky top-0 z-50 border-b border-zinc-200/70  bg-white/70  backdrop-blur supports-[backdrop-filter]:bg-white/60 ">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center px-4 sm:px-6 lg:px-8 h-14">
           {user ? (
@@ -75,7 +72,7 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
               <div className="flex items-center space-x-4">
                 <button
                   onClick={onToggleSidebar}
-                  className="lg:hidden inline-flex items-center justify-center h-9 w-9 rounded-lg text-zinc-700 dark:text-white hover:text-indigo-600 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition"
+                  className="lg:hidden inline-flex items-center justify-center h-9 w-9 rounded-lg text-zinc-700  hover:text-indigo-600 hover:bg-zinc-100  transition"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     {isSidebarOpen ? (
@@ -99,7 +96,7 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
                           item.label === 'Admin' ? 'flex items-center gap-1' : '',
                           active
                             ? 'text-indigo-700 bg-indigo-50 ring-1 ring-inset ring-indigo-200'
-                            : 'text-zinc-700 dark:text-white hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-zinc-100 dark:hover:bg-zinc-800'
+                            : 'text-zinc-700  hover:text-indigo-700  hover:bg-zinc-100 '
                         ].join(' ')}
                       >
                         {item.label === 'Admin' && (
@@ -116,10 +113,9 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
               </div>
               
               <div className="flex items-center space-x-2 sm:space-x-4">
-                <ThemeToggle />
 
                 {/* Notifications button - hidden on very small screens */}
-                <button className="hidden sm:block text-zinc-600 dark:text-white hover:text-indigo-600 dark:hover:text-indigo-300 transition">
+                <button className="hidden sm:block text-zinc-600  hover:text-indigo-600  transition">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
@@ -142,20 +138,20 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
                   </button>
                   
                   {isDropdownOpen && (
-                    <div className="absolute right-0 w-56 mt-2 origin-top-right bg-white/95 dark:bg-zinc-800/95 backdrop-blur divide-y divide-zinc-100 dark:divide-zinc-700 rounded-xl shadow-lg ring-1 ring-zinc-200 dark:ring-zinc-700 z-50">
+                    <div className="absolute right-0 w-56 mt-2 origin-top-right bg-white/95  backdrop-blur divide-y divide-zinc-100  rounded-xl shadow-lg ring-1 ring-zinc-200  z-50">
                       <div className="px-4 py-3">
-                        <p className="text-sm font-semibold text-zinc-900 dark:text-zinc-100 truncate">
+                        <p className="text-sm font-semibold text-zinc-900  truncate">
                           {user.firstName && user.lastName 
                             ? `${user.firstName} ${user.lastName}`
                             : user.username
                           }
                         </p>
-                        <p className="text-xs text-zinc-500 dark:text-zinc-300 truncate">{user.email}</p>
+                        <p className="text-xs text-zinc-500  truncate">{user.email}</p>
                       </div>
                       <div className="py-1">
                         <Link
                           href={orgSlug ? `/org/${orgSlug}/account` : '/account'}
-                          className="block px-4 py-2 text-sm text-zinc-700 dark:text-white hover:bg-zinc-50 dark:hover:bg-zinc-700"
+                          className="block px-4 py-2 text-sm text-zinc-700  hover:bg-zinc-50 "
                           onClick={() => setIsDropdownOpen(false)}
                         >
                           Account Settings
@@ -169,7 +165,7 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
                             // Force a complete page reload to clear all state
                             window.location.replace('/');
                           }}
-                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 "
                         >
                           Sign out
                         </button>
@@ -185,7 +181,7 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
         <div className="flex items-center gap-3 sm:gap-6">
                 <Link href="/" className="inline-flex items-center gap-2 group">
                   <LogoMark className="h-7 w-7 transition-transform group-hover:scale-105" variant="brackets" />
-                  <span className="text-base sm:text-lg font-semibold text-zinc-900 dark:text-zinc-100 tracking-tight">Interactive Coding</span>
+                  <span className="text-base sm:text-lg font-semibold text-zinc-900  tracking-tight">Interactive Coding</span>
                 </Link>
               </div>
               <div className="flex items-center gap-2">
