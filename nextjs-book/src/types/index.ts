@@ -47,6 +47,38 @@ export interface Progress {
   exercises: Exercise[];
 }
 
+export interface CodeExecution {
+  id: string;
+  userId: string;
+  organizationId: string;
+  chapterId: string;
+  sectionId: string;
+  codeContent: string;
+  executionResult?: string;
+  executionStatus: 'success' | 'error' | 'timeout';
+  errorMessage?: string;
+  executionMode: 'shared' | 'isolated';
+  contextId: string;
+  executedAt: Date;
+  sessionId?: string;
+}
+
+export interface CodeExecutionStats {
+  organizationId: string;
+  userId: string;
+  firstName?: string;
+  lastName: string;
+  email: string;
+  chapterId: string;
+  chapterTitle: string;
+  sectionId: string;
+  totalExecutions: number;
+  successfulExecutions: number;
+  errorExecutions: number;
+  lastExecution: Date;
+  firstExecution: Date;
+}
+
 export interface PyodideInstance {
   runPython: (code: string) => unknown;
   runPythonAsync: (code: string) => Promise<unknown>;

@@ -306,6 +306,25 @@ export default function Dashboard() {
                     </div>
                   </Link>
 
+                  {['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(userProfile?.role || '') && (
+                    <Link
+                      href={`/org/${orgSlug}/dashboard/code-tracking`}
+                      className="group relative rounded-xl border border-zinc-200 bg-zinc-50/80 p-4 backdrop-blur-sm transition hover:border-indigo-300 hover:shadow-md"
+                    >
+                      <div className="flex flex-col gap-3">
+                        <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-medium text-zinc-900">Code Tracking</h4>
+                          <p className="text-xs text-zinc-600">Monitor learner code executions</p>
+                        </div>
+                      </div>
+                    </Link>
+                  )}
+
                   {permissions.canManageBilling && (
                     <Link
                       href={`/org/${orgSlug}/dashboard/billing`}

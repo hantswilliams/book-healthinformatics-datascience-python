@@ -364,6 +364,7 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                 }
                 contextId={chapterId}
                 sectionId={section.id}
+                chapterId={chapterId}
                 onCodeRun={handleCodeRun}
               />
             ) : (

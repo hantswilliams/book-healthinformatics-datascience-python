@@ -12,6 +12,7 @@ interface ExecutionAwarePythonEditorProps {
   executionMode: 'shared' | 'isolated';
   contextId: string; // Chapter ID for shared mode, unique ID for isolated
   sectionId: string; // Unique identifier for this section
+  chapterId?: string; // Chapter ID for tracking purposes
   onCodeRun?: (code: string, success: boolean) => void;
 }
 
@@ -20,6 +21,7 @@ export default function ExecutionAwarePythonEditor({
   executionMode,
   contextId,
   sectionId,
+  chapterId,
   onCodeRun
 }: ExecutionAwarePythonEditorProps) {
   const [code, setCode] = useState(initialCode);
@@ -27,6 +29,41 @@ export default function ExecutionAwarePythonEditor({
   const [isRunning, setIsRunning] = useState(false);
   const [isLoadingPyodide, setIsLoadingPyodide] = useState(false);
   const editorRef = useRef<any>(null);
+  const sessionId = useRef<string>(`${crypto.randomUUID()}`);
+
+  // Track code execution
+  const trackExecution = async (
+    code: string, 
+    result: string, 
+    status: 'success' | 'error', 
+    errorMessage?: string
+  ) => {
+    // Only track if we have a chapterId
+    if (!chapterId) return;
+
+    try {
+      await fetch('/api/code-executions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chapterId,
+          sectionId,
+          codeContent: code,
+          executionResult: result,
+          executionStatus: status,
+          errorMessage,
+          executionMode,
+          contextId,
+          sessionId: sessionId.current
+        }),
+      });
+    } catch (error) {
+      // Silently fail - don't disrupt user experience if tracking fails
+      console.warn('Failed to track code execution:', error);
+    }
+  };
 
   useEffect(() => {
     if (initialCode) {
@@ -159,13 +196,21 @@ print("Python environment ready!")
       pyodide.setStdout();
       pyodide.setStderr();
 
-      setOutput(outputBuffer || 'Code executed successfully (no output)');
+      const result = outputBuffer || 'Code executed successfully (no output)';
+      setOutput(result);
       onCodeRun?.(code, true);
+      
+      // Track successful execution
+      await trackExecution(code, result, 'success');
 
     } catch (err: any) {
       const errorMessage = err?.message || String(err);
-      setOutput(`Error: ${errorMessage}`);
+      const result = `Error: ${errorMessage}`;
+      setOutput(result);
       onCodeRun?.(code, false);
+      
+      // Track failed execution
+      await trackExecution(code, result, 'error', errorMessage);
     } finally {
       setIsRunning(false);
     }

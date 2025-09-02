@@ -57,7 +57,8 @@ export default function Header({ onToggleSidebar, isSidebarOpen }: HeaderProps) 
                 p.includes('/dashboard/content') ||
                 p.includes('/dashboard/billing') ||
                 p.includes('/dashboard/settings') ||
-                p.includes('/dashboard/progress'));
+                p.includes('/dashboard/progress') ||
+                p.includes('/dashboard/code-tracking'));
       }
     });
   }
