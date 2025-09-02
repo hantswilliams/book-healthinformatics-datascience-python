@@ -42,6 +42,8 @@ export default function CodeTrackingDashboard() {
   const [selectedUser, setSelectedUser] = useState<string>('all');
   const [selectedChapter, setSelectedChapter] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
+  const [selectedExecution, setSelectedExecution] = useState<DetailedExecution | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -59,6 +61,24 @@ export default function CodeTrackingDashboard() {
 
     fetchData();
   }, [user, userProfile, organization, authLoading, router, activeTab, selectedUser, selectedChapter, selectedStatus]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isModalOpen) {
+        closeModal();
+      }
+    };
+
+    if (isModalOpen) {
+      document.addEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'hidden';
+    }
+
+    return () => {
+      document.removeEventListener('keydown', handleEscape);
+      document.body.style.overflow = 'unset';
+    };
+  }, [isModalOpen]);
 
   const fetchData = async () => {
     try {
@@ -136,6 +156,16 @@ export default function CodeTrackingDashboard() {
     } catch (error) {
       setError('Failed to export data');
     }
+  };
+
+  const handleRowClick = (execution: DetailedExecution) => {
+    setSelectedExecution(execution);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedExecution(null);
   };
 
   if (authLoading || isLoading) {
@@ -459,7 +489,11 @@ export default function CodeTrackingDashboard() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {detailedExecutions.map((execution) => (
-                      <tr key={execution.id} className="hover:bg-gray-50">
+                      <tr 
+                        key={execution.id} 
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => handleRowClick(execution)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
@@ -518,16 +552,119 @@ export default function CodeTrackingDashboard() {
           </>
         )}
       </div>
+
+      {/* Code Execution Modal */}
+      {isModalOpen && selectedExecution && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Code Execution Details</h3>
+                <p className="text-sm text-gray-500">
+                  {selectedExecution.users.first_name ? 
+                    `${selectedExecution.users.first_name} ${selectedExecution.users.last_name}` : 
+                    selectedExecution.users.username
+                  } • {formatDate(selectedExecution.executedAt)}
+                </p>
+              </div>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 text-2xl font-semibold"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="px-6 py-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+              {/* Metadata Section */}
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Chapter:</span>
+                    <p className="text-sm text-gray-900">{selectedExecution.chapters.title}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Section:</span>
+                    <p className="text-sm text-gray-900">{selectedExecution.sectionId}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Execution Mode:</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-2 ${
+                      selectedExecution.executionMode === 'shared' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                    }`}>
+                      {selectedExecution.executionMode}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Status:</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-2 ${getStatusColor(selectedExecution.executionStatus)}`}>
+                      {selectedExecution.executionStatus}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Context ID:</span>
+                    <p className="text-sm text-gray-900 font-mono">{selectedExecution.contextId}</p>
+                  </div>
+                  {selectedExecution.sessionId && (
+                    <div>
+                      <span className="text-sm font-medium text-gray-500">Session ID:</span>
+                      <p className="text-sm text-gray-900 font-mono">{selectedExecution.sessionId}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Code Content */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-900 mb-3">Code Content:</h4>
+                <div className="bg-gray-900 rounded-lg p-4 overflow-x-auto">
+                  <pre className="text-sm text-gray-100 whitespace-pre-wrap">
+                    <code>{selectedExecution.codeContent}</code>
+                  </pre>
+                </div>
+              </div>
+
+              {/* Execution Result */}
+              {selectedExecution.executionResult && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Execution Result:</h4>
+                  <div className="bg-gray-50 rounded-lg p-4 overflow-x-auto">
+                    <pre className="text-sm text-gray-700 whitespace-pre-wrap">
+                      <code>{selectedExecution.executionResult}</code>
+                    </pre>
+                  </div>
+                </div>
+              )}
+
+              {/* Error Message */}
+              {selectedExecution.errorMessage && (
+                <div className="mb-6">
+                  <h4 className="text-sm font-medium text-gray-900 mb-3">Error Message:</h4>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <pre className="text-sm text-red-700 whitespace-pre-wrap">
+                      <code>{selectedExecution.errorMessage}</code>
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-}
-
-function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
 }

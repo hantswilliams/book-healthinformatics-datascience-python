@@ -59,10 +59,27 @@ export async function GET(request: NextRequest) {
         return executedDate.toDateString() === today.toDateString();
       }).length || 0;
 
+      // Transform stats to camelCase
+      const transformedStats = (stats || []).map(stat => ({
+        organizationId: stat.organization_id,
+        userId: stat.user_id,
+        firstName: stat.first_name,
+        lastName: stat.last_name,
+        email: stat.email,
+        chapterId: stat.chapter_id,
+        chapterTitle: stat.chapter_title,
+        sectionId: stat.section_id,
+        totalExecutions: stat.total_executions,
+        successfulExecutions: stat.successful_executions,
+        errorExecutions: stat.error_executions,
+        lastExecution: stat.last_execution,
+        firstExecution: stat.first_execution
+      }));
+
       return NextResponse.json({
         success: true,
         data: {
-          userStats: stats || [],
+          userStats: transformedStats,
           organizationStats: {
             totalExecutions,
             successfulExecutions,
