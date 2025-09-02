@@ -157,14 +157,7 @@ function OnboardingSuccessForm() {
           </ul>
         </div>
 
-        <div className="space-y-3">
-          <button
-            onClick={handleContinue}
-            className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-          >
-            Get Started
-          </button>
-          
+        <div className="space-y-3">          
           <p className="text-center text-sm text-gray-500">
             Need help? <a href="mailto:support@yourcompany.com" className="text-blue-600 hover:text-blue-500">Contact our support team</a>
           </p>
