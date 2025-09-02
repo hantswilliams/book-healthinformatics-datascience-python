@@ -9,7 +9,27 @@ const checkUserRoleSchema = z.object({
   orgSlug: z.string(),
 });
 
+export async function GET(request: NextRequest) {
+  console.log('❌ GET request to check-user-role endpoint');
+  console.log('📍 URL:', request.url);
+  console.log('🔗 Referer:', request.headers.get('referer'));
+  console.log('🤖 User-Agent:', request.headers.get('user-agent'));
+  
+  return NextResponse.json(
+    { 
+      error: 'Method not allowed. This endpoint requires POST method.',
+      receivedMethod: 'GET',
+      expectedMethod: 'POST',
+      url: request.url,
+      referer: request.headers.get('referer')
+    },
+    { status: 405 }
+  );
+}
+
 export async function POST(request: NextRequest) {
+  console.log('✅ POST request to check-user-role endpoint');
+  console.log('📍 URL:', request.url);
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient<Database>(
