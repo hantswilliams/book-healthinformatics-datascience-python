@@ -10,7 +10,7 @@ import { useSupabase } from '@/lib/SupabaseProvider';
 // Enhanced interfaces that match our new schema
 interface EnhancedSection {
   id: string;
-  type: 'markdown' | 'python';
+  type: 'markdown' | 'python' | 'youtube' | 'image';
   title: string;
   content: string;
   executionMode: 'shared' | 'isolated' | 'inherit';
@@ -114,12 +114,39 @@ export default function CreateEnhancedBook() {
         return;
       }
 
+      // Check for uploading images
+      const uploadingImages = chapters.some(chapter => 
+        chapter.sections.some(section => 
+          section.type === 'image' && section.content === 'uploading...'
+        )
+      );
+      if (uploadingImages) {
+        setError('Please wait for all images to finish uploading before creating the course');
+        return;
+      }
+
+      // Check for empty image sections
+      const emptyImageSections = chapters.some(chapter =>
+        chapter.sections.some(section => 
+          section.type === 'image' && (!section.content || section.content.trim() === '')
+        )
+      );
+      if (emptyImageSections) {
+        setError('All image sections must have either a URL or uploaded file');
+        return;
+      }
+
       // Convert to API format
       console.log('Frontend: Preparing chapters for API:', chapters);
       const chaptersData = chapters
         .sort((a, b) => a.order - b.order)
         .map((chapter, index) => {
           console.log(`Frontend: Chapter ${index}:`, chapter.title, 'packages:', chapter.packages);
+          console.log(`Frontend: Chapter ${index} sections:`, chapter.sections.map(s => ({ 
+            title: s.title, 
+            type: s.type, 
+            content: s.content?.substring(0, 100) + (s.content?.length > 100 ? '...' : '')
+          })));
           return {
             title: chapter.title,
             emoji: chapter.emoji,
@@ -128,14 +155,17 @@ export default function CreateEnhancedBook() {
             packages: chapter.packages || [],
             sections: chapter.sections
             .sort((a, b) => a.order - b.order)
-            .map((section, sectionIndex) => ({
-              title: section.title || `Section ${sectionIndex + 1}`,
-              type: section.type.toUpperCase() as 'MARKDOWN' | 'PYTHON',
-              content: section.content,
-              order: sectionIndex + 1,
-              executionMode: section.executionMode.toUpperCase() as 'SHARED' | 'ISOLATED' | 'INHERIT',
-              dependsOn: section.dependsOn || []
-            }))
+            .map((section, sectionIndex) => {
+              console.log(`Frontend: Section ${sectionIndex}:`, section.title, 'type:', section.type, 'content length:', section.content?.length);
+              return {
+                title: section.title || `Section ${sectionIndex + 1}`,
+                type: section.type.toUpperCase() as 'MARKDOWN' | 'PYTHON' | 'YOUTUBE' | 'IMAGE',
+                content: section.content,
+                order: sectionIndex + 1,
+                executionMode: section.executionMode.toUpperCase() as 'SHARED' | 'ISOLATED' | 'INHERIT',
+                dependsOn: section.dependsOn || []
+              };
+            })
           };
         });
 
@@ -710,7 +740,9 @@ export default function CreateEnhancedBook() {
                               color: '#111827'
                             }}>
                               <span style={{ fontSize: '16px', marginRight: '8px' }}>
-                                {section.type === 'python' ? '🐍' : '📝'}
+                                {section.type === 'python' ? '🐍' : 
+                                 section.type === 'youtube' ? '📺' :
+                                 section.type === 'image' ? '🖼️' : '📝'}
                               </span>
                               <span>{sectionIndex + 1}. {section.title}</span>
                               <span style={{

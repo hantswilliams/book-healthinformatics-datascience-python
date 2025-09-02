@@ -279,7 +279,82 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                   {section.content}
                 </ReactMarkdown>
               </div>
-            ) : (
+            ) : section.type === 'youtube' ? (
+              <div>
+                {(() => {
+                  const extractYouTubeVideoId = (url: string): string | null => {
+                    if (!url) return null;
+                    const patterns = [
+                      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+                      /youtube\.com\/.*[?&]v=([a-zA-Z0-9_-]{11})/
+                    ];
+                    for (const pattern of patterns) {
+                      const match = url.match(pattern);
+                      if (match && match[1]) return match[1];
+                    }
+                    return null;
+                  };
+
+                  const videoId = extractYouTubeVideoId(section.content);
+                  return videoId ? (
+                    <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0 }}>
+                      <iframe
+                        src={`https://www.youtube-nocookie.com/embed/${videoId}`}
+                        frameBorder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          borderRadius: '8px'
+                        }}
+                      />
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      Invalid YouTube URL: {section.content}
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : section.type === 'image' ? (
+              <div className="text-center">
+                {section.content ? (
+                  <div>
+                    <img
+                      src={section.content}
+                      alt={section.title || 'Chapter image'}
+                      className="max-w-full h-auto rounded-lg shadow-lg mx-auto"
+                      style={{ border: '1px solid #e5e7eb' }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement;
+                        if (parent) {
+                          parent.innerHTML = `
+                            <div class="text-center py-8 text-gray-500">
+                              Failed to load image: ${section.content}
+                            </div>
+                          `;
+                        }
+                      }}
+                    />
+                    {section.title && section.title !== 'New Image' && (
+                      <div className="mt-3 text-sm text-gray-600 italic font-medium">
+                        {section.title}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    No image provided
+                  </div>
+                )}
+              </div>
+            ) : section.type === 'python' ? (
               <ExecutionAwarePythonEditor
                 initialCode={section.content || '# No code provided'}
                 executionMode={
@@ -291,6 +366,10 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                 sectionId={section.id}
                 onCodeRun={handleCodeRun}
               />
+            ) : (
+              <div className="text-center py-8 text-gray-500">
+                Unknown section type: {section.type}
+              </div>
             )}
           </div>
         </div>

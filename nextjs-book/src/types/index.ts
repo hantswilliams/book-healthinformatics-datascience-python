@@ -19,7 +19,7 @@ export interface Chapter {
   bookTitle?: string;
   sections: Array<{
     id: string;
-    type: 'markdown' | 'python';
+    type: 'markdown' | 'python' | 'youtube' | 'image';
     content: string;
     title?: string;
     order: number;

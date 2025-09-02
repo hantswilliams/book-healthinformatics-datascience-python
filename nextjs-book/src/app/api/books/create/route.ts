@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 const sectionSchema = z.object({
   title: z.string().optional(),
-  type: z.enum(['MARKDOWN', 'PYTHON']),
+  type: z.enum(['MARKDOWN', 'PYTHON', 'YOUTUBE', 'IMAGE']),
   content: z.string(),
   order: z.number(),
   executionMode: z.enum(['SHARED', 'ISOLATED', 'INHERIT']).default('INHERIT'),
@@ -187,6 +187,12 @@ export async function POST(request: NextRequest) {
 
       // Create sections for this chapter
       for (const sectionData of chapterData.sections) {
+        console.log('CREATE API: Section data:', {
+          title: sectionData.title,
+          type: sectionData.type,
+          contentLength: sectionData.content?.length,
+          contentPreview: sectionData.content?.substring(0, 100)
+        });
         sectionsToCreate.push({
           id: crypto.randomUUID(),
           chapter_id: chapterId,

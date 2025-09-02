@@ -9,7 +9,7 @@ import PackageSelector from './PackageSelector';
 // Enhanced interfaces with execution modes
 interface EnhancedSection {
   id: string;
-  type: 'markdown' | 'python';
+  type: 'markdown' | 'python' | 'youtube' | 'image';
   title: string;
   content: string;
   executionMode: 'shared' | 'isolated' | 'inherit';
@@ -98,14 +98,67 @@ export default function EnhancedChapterBuilder({
     return newId;
   };
 
-  const addSection = (type: 'markdown' | 'python', targetIndex?: number) => {
+  const extractYouTubeVideoId = (url: string): string | null => {
+    if (!url) return null;
+    
+    // Handle different YouTube URL formats
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/,
+      /youtube\.com\/.*[?&]v=([a-zA-Z0-9_-]{11})/
+    ];
+    
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    
+    return null;
+  };
+
+  const getYouTubeEmbedUrl = (url: string): string | null => {
+    const videoId = extractYouTubeVideoId(url);
+    if (!videoId) return null;
+    return `https://www.youtube-nocookie.com/embed/${videoId}`;
+  };
+
+  const addSection = (type: 'markdown' | 'python' | 'youtube' | 'image', targetIndex?: number) => {
+    const getDefaultContent = (sectionType: typeof type) => {
+      switch (sectionType) {
+        case 'markdown':
+          return '# New Section\n\nAdd your content here...';
+        case 'python':
+          return '# New exercise\nprint("Hello, World!")\n\n# Your code here:\n';
+        case 'youtube':
+          return 'https://www.youtube.com/watch?v=';
+        case 'image':
+          return '';
+        default:
+          return '';
+      }
+    };
+
+    const getDefaultTitle = (sectionType: typeof type) => {
+      switch (sectionType) {
+        case 'markdown':
+          return 'New Content Section';
+        case 'python':
+          return 'New Code Exercise';
+        case 'youtube':
+          return 'New Video';
+        case 'image':
+          return 'New Image';
+        default:
+          return 'New Section';
+      }
+    };
+
     const newSection: EnhancedSection = {
       id: generateSectionId(),
       type,
-      title: type === 'markdown' ? 'New Content Section' : 'New Code Exercise',
-      content: type === 'markdown' 
-        ? '# New Section\n\nAdd your content here...'
-        : '# New exercise\nprint("Hello, World!")\n\n# Your code here:\n',
+      title: getDefaultTitle(type),
+      content: getDefaultContent(type),
       executionMode: 'inherit',
       order: targetIndex !== undefined ? targetIndex : chapter.sections.length,
       isEditing: true
@@ -152,7 +205,17 @@ export default function EnhancedChapterBuilder({
     setChapter({ ...chapter, sections: updatedSections });
   };
 
-  const detectContentType = (content: string): 'markdown' | 'python' => {
+  const detectContentType = (content: string): 'markdown' | 'python' | 'youtube' | 'image' => {
+    // Check for YouTube URLs first (more comprehensive check)
+    if (extractYouTubeVideoId(content)) {
+      return 'youtube';
+    }
+    
+    // Check for image URLs
+    if (content.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i) || content.startsWith('data:image/')) {
+      return 'image';
+    }
+    
     // Simple heuristics to detect content type
     const pythonIndicators = [
       'import ', 'def ', 'class ', 'print(', 'pandas', 'numpy', '#', 'pd.', 'np.'
@@ -171,10 +234,25 @@ export default function EnhancedChapterBuilder({
     if (!pasteContent.trim()) return;
 
     const type = detectContentType(pasteContent);
+    const getPasteTitle = (sectionType: typeof type) => {
+      switch (sectionType) {
+        case 'markdown':
+          return 'Pasted Content';
+        case 'python':
+          return 'Pasted Code';
+        case 'youtube':
+          return 'Pasted Video';
+        case 'image':
+          return 'Pasted Image';
+        default:
+          return 'Pasted Content';
+      }
+    };
+
     const newSection: EnhancedSection = {
       id: generateSectionId(),
       type,
-      title: `Pasted ${type === 'markdown' ? 'Content' : 'Code'}`,
+      title: getPasteTitle(type),
       content: pasteContent.trim(),
       executionMode: 'inherit',
       order: pasteTargetIndex,
@@ -494,6 +572,11 @@ export default function EnhancedChapterBuilder({
           line-height: 1.5;
           resize: vertical;
         }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
       `}</style>
 
       {/* Chapter Header */}
@@ -617,7 +700,9 @@ export default function EnhancedChapterBuilder({
           <div key={section.id} className="section-card">
             <div className="section-header">
               <span className="section-type-icon">
-                {section.type === 'python' ? '🐍' : '📝'}
+                {section.type === 'python' ? '🐍' : 
+                 section.type === 'youtube' ? '📺' :
+                 section.type === 'image' ? '🖼️' : '📝'}
               </span>
               
               {section.isEditing ? (
@@ -689,27 +774,339 @@ export default function EnhancedChapterBuilder({
             </div>
 
             <div className="section-content">
-              {section.isEditing ? (
-                <MonacoCodeBlock
-                  value={section.content}
-                  onChange={(content) => updateSection(section.id, { content })}
-                  language={section.type}
-                  height={180}
-                  placeholder={section.type === 'python' 
-                    ? 'Enter Python code...' 
-                    : 'Enter markdown content...'
-                  }
-                  executionMode={section.executionMode === 'inherit' ? chapter.defaultExecutionMode : section.executionMode}
-                />
+              {section.type === 'youtube' ? (
+                section.isEditing ? (
+                  <div>
+                    <input
+                      type="url"
+                      value={section.content}
+                      onChange={(e) => updateSection(section.id, { content: e.target.value })}
+                      placeholder="Enter YouTube URL (e.g., https://www.youtube.com/watch?v=dQw4w9WgXcQ or https://youtu.be/dQw4w9WgXcQ)"
+                      style={{
+                        width: '100%',
+                        background: 'var(--panel-darker)',
+                        border: '1px solid var(--border-light)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        color: 'var(--ink)',
+                        fontSize: '14px',
+                        marginBottom: '12px'
+                      }}
+                    />
+                    {/* Live preview while editing */}
+                    {(() => {
+                      const embedUrl = getYouTubeEmbedUrl(section.content);
+                      return embedUrl ? (
+                        <div>
+                          <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '8px' }}>
+                            Preview:
+                          </div>
+                          <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0, opacity: 0.8 }}>
+                            <iframe
+                              src={embedUrl}
+                              frameBorder="0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                              allowFullScreen
+                              style={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                width: '100%',
+                                height: '100%',
+                                borderRadius: '8px'
+                              }}
+                            />
+                          </div>
+                        </div>
+                      ) : section.content ? (
+                        <div style={{ 
+                          padding: '12px', 
+                          fontSize: '12px',
+                          color: 'var(--warn)',
+                          background: 'rgba(255, 107, 107, 0.1)',
+                          borderRadius: '6px',
+                          border: '1px solid var(--warn)'
+                        }}>
+                          Invalid YouTube URL format
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                ) : (
+                  <div>
+                    {(() => {
+                      const embedUrl = getYouTubeEmbedUrl(section.content);
+                      return embedUrl ? (
+                        <div style={{ position: 'relative', width: '100%', paddingBottom: '56.25%', height: 0 }}>
+                          <iframe
+                            src={embedUrl}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            style={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              borderRadius: '8px'
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div style={{ 
+                          padding: '20px', 
+                          textAlign: 'center', 
+                          color: 'var(--muted)',
+                          background: 'var(--panel-darker)',
+                          borderRadius: '8px',
+                          border: '1px solid var(--border-light)'
+                        }}>
+                          {section.content ? 
+                            `Invalid YouTube URL: ${section.content}` : 
+                            'No YouTube URL provided'
+                          }
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )
+              ) : section.type === 'image' ? (
+                section.isEditing ? (
+                  <div>
+                    <input
+                      type="url"
+                      value={section.content}
+                      onChange={(e) => updateSection(section.id, { content: e.target.value })}
+                      placeholder="Enter image URL"
+                      style={{
+                        width: '100%',
+                        background: 'var(--panel-darker)',
+                        border: '1px solid var(--border-light)',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        color: 'var(--ink)',
+                        fontSize: '14px',
+                        marginBottom: '12px'
+                      }}
+                    />
+                    
+                    <div style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '12px',
+                      marginBottom: '12px',
+                      fontSize: '13px',
+                      color: 'var(--muted)'
+                    }}>
+                      <span>or</span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            try {
+                              // Show loading state
+                              updateSection(section.id, { content: 'uploading...' });
+                              
+                              const formData = new FormData();
+                              formData.append('file', file);
+                              
+                              const response = await fetch('/api/upload/image', {
+                                method: 'POST',
+                                body: formData
+                              });
+                              
+                              if (!response.ok) {
+                                const errorData = await response.json();
+                                throw new Error(errorData.error || 'Upload failed');
+                              }
+                              
+                              const result = await response.json();
+                              
+                              // Update both content and title in a single call to avoid race conditions
+                              const updates: Partial<EnhancedSection> = { content: result.url };
+                              if (section.title === 'New Image') {
+                                updates.title = file.name.replace(/\.[^/.]+$/, '');
+                              }
+                              updateSection(section.id, updates);
+                            } catch (error) {
+                              console.error('Image upload error:', error);
+                              updateSection(section.id, { content: '' });
+                              alert(`Failed to upload image: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                            }
+                          }
+                        }}
+                        style={{ display: 'none' }}
+                        id={`file-upload-${section.id}`}
+                      />
+                      <label
+                        htmlFor={`file-upload-${section.id}`}
+                        style={{
+                          background: 'var(--accent)',
+                          color: 'white',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          fontSize: '13px',
+                          fontWeight: '500',
+                          border: 'none'
+                        }}
+                      >
+                        📁 Upload Image
+                      </label>
+                    </div>
+
+                    {/* Live preview while editing */}
+                    {section.content && (
+                      <div>
+                        <div style={{ fontSize: '12px', color: 'var(--muted)', marginBottom: '8px' }}>
+                          Preview:
+                        </div>
+                        <div style={{ textAlign: 'center', opacity: 0.8 }}>
+                          {section.content === 'uploading...' ? (
+                            <div style={{
+                              padding: '40px',
+                              background: 'var(--panel-darker)',
+                              borderRadius: '8px',
+                              border: '1px solid var(--border-light)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: '12px'
+                            }}>
+                              <div style={{
+                                width: '32px',
+                                height: '32px',
+                                border: '3px solid var(--border-light)',
+                                borderTop: '3px solid var(--accent)',
+                                borderRadius: '50%',
+                                animation: 'spin 1s linear infinite'
+                              }}></div>
+                              <span style={{ color: 'var(--muted)', fontSize: '14px' }}>
+                                Uploading image...
+                              </span>
+                            </div>
+                          ) : (
+                            <img
+                              src={section.content}
+                              alt={section.title}
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '200px',
+                                height: 'auto',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-light)'
+                              }}
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ fontSize: '12px', color: 'var(--muted)', marginTop: '8px' }}>
+                      Add image annotations or captions in the title field above
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    {console.log('Image section content:', section.content, 'Title:', section.title)}
+                    {section.content && section.content !== 'uploading...' ? (
+                      <div style={{ textAlign: 'center' }}>
+                        <div style={{ position: 'relative', display: 'inline-block', maxWidth: '100%' }}>
+                          <img
+                            src={section.content}
+                            alt={section.title}
+                            style={{
+                              maxWidth: '100%',
+                              height: 'auto',
+                              borderRadius: '8px',
+                              border: '1px solid var(--border-light)',
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)'
+                            }}
+                            onLoad={() => console.log('Image loaded successfully:', section.content)}
+                            onError={(e) => {
+                              console.error('Image failed to load:', section.content);
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                              const parent = target.parentElement?.parentElement;
+                              if (parent) {
+                                parent.innerHTML = `
+                                  <div style="
+                                    padding: 20px; 
+                                    text-align: center; 
+                                    color: var(--muted);
+                                    background: var(--panel-darker);
+                                    border-radius: 8px;
+                                    border: 1px solid var(--border-light);
+                                  ">
+                                    Failed to load image: ${section.content}
+                                  </div>
+                                `;
+                              }
+                            }}
+                          />
+                        </div>
+                        {section.title !== 'New Image' && section.title && (
+                          <div style={{ 
+                            marginTop: '12px', 
+                            fontSize: '14px', 
+                            color: 'var(--ink)',
+                            fontWeight: '500',
+                            background: 'var(--panel-darker)',
+                            padding: '8px 12px',
+                            borderRadius: '6px',
+                            border: '1px solid var(--border-light)',
+                            display: 'inline-block'
+                          }}>
+                            {section.title}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div style={{ 
+                        padding: '20px', 
+                        textAlign: 'center', 
+                        color: 'var(--muted)',
+                        background: 'var(--panel-darker)',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-light)'
+                      }}>
+                        {section.content === 'uploading...' ? 'Uploading image...' : 'No image URL provided'}
+                        {section.content && <div style={{ fontSize: '11px', marginTop: '8px', wordBreak: 'break-all' }}>
+                          Debug: {section.content}
+                        </div>}
+                      </div>
+                    )}
+                  </div>
+                )
               ) : (
-                <MonacoCodeBlock
-                  value={section.content}
-                  language={section.type}
-                  height={140}
-                  readOnly
-                  showMinimap={false}
-                  executionMode={section.executionMode === 'inherit' ? chapter.defaultExecutionMode : section.executionMode}
-                />
+                section.isEditing ? (
+                  <MonacoCodeBlock
+                    value={section.content}
+                    onChange={(content) => updateSection(section.id, { content })}
+                    language={section.type}
+                    height={180}
+                    placeholder={section.type === 'python' 
+                      ? 'Enter Python code...' 
+                      : 'Enter markdown content...'
+                    }
+                    executionMode={section.executionMode === 'inherit' ? chapter.defaultExecutionMode : section.executionMode}
+                  />
+                ) : (
+                  <MonacoCodeBlock
+                    value={section.content}
+                    language={section.type}
+                    height={140}
+                    readOnly
+                    showMinimap={false}
+                    executionMode={section.executionMode === 'inherit' ? chapter.defaultExecutionMode : section.executionMode}
+                  />
+                )
               )}
             </div>
           </div>
@@ -732,6 +1129,18 @@ export default function EnhancedChapterBuilder({
               onClick={() => addSection('python')}
             >
               🐍 Add Python
+            </button>
+            <button
+              className="action-button primary"
+              onClick={() => addSection('youtube')}
+            >
+              📺 Add YouTube Video
+            </button>
+            <button
+              className="action-button primary"
+              onClick={() => addSection('image')}
+            >
+              🖼️ Add Image
             </button>
             <button
               className="action-button"

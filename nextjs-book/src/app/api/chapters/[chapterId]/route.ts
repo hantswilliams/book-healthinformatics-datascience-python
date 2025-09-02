@@ -114,6 +114,13 @@ export async function GET(
     }
 
     // Transform the data to match the expected format
+    console.log('API: Raw chapter sections from DB:', chapter.sections.map((s: any) => ({
+      title: s.title,
+      type: s.type,
+      contentLength: s.content?.length,
+      contentPreview: s.content?.substring(0, 100)
+    })));
+
     const chapterData = {
       id: chapter.id,
       title: chapter.title,
@@ -125,15 +132,24 @@ export async function GET(
       bookTitle: chapter.book.title,
       sections: chapter.sections
         .sort((a: any, b: any) => a.display_order - b.display_order)
-        .map((section: any) => ({
-          id: section.id,
-          title: section.title,
-          type: section.type.toLowerCase(), // Convert MARKDOWN/PYTHON to markdown/python
-          content: section.content,
-          order: section.display_order,
-          executionMode: section.execution_mode?.toLowerCase() || 'inherit',
-          dependsOn: section.depends_on ? JSON.parse(section.depends_on) : []
-        }))
+        .map((section: any) => {
+          const transformedSection = {
+            id: section.id,
+            title: section.title,
+            type: section.type.toLowerCase(), // Convert MARKDOWN/PYTHON/YOUTUBE/IMAGE to lowercase
+            content: section.content,
+            order: section.display_order,
+            executionMode: section.execution_mode?.toLowerCase() || 'inherit',
+            dependsOn: section.depends_on ? JSON.parse(section.depends_on) : []
+          };
+          console.log('API: Transformed section:', {
+            title: transformedSection.title,
+            type: transformedSection.type,
+            contentLength: transformedSection.content?.length,
+            contentPreview: transformedSection.content?.substring(0, 100)
+          });
+          return transformedSection;
+        })
     };
 
     return NextResponse.json({ chapter: chapterData });
