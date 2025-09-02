@@ -88,7 +88,7 @@ function PaymentOnboardingForm() {
 
   const handleSkipForNow = () => {
     // Redirect to dashboard with trial
-    router.push('/dashboard');
+    router.push(`/org/${organization?.slug}/dashboard`);
   };
 
   if (loading || !user || !userProfile) {

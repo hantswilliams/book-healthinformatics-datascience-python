@@ -72,7 +72,7 @@ export default function ProgressDashboard() {
 
     // Check permissions - Only OWNER, ADMIN, and INSTRUCTOR can view progress
     if (!user || !userProfile || !organization || !['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(userProfile.role)) {
-      router.push('/dashboard');
+      router.push(`/org/${orgSlug}/dashboard`);
       return;
     }
 

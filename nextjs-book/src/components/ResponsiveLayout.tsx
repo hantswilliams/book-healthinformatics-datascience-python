@@ -1,23 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import Footer from './Footer';
 import { useSupabase } from '@/lib/SupabaseProvider';
+import { useBooksData } from '@/lib/useBooksData';
 import type { User, Chapter } from '@/types';
-
-interface Book {
-  id: string;
-  slug: string;
-  title: string;
-  description?: string;
-  difficulty: string;
-  isPublished: boolean;
-  order: number;
-  accessType: string;
-  chapters: Chapter[];
-}
 
 interface ResponsiveLayoutProps {
   chapters: Chapter[];
@@ -26,9 +15,8 @@ interface ResponsiveLayoutProps {
 
 export default function ResponsiveLayout({ chapters, children }: ResponsiveLayoutProps) {
   const { user: supabaseUser, userProfile } = useSupabase();
+  const { books, loading } = useBooksData();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [books, setBooks] = useState<Book[]>([]);
-  const [loading, setLoading] = useState(true);
   
   // Transform Supabase user to match existing User interface
   const user = userProfile ? {
@@ -53,31 +41,6 @@ export default function ResponsiveLayout({ chapters, children }: ResponsiveLayou
     setIsSidebarOpen(false);
   };
 
-  useEffect(() => {
-    if (userProfile) {
-      fetchUserBooks();
-    } else {
-      setLoading(false);
-    }
-  }, [userProfile?.id]); // Only depend on the user ID to prevent infinite loops
-
-  const fetchUserBooks = async () => {
-    try {
-      const response = await fetch('/api/user-books');
-      if (response.ok) {
-        const data = await response.json();
-        setBooks(data.books || []);
-      } else {
-        console.error('Failed to fetch user books - HTTP', response.status);
-        setBooks([]);
-      }
-    } catch (error) {
-      console.error('Error fetching user books:', error);
-      setBooks([]); // Set empty array on error to prevent UI issues
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="h-screen bg-white ">

@@ -5,6 +5,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import { useSupabase } from '@/lib/SupabaseProvider';
+import { useBooksData } from '@/lib/useBooksData';
 
 interface Book {
   id: string;
@@ -25,6 +26,7 @@ const categoryOptions = [
 
 export default function EditCoursePage() {
   const { user, userProfile, organization, loading: authLoading } = useSupabase();
+  const { refreshBooks } = useBooksData();
   const router = useRouter();
   const params = useParams();
   const orgSlug = useOrgSlug();
@@ -111,6 +113,9 @@ export default function EditCoursePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to update course');
+      
+      // Refresh the books data to update the sidebar
+      await refreshBooks();
       setSuccess('Course updated');
     } catch (e:any) {
       setError(e.message);
@@ -142,6 +147,8 @@ export default function EditCoursePage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to save order');
+      // Refresh the books data to update the sidebar
+      await refreshBooks();
       setSuccess('Chapter order updated');
   // Normalize local order numbers to reflect persisted state
   setChapters(prev => prev.map((c, idx) => ({ ...c, order: idx + 1 })));

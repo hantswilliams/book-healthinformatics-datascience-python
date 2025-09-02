@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import { useSupabase } from '@/lib/SupabaseProvider';
+import { useBooksData } from '@/lib/useBooksData';
 
 interface Chapter {
   id: string;
@@ -35,10 +36,9 @@ interface Book {
 
 export default function ContentManagement() {
   const { user, userProfile, organization, loading: authLoading } = useSupabase();
+  const { books, loading: booksLoading, refreshBooks } = useBooksData();
   const router = useRouter();
   const orgSlug = useOrgSlug();
-  const [books, setBooks] = useState<Book[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'organization' | 'marketplace'>('all');
   const [publishingBooks, setPublishingBooks] = useState<Set<string>>(new Set());
@@ -59,27 +59,7 @@ export default function ContentManagement() {
       return;
     }
 
-    fetchBooks();
   }, [user, userProfile, organization, authLoading, router, orgSlug]);
-
-  const fetchBooks = async () => {
-    try {
-      setIsLoading(true);
-      
-      const response = await fetch('/api/user-books');
-      if (!response.ok) {
-        throw new Error('Failed to load books');
-      }
-
-      const result = await response.json();
-      setBooks(result.books || []);
-
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load books');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const toggleBookPublishStatus = async (bookId: string, currentStatus: boolean) => {
     if (publishingBooks.has(bookId)) return;
@@ -102,14 +82,8 @@ export default function ContentManagement() {
         throw new Error(result.error || 'Failed to update book status');
       }
       
-      // Update the book in the local state
-      setBooks(prevBooks => 
-        prevBooks.map(book => 
-          book.id === bookId 
-            ? { ...book, isPublished: newStatus }
-            : book
-        )
-      );
+      // Refresh the books data to update everywhere including sidebar
+      await refreshBooks();
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update book status');
@@ -146,8 +120,8 @@ export default function ContentManagement() {
         throw new Error(result.error || 'Failed to delete book');
       }
       
-      // Remove the book from the local state
-      setBooks(prevBooks => prevBooks.filter(book => book.id !== bookId));
+      // Refresh the books data to update everywhere including sidebar
+      await refreshBooks();
       setShowDeleteConfirm(null);
       
     } catch (err) {
@@ -197,7 +171,7 @@ export default function ContentManagement() {
     }
   };
 
-  if (authLoading || isLoading) {
+  if (authLoading || booksLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

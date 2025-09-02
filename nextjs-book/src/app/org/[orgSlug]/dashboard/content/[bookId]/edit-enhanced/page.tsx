@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import EnhancedChapterBuilder from '@/components/EnhancedChapterBuilder';
 import { useSupabase } from '@/lib/SupabaseProvider';
+import { useBooksData } from '@/lib/useBooksData';
 
 // Enhanced interfaces that match our new schema
 interface EnhancedSection {
@@ -52,6 +53,7 @@ interface EnhancedBookData {
 
 export default function EditEnhancedPage() {
   const { user, userProfile, organization, loading: authLoading } = useSupabase();
+  const { refreshBooks } = useBooksData();
   const router = useRouter();
   const params = useParams();
   const orgSlug = useOrgSlug();
@@ -228,6 +230,9 @@ export default function EditEnhancedPage() {
         throw new Error(result.error || 'Failed to update course');
       }
 
+      // Refresh the books data to update the sidebar
+      await refreshBooks();
+      
       router.push(`/org/${orgSlug}/dashboard/content`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update course');

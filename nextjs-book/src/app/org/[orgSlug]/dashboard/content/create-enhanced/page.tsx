@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import EnhancedChapterBuilder from '@/components/EnhancedChapterBuilder';
 import { useSupabase } from '@/lib/SupabaseProvider';
+import { useBooksData } from '@/lib/useBooksData';
 
 // Enhanced interfaces that match our new schema
 interface EnhancedSection {
@@ -40,6 +41,7 @@ interface BookForm {
 
 export default function CreateEnhancedBook() {
   const { user, userProfile, organization } = useSupabase();
+  const { refreshBooks } = useBooksData();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   
@@ -61,7 +63,7 @@ export default function CreateEnhancedBook() {
 
   // Check permissions
   if (!user || !userProfile || !organization || !['OWNER', 'ADMIN'].includes(userProfile.role)) {
-    router.push('/dashboard');
+    router.push(`/org/${orgSlug}/dashboard`);
     return null;
   }
 
@@ -189,6 +191,9 @@ export default function CreateEnhancedBook() {
         throw new Error(result.error || 'Failed to create course');
       }
 
+      // Refresh the books data to update the sidebar
+      await refreshBooks();
+      
       router.push(`/org/${orgSlug}/dashboard/content`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create course');

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSupabase } from '@/lib/SupabaseProvider';
+import { useOrgSlug } from '@/lib/useOrgSlug';
 import MonacoCodeBlock from './MonacoCodeBlock';
 import PackageSelector from './PackageSelector';
 
@@ -41,6 +42,7 @@ export default function EnhancedChapterBuilder({
 }: EnhancedChapterBuilderProps) {
   const { user, userProfile, loading } = useSupabase();
   const router = useRouter();
+  const orgSlug = useOrgSlug();
 
   // State management
   const [chapter, setChapter] = useState<EnhancedChapter>(
@@ -90,7 +92,7 @@ export default function EnhancedChapterBuilder({
   }
   
   if (!user || !userProfile || !['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(userProfile.role)) {
-    router.push('/dashboard');
+    router.push(`/org/${orgSlug}/dashboard`);
     return null;
   }
   const generateSectionId = () => {

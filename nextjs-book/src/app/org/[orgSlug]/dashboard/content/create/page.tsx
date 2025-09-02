@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import { useSupabase } from '@/lib/SupabaseProvider';
+import { useBooksData } from '@/lib/useBooksData';
 
 interface UploadedFile {
   id: string;
@@ -36,6 +37,7 @@ interface BookForm { // backend model remains 'book'
 
 export default function CreateBook() { // component name kept; UI text will say Course
   const { user, userProfile, organization } = useSupabase();
+  const { refreshBooks } = useBooksData();
   const router = useRouter();
   const orgSlug = useOrgSlug();
   
@@ -60,7 +62,7 @@ export default function CreateBook() { // component name kept; UI text will say 
 
   // Check permissions
   if (!user || !userProfile || !organization || !['OWNER', 'ADMIN'].includes(userProfile.role)) {
-    router.push('/dashboard');
+    router.push(`/org/${orgSlug}/dashboard`);
     return null;
   }
 
@@ -289,7 +291,10 @@ export default function CreateBook() { // component name kept; UI text will say 
   throw new Error(result.error || 'Failed to create course');
       }
 
-      router.push('/dashboard/content');
+      // Refresh the books data to update the sidebar
+      await refreshBooks();
+      
+      router.push(`/org/${orgSlug}/dashboard/content`);
     } catch (err) {
   setError(err instanceof Error ? err.message : 'Failed to create course');
     } finally {
