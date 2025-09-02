@@ -102,8 +102,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Get the base URL for redirect URLs
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    // Get the base URL for redirect URLs - prioritize NEXT_PUBLIC_APP_URL for stable production domain
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     
     // Create checkout session
     const checkoutSession = await stripe.checkout.sessions.create({

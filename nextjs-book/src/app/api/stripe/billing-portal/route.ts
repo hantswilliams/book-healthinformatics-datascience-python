@@ -71,8 +71,8 @@ export async function POST(request: NextRequest) {
       }, { status: 503 });
     }
 
-    // Get the base URL for return URL
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+    // Get the base URL for return URL - prioritize NEXT_PUBLIC_APP_URL for stable production domain
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000');
     
     // Create billing portal session
     const portalSession = await stripe.billingPortal.sessions.create({
