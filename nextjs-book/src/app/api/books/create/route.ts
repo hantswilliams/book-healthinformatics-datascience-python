@@ -6,7 +6,7 @@ import { z } from 'zod';
 
 const sectionSchema = z.object({
   title: z.string().optional(),
-  type: z.enum(['MARKDOWN', 'PYTHON', 'YOUTUBE', 'IMAGE']),
+  type: z.enum(['MARKDOWN', 'PYTHON', 'YOUTUBE', 'IMAGE', 'ASSESSMENT']),
   content: z.string(),
   order: z.number(),
   executionMode: z.enum(['SHARED', 'ISOLATED', 'INHERIT']).default('INHERIT'),

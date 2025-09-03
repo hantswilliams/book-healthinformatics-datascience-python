@@ -300,8 +300,8 @@ export default function Dashboard() {
                         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
                       </div>
                       <div>
-                        <h4 className="text-sm font-medium text-zinc-900">View Progress</h4>
-                        <p className="text-xs text-zinc-600">Track team learning progress</p>
+                        <h4 className="text-sm font-medium text-zinc-900">Chapter Completion</h4>
+                        <p className="text-xs text-zinc-600">Track team learning progress & completion</p>
                       </div>
                     </div>
                   </Link>
@@ -318,8 +318,8 @@ export default function Dashboard() {
                           </svg>
                         </div>
                         <div>
-                          <h4 className="text-sm font-medium text-zinc-900">Code Tracking</h4>
-                          <p className="text-xs text-zinc-600">Monitor learner code executions</p>
+                          <h4 className="text-sm font-medium text-zinc-900">Activity Analytics</h4>
+                          <p className="text-xs text-zinc-600">Monitor code executions & assessments</p>
                         </div>
                       </div>
                     </Link>

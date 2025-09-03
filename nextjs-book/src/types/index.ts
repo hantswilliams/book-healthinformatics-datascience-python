@@ -19,7 +19,7 @@ export interface Chapter {
   bookTitle?: string;
   sections: Array<{
     id: string;
-    type: 'markdown' | 'python' | 'youtube' | 'image';
+    type: 'markdown' | 'python' | 'youtube' | 'image' | 'assessment';
     content: string;
     title?: string;
     order: number;
@@ -77,6 +77,33 @@ export interface CodeExecutionStats {
   errorExecutions: number;
   lastExecution: Date;
   firstExecution: Date;
+}
+
+export interface AssessmentConfig {
+  questionText: string;
+  questionType: 'multiple_choice' | 'true_false' | 'short_answer';
+  options?: string[];
+  correctAnswer: string | string[] | boolean;
+  explanation?: string;
+  points: number;
+  allowRetries: boolean | number;
+  showFeedback: boolean;
+  partialCredit?: boolean;
+  caseSensitive?: boolean;
+}
+
+export interface AssessmentAttempt {
+  id: string;
+  userId: string;
+  organizationId: string;
+  chapterId: string;
+  sectionId: string;
+  userAnswer: any;
+  isCorrect: boolean;
+  pointsEarned: number;
+  maxPoints: number;
+  attemptNumber: number;
+  attemptedAt: Date;
 }
 
 export interface PyodideInstance {

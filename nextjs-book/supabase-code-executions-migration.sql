@@ -73,3 +73,83 @@ GROUP BY ce.organization_id, ce.user_id, u.first_name, u.last_name, u.email,
 
 -- Grant access to the view (RLS is handled by underlying tables)
 GRANT SELECT ON admin_code_execution_stats TO authenticated;
+
+-- Assessment attempts table
+CREATE TABLE IF NOT EXISTS assessment_attempts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  organization_id UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+  chapter_id UUID NOT NULL REFERENCES chapters(id) ON DELETE CASCADE,
+  section_id VARCHAR(255) NOT NULL, -- Identifier for specific assessment section within chapter
+  user_answer JSONB NOT NULL, -- Flexible answer storage (string, array, boolean)
+  is_correct BOOLEAN NOT NULL,
+  points_earned INTEGER DEFAULT 0,
+  max_points INTEGER NOT NULL,
+  attempt_number INTEGER DEFAULT 1,
+  attempted_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+-- Create indexes for assessment_attempts
+CREATE INDEX IF NOT EXISTS idx_assessment_attempts_user_id ON assessment_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_assessment_attempts_chapter_id ON assessment_attempts(chapter_id);
+CREATE INDEX IF NOT EXISTS idx_assessment_attempts_organization_id ON assessment_attempts(organization_id);
+CREATE INDEX IF NOT EXISTS idx_assessment_attempts_attempted_at ON assessment_attempts(attempted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_assessment_attempts_user_chapter ON assessment_attempts(user_id, chapter_id);
+CREATE INDEX IF NOT EXISTS idx_assessment_attempts_section ON assessment_attempts(section_id);
+
+-- Enable Row Level Security for assessment_attempts
+ALTER TABLE assessment_attempts ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for assessment_attempts table
+
+-- Users can view their own assessment attempts
+CREATE POLICY "Users can view their own assessment attempts" ON assessment_attempts
+  FOR SELECT USING (user_id = auth.uid());
+
+-- Users can insert their own assessment attempts
+CREATE POLICY "Users can insert their own assessment attempts" ON assessment_attempts
+  FOR INSERT WITH CHECK (
+    user_id = auth.uid() AND 
+    organization_id = public.user_organization_id()
+  );
+
+-- Instructors and admins can view all assessment attempts in their organization
+CREATE POLICY "Instructors and admins can view organization assessment attempts" ON assessment_attempts
+  FOR SELECT USING (
+    organization_id = public.user_organization_id() AND 
+    public.user_role() IN ('OWNER', 'ADMIN', 'INSTRUCTOR')
+  );
+
+-- Add helpful view for admin dashboard - assessment stats
+CREATE OR REPLACE VIEW admin_assessment_stats AS
+SELECT 
+  aa.organization_id,
+  aa.user_id,
+  u.first_name,
+  u.last_name,
+  u.email,
+  aa.chapter_id,
+  c.title as chapter_title,
+  aa.section_id,
+  COUNT(*) as total_attempts,
+  COUNT(CASE WHEN aa.is_correct = true THEN 1 END) as correct_attempts,
+  COUNT(CASE WHEN aa.is_correct = false THEN 1 END) as incorrect_attempts,
+  SUM(aa.points_earned) as total_points_earned,
+  SUM(aa.max_points) as total_possible_points,
+  MAX(aa.attempted_at) as last_attempt,
+  MIN(aa.attempted_at) as first_attempt,
+  ROUND(
+    (SUM(aa.points_earned)::DECIMAL / NULLIF(SUM(aa.max_points), 0)) * 100, 
+    2
+  ) as success_percentage
+FROM assessment_attempts aa
+JOIN users u ON aa.user_id = u.id
+JOIN chapters c ON aa.chapter_id = c.id
+GROUP BY aa.organization_id, aa.user_id, u.first_name, u.last_name, u.email, 
+         aa.chapter_id, c.title, aa.section_id;
+
+-- Grant access to the assessment stats view
+GRANT SELECT ON admin_assessment_stats TO authenticated;
+
+-- Add ASSESSMENT to the section_type enum
+ALTER TYPE section_type ADD VALUE IF NOT EXISTS 'ASSESSMENT';

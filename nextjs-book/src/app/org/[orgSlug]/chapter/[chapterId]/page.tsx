@@ -7,7 +7,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import PythonEditor from '@/components/PythonEditor';
 import ExecutionAwarePythonEditor from '@/components/ExecutionAwarePythonEditor';
-import type { Chapter } from '@/types';
+import AssessmentRenderer from '@/components/AssessmentRenderer';
+import type { Chapter, AssessmentConfig } from '@/types';
 
 interface ChapterPageProps {
   params: Promise<{ chapterId: string }>;
@@ -367,6 +368,25 @@ export default function ChapterPage({ params }: ChapterPageProps) {
                 chapterId={chapterId}
                 onCodeRun={handleCodeRun}
               />
+            ) : section.type === 'assessment' ? (
+              (() => {
+                try {
+                  const assessmentConfig: AssessmentConfig = JSON.parse(section.content);
+                  return (
+                    <AssessmentRenderer
+                      sectionId={section.id}
+                      chapterId={chapterId}
+                      assessmentConfig={assessmentConfig}
+                    />
+                  );
+                } catch (error) {
+                  return (
+                    <div className="text-center py-8 text-red-500">
+                      Invalid assessment configuration
+                    </div>
+                  );
+                }
+              })()
             ) : (
               <div className="text-center py-8 text-gray-500">
                 Unknown section type: {section.type}

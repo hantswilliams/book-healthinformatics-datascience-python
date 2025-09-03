@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import { useSupabase } from '@/lib/SupabaseProvider';
-import type { CodeExecution, CodeExecutionStats } from '@/types';
+import type { CodeExecution, CodeExecutionStats, AssessmentAttempt } from '@/types';
 
 interface CodeExecutionData {
   userStats: CodeExecutionStats[];
@@ -18,7 +18,52 @@ interface CodeExecutionData {
   };
 }
 
+interface AssessmentStats {
+  organizationId: string;
+  userId: string;
+  firstName?: string;
+  lastName: string;
+  email: string;
+  chapterId: string;
+  chapterTitle: string;
+  sectionId: string;
+  totalAttempts: number;
+  correctAttempts: number;
+  incorrectAttempts: number;
+  totalPointsEarned: number;
+  totalPossiblePoints: number;
+  lastAttempt: Date;
+  firstAttempt: Date;
+  successPercentage: number;
+}
+
+interface AssessmentData {
+  userStats: AssessmentStats[];
+  organizationStats: {
+    totalAttempts: number;
+    correctAttempts: number;
+    incorrectAttempts: number;
+    totalPointsEarned: number;
+    totalPossiblePoints: number;
+    successRate: number;
+    scoreRate: number;
+    todayAttempts: number;
+  };
+}
+
 interface DetailedExecution extends CodeExecution {
+  users: {
+    first_name?: string;
+    last_name: string;
+    email: string;
+    username: string;
+  };
+  chapters: {
+    title: string;
+  };
+}
+
+interface DetailedAttempt extends AssessmentAttempt {
   users: {
     first_name?: string;
     last_name: string;
@@ -38,12 +83,14 @@ export default function CodeTrackingDashboard() {
   const [detailedExecutions, setDetailedExecutions] = useState<DetailedExecution[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'overview' | 'executions'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'executions' | 'assessments'>('overview');
   const [selectedUser, setSelectedUser] = useState<string>('all');
   const [selectedChapter, setSelectedChapter] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedExecution, setSelectedExecution] = useState<DetailedExecution | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [assessmentData, setAssessmentData] = useState<AssessmentData | null>(null);
+  const [detailedAttempts, setDetailedAttempts] = useState<DetailedAttempt[]>([]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -91,6 +138,18 @@ export default function CodeTrackingDashboard() {
         
         const result = await response.json();
         setStatsData(result.data);
+      } else if (activeTab === 'assessments') {
+        // Fetch assessment stats or detailed attempts
+        const params = new URLSearchParams();
+        if (selectedUser !== 'all') params.append('userId', selectedUser);
+        if (selectedChapter !== 'all') params.append('chapterId', selectedChapter);
+        params.append('limit', '50');
+
+        const response = await fetch(`/api/admin/assessments?view=detailed&${params}`);
+        if (!response.ok) throw new Error('Failed to load assessment attempts');
+        
+        const result = await response.json();
+        setDetailedAttempts(result.data);
       } else {
         // Fetch detailed executions with filters
         const params = new URLSearchParams();
@@ -262,6 +321,19 @@ export default function CodeTrackingDashboard() {
                 }`}
               >
                 Code Executions
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab('assessments');
+                  fetchData();
+                }}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'assessments'
+                    ? 'border-indigo-500 text-indigo-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Assessment Attempts
               </button>
             </nav>
           </div>
@@ -546,6 +618,155 @@ export default function CodeTrackingDashboard() {
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Executions Found</h3>
                   <p className="text-gray-600">No code executions match the current filters.</p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {activeTab === 'assessments' && (
+          <>
+            {/* Filters */}
+            <div className="mb-6 bg-white p-4 rounded-lg shadow">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="user-filter-assessment" className="block text-sm font-medium text-gray-700 mb-1">
+                    Filter by User
+                  </label>
+                  <select
+                    id="user-filter-assessment"
+                    value={selectedUser}
+                    onChange={(e) => setSelectedUser(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option key="all-users" value="all">All Users</option>
+                    {Array.from(new Set(statsData?.userStats.map(stat => stat.userId))).map((userId) => {
+                      const stat = statsData?.userStats.find(s => s.userId === userId);
+                      return (
+                        <option key={userId} value={userId}>
+                          {stat?.firstName ? `${stat.firstName} ${stat.lastName}` : stat?.email}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="chapter-filter-assessment" className="block text-sm font-medium text-gray-700 mb-1">
+                    Filter by Chapter
+                  </label>
+                  <select
+                    id="chapter-filter-assessment"
+                    value={selectedChapter}
+                    onChange={(e) => setSelectedChapter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="all">All Chapters</option>
+                    {Array.from(new Set(statsData?.userStats.map(s => s.chapterId))).map((chapterId) => {
+                      const stat = statsData?.userStats.find(s => s.chapterId === chapterId);
+                      return (
+                        <option key={chapterId} value={chapterId}>
+                          {stat?.chapterTitle || 'Unknown Chapter'}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Assessment Attempts Table */}
+            <div className="bg-white shadow rounded-lg overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Recent Assessment Attempts ({detailedAttempts.length})
+                </h3>
+              </div>
+              
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        User & Time
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Chapter & Section
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Answer
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Result
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Score
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Attempt #
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {detailedAttempts.map((attempt) => (
+                      <tr key={attempt.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {attempt.users?.first_name ? 
+                                `${attempt.users.first_name} ${attempt.users.last_name}` : 
+                                attempt.users?.username
+                              }
+                            </div>
+                            <div className="text-sm text-gray-500">{formatDate(attempt.attemptedAt)}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{attempt.chapters?.title}</div>
+                          <div className="text-sm text-gray-500">Section: {attempt.sectionId}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-gray-900 max-w-xs overflow-hidden">
+                            {typeof attempt.userAnswer === 'string' 
+                              ? attempt.userAnswer.substring(0, 50) + (attempt.userAnswer.length > 50 ? '...' : '')
+                              : Array.isArray(attempt.userAnswer)
+                              ? attempt.userAnswer.join(', ')
+                              : String(attempt.userAnswer)
+                            }
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            attempt.isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {attempt.isCorrect ? 'Correct' : 'Incorrect'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {attempt.pointsEarned}/{attempt.maxPoints}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {attempt.maxPoints > 0 ? Math.round((attempt.pointsEarned / attempt.maxPoints) * 100) : 0}%
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          #{attempt.attemptNumber}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {detailedAttempts.length === 0 && (
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mb-4 mx-auto">
+                    <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Assessment Attempts Found</h3>
+                  <p className="text-gray-600">No assessment attempts match the current filters.</p>
                 </div>
               )}
             </div>

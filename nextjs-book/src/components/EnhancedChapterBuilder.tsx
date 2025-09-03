@@ -6,11 +6,13 @@ import { useSupabase } from '@/lib/SupabaseProvider';
 import { useOrgSlug } from '@/lib/useOrgSlug';
 import MonacoCodeBlock from './MonacoCodeBlock';
 import PackageSelector from './PackageSelector';
+import AssessmentTypeModal from './AssessmentTypeModal';
+import type { AssessmentConfig } from '@/types';
 
 // Enhanced interfaces with execution modes
 interface EnhancedSection {
   id: string;
-  type: 'markdown' | 'python' | 'youtube' | 'image';
+  type: 'markdown' | 'python' | 'youtube' | 'image' | 'assessment';
   title: string;
   content: string;
   executionMode: 'shared' | 'isolated' | 'inherit';
@@ -67,6 +69,8 @@ export default function EnhancedChapterBuilder({
 
   // Helper functions
   const [sectionIdCounter, setSectionIdCounter] = useState(0);
+  const [showAssessmentModal, setShowAssessmentModal] = useState(false);
+  const [assessmentTargetIndex, setAssessmentTargetIndex] = useState<number | undefined>(undefined);
 
   // Sync with initialChapter prop changes (when different chapter is selected)
   useEffect(() => {
@@ -123,6 +127,20 @@ export default function EnhancedChapterBuilder({
     const videoId = extractYouTubeVideoId(url);
     if (!videoId) return null;
     return `https://www.youtube-nocookie.com/embed/${videoId}`;
+  };
+
+  const getAssessmentTypeLabel = (content: string): string => {
+    try {
+      const config: AssessmentConfig = JSON.parse(content);
+      const typeLabels = {
+        'multiple_choice': 'Multiple Choice',
+        'true_false': 'True/False', 
+        'short_answer': 'Short Answer'
+      };
+      return typeLabels[config.questionType] || 'Custom';
+    } catch {
+      return 'Custom';
+    }
   };
 
   const addSection = (type: 'markdown' | 'python' | 'youtube' | 'image', targetIndex?: number) => {
@@ -192,6 +210,34 @@ export default function EnhancedChapterBuilder({
       .filter(section => section.id !== sectionId)
       .map((section, index) => ({ ...section, order: index }));
     setChapter({ ...chapter, sections: updatedSections });
+  };
+
+  const handleAssessmentTypeSelect = (config: AssessmentConfig) => {
+    const newSection: EnhancedSection = {
+      id: `section-${Date.now()}-${sectionIdCounter}`,
+      type: 'assessment',
+      title: 'New Assessment',
+      content: JSON.stringify(config, null, 2),
+      executionMode: 'inherit',
+      order: assessmentTargetIndex !== undefined ? assessmentTargetIndex : chapter.sections.length,
+      isEditing: true
+    };
+
+    setSectionIdCounter(prev => prev + 1);
+
+    const updatedSections = [...chapter.sections];
+    if (assessmentTargetIndex !== undefined) {
+      updatedSections.splice(assessmentTargetIndex, 0, newSection);
+      updatedSections.forEach((section, index) => {
+        section.order = index;
+      });
+    } else {
+      updatedSections.push(newSection);
+    }
+
+    setChapter({ ...chapter, sections: updatedSections });
+    setShowAssessmentModal(false);
+    setAssessmentTargetIndex(undefined);
   };
 
   const reorderSections = (startIndex: number, endIndex: number) => {
@@ -704,7 +750,8 @@ export default function EnhancedChapterBuilder({
               <span className="section-type-icon">
                 {section.type === 'python' ? '🐍' : 
                  section.type === 'youtube' ? '📺' :
-                 section.type === 'image' ? '🖼️' : '📝'}
+                 section.type === 'image' ? '🖼️' : 
+                 section.type === 'assessment' ? '❓' : '📝'}
               </span>
               
               {section.isEditing ? (
@@ -716,7 +763,14 @@ export default function EnhancedChapterBuilder({
                   placeholder="Section title..."
                 />
               ) : (
-                <span className="section-title">{section.title}</span>
+                <span className="section-title">
+                  {section.title}
+                  {section.type === 'assessment' && (
+                    <span className="text-xs text-gray-500 ml-2">
+                      ({getAssessmentTypeLabel(section.content)})
+                    </span>
+                  )}
+                </span>
               )}
 
               <div className={`execution-badge ${getExecutionModeDisplay(section).color}`}>
@@ -1091,10 +1145,12 @@ export default function EnhancedChapterBuilder({
                   <MonacoCodeBlock
                     value={section.content}
                     onChange={(content) => updateSection(section.id, { content })}
-                    language={section.type}
-                    height={180}
+                    language={section.type === 'assessment' ? 'json' : section.type}
+                    height={section.type === 'assessment' ? 300 : 180}
                     placeholder={section.type === 'python' 
                       ? 'Enter Python code...' 
+                      : section.type === 'assessment'
+                      ? 'Configure assessment JSON...'
                       : 'Enter markdown content...'
                     }
                     executionMode={section.executionMode === 'inherit' ? chapter.defaultExecutionMode : section.executionMode}
@@ -1102,8 +1158,8 @@ export default function EnhancedChapterBuilder({
                 ) : (
                   <MonacoCodeBlock
                     value={section.content}
-                    language={section.type}
-                    height={140}
+                    language={section.type === 'assessment' ? 'json' : section.type}
+                    height={section.type === 'assessment' ? 200 : 140}
                     readOnly
                     showMinimap={false}
                     executionMode={section.executionMode === 'inherit' ? chapter.defaultExecutionMode : section.executionMode}
@@ -1143,6 +1199,15 @@ export default function EnhancedChapterBuilder({
               onClick={() => addSection('image')}
             >
               🖼️ Add Image
+            </button>
+            <button
+              className="action-button primary"
+              onClick={() => {
+                setAssessmentTargetIndex(chapter.sections.length);
+                setShowAssessmentModal(true);
+              }}
+            >
+              ❓ Add Assessment
             </button>
             <button
               className="action-button"
@@ -1212,6 +1277,16 @@ export default function EnhancedChapterBuilder({
           </div>
         </div>
       )}
+
+      {/* Assessment Type Selection Modal */}
+      <AssessmentTypeModal
+        isOpen={showAssessmentModal}
+        onClose={() => {
+          setShowAssessmentModal(false);
+          setAssessmentTargetIndex(undefined);
+        }}
+        onSelectType={handleAssessmentTypeSelect}
+      />
     </div>
   );
 }
