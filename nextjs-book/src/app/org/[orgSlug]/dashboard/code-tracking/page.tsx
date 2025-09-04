@@ -18,38 +18,7 @@ interface CodeExecutionData {
   };
 }
 
-interface AssessmentStats {
-  organizationId: string;
-  userId: string;
-  firstName?: string;
-  lastName: string;
-  email: string;
-  chapterId: string;
-  chapterTitle: string;
-  sectionId: string;
-  totalAttempts: number;
-  correctAttempts: number;
-  incorrectAttempts: number;
-  totalPointsEarned: number;
-  totalPossiblePoints: number;
-  lastAttempt: Date;
-  firstAttempt: Date;
-  successPercentage: number;
-}
 
-interface AssessmentData {
-  userStats: AssessmentStats[];
-  organizationStats: {
-    totalAttempts: number;
-    correctAttempts: number;
-    incorrectAttempts: number;
-    totalPointsEarned: number;
-    totalPossiblePoints: number;
-    successRate: number;
-    scoreRate: number;
-    todayAttempts: number;
-  };
-}
 
 interface DetailedExecution extends CodeExecution {
   users: {
@@ -89,7 +58,8 @@ export default function CodeTrackingDashboard() {
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedExecution, setSelectedExecution] = useState<DetailedExecution | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [assessmentData, setAssessmentData] = useState<AssessmentData | null>(null);
+  const [selectedAttempt, setSelectedAttempt] = useState<DetailedAttempt | null>(null);
+  const [isAttemptModalOpen, setIsAttemptModalOpen] = useState(false);
   const [detailedAttempts, setDetailedAttempts] = useState<DetailedAttempt[]>([]);
 
   useEffect(() => {
@@ -111,12 +81,13 @@ export default function CodeTrackingDashboard() {
 
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isModalOpen) {
+      if (e.key === 'Escape' && (isModalOpen || isAttemptModalOpen)) {
         closeModal();
+        closeAttemptModal();
       }
     };
 
-    if (isModalOpen) {
+    if (isModalOpen || isAttemptModalOpen) {
       document.addEventListener('keydown', handleEscape);
       document.body.style.overflow = 'hidden';
     }
@@ -125,7 +96,7 @@ export default function CodeTrackingDashboard() {
       document.removeEventListener('keydown', handleEscape);
       document.body.style.overflow = 'unset';
     };
-  }, [isModalOpen]);
+  }, [isModalOpen, isAttemptModalOpen]);
 
   const fetchData = async () => {
     try {
@@ -225,6 +196,16 @@ export default function CodeTrackingDashboard() {
   const closeModal = () => {
     setIsModalOpen(false);
     setSelectedExecution(null);
+  };
+
+  const handleAttemptRowClick = (attempt: DetailedAttempt) => {
+    setSelectedAttempt(attempt);
+    setIsAttemptModalOpen(true);
+  };
+
+  const closeAttemptModal = () => {
+    setIsAttemptModalOpen(false);
+    setSelectedAttempt(null);
   };
 
   if (authLoading || isLoading) {
@@ -708,7 +689,11 @@ export default function CodeTrackingDashboard() {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {detailedAttempts.map((attempt) => (
-                      <tr key={attempt.id} className="hover:bg-gray-50">
+                      <tr 
+                        key={attempt.id} 
+                        className="hover:bg-gray-50 cursor-pointer"
+                        onClick={() => handleAttemptRowClick(attempt)}
+                      >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div>
                             <div className="text-sm font-medium text-gray-900">
@@ -878,6 +863,112 @@ export default function CodeTrackingDashboard() {
             <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
               <button
                 onClick={closeModal}
+                className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assessment Attempt Modal */}
+      {isAttemptModalOpen && selectedAttempt && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Assessment Attempt Details</h3>
+                <p className="text-sm text-gray-500">
+                  {selectedAttempt.users?.first_name ? 
+                    `${selectedAttempt.users.first_name} ${selectedAttempt.users.last_name}` : 
+                    selectedAttempt.users?.username
+                  } • {formatDate(selectedAttempt.attemptedAt)}
+                </p>
+              </div>
+              <button
+                onClick={closeAttemptModal}
+                className="text-gray-400 hover:text-gray-600 text-2xl font-semibold"
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Content */}
+            <div className="px-6 py-4 overflow-y-auto max-h-[calc(90vh-140px)]">
+              {/* Metadata Section */}
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Chapter:</span>
+                    <p className="text-sm text-gray-900">{selectedAttempt.chapters?.title}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Section:</span>
+                    <p className="text-sm text-gray-900">{selectedAttempt.sectionId}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Attempt Number:</span>
+                    <p className="text-sm text-gray-900">#{selectedAttempt.attemptNumber}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">User ID:</span>
+                    <p className="text-sm text-gray-900 font-mono">{selectedAttempt.userId}</p>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Result:</span>
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ml-2 ${
+                      selectedAttempt.isCorrect ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {selectedAttempt.isCorrect ? 'Correct' : 'Incorrect'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Score:</span>
+                    <p className="text-sm text-gray-900">
+                      {selectedAttempt.pointsEarned}/{selectedAttempt.maxPoints} points
+                      <span className="text-gray-500 ml-1">
+                        ({selectedAttempt.maxPoints > 0 ? Math.round((selectedAttempt.pointsEarned / selectedAttempt.maxPoints) * 100) : 0}%)
+                      </span>
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Chapter ID:</span>
+                    <p className="text-sm text-gray-900 font-mono">{selectedAttempt.chapterId}</p>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-500">Organization ID:</span>
+                    <p className="text-sm text-gray-900 font-mono">{selectedAttempt.organizationId}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* User Answer */}
+              <div className="mb-6">
+                <h4 className="text-sm font-medium text-gray-900 mb-3">User Answer:</h4>
+                <div className="bg-gray-50 rounded-lg p-4 overflow-x-auto">
+                  <pre className="text-sm text-gray-700 whitespace-pre-wrap">
+                    <code>
+                      {typeof selectedAttempt.userAnswer === 'string' 
+                        ? selectedAttempt.userAnswer
+                        : Array.isArray(selectedAttempt.userAnswer)
+                        ? selectedAttempt.userAnswer.join(', ')
+                        : JSON.stringify(selectedAttempt.userAnswer, null, 2)
+                      }
+                    </code>
+                  </pre>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={closeAttemptModal}
                 className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
               >
                 Close
