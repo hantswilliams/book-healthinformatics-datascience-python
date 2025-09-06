@@ -1,50 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import { Database } from '@/lib/supabase-types';
+import { getAuthenticatedUser, createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          },
-        },
-      }
-    );
-
-    // Get current user
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    // Extract organization slug from the referer header
+    const referer = request.headers.get('referer');
+    let orgSlug: string | undefined = undefined;
     
-    if (authError || !authUser) {
-      return NextResponse.json(
-        { error: 'Authentication required' },
-        { status: 401 }
-      );
+    if (referer) {
+      const urlMatch = referer.match(/\/org\/([^\/]+)/);
+      if (urlMatch && urlMatch[1]) {
+        orgSlug = urlMatch[1];
+      }
     }
 
-    // Get current user's details from database
-    const { data: currentUser, error: userError } = await supabase
-      .from('users')
-      .select('id, role, organization_id')
-      .eq('id', authUser.id)
-      .single();
-
-    if (userError || !currentUser) {
-      return NextResponse.json(
-        { error: 'User profile not found' },
-        { status: 404 }
-      );
+    const { user: currentUser, error: authError } = await getAuthenticatedUser(orgSlug);
+    if (authError || !currentUser) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Check if user has permission to view organization progress
@@ -54,6 +26,8 @@ export async function GET(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    const supabase = await createClient();
 
     // Get all users in the organization
     const { data: organizationUsers, error: orgUsersError } = await supabase
@@ -79,7 +53,21 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get books with access count for the organization
+    // Get ALL books that belong to this organization (for stats calculation)
+    const { data: allOrgBooks, error: allBooksError } = await supabase
+      .from('books')
+      .select('id, title, slug')
+      .eq('organization_id', currentUser.organization_id);
+
+    if (allBooksError) {
+      console.error('Error fetching organization books:', allBooksError);
+      return NextResponse.json(
+        { error: 'Failed to fetch organization books' },
+        { status: 500 }
+      );
+    }
+
+    // Get books with access for individual user calculations
     const { data: bookAccessData, error: bookAccessError } = await supabase
       .from('book_access')
       .select(`
@@ -100,8 +88,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get unique books accessible to the organization
-    const uniqueBooks = bookAccessData?.reduce((acc, item) => {
+    // Get unique books accessible to users (for individual progress)
+    const accessibleBooks = bookAccessData?.reduce((acc, item) => {
       if (item.books && !acc.find(book => book.id === item.books.id)) {
         acc.push(item.books);
       }
@@ -141,20 +129,16 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Get all chapters for books in this organization to calculate totals
+    // Get all chapters for ALL books in this organization (for stats)
+    const allBookIds = (allOrgBooks || []).map(book => book.id);
     const { data: chaptersData, error: chaptersError } = await supabase
       .from('chapters')
       .select(`
         id,
         book_id,
-        title,
-        books:book_id (
-          id,
-          title,
-          organization_id
-        )
+        title
       `)
-      .eq('books.organization_id', currentUser.organization_id);
+      .in('book_id', allBookIds);
 
     if (chaptersError) {
       console.error('Error fetching chapters data:', chaptersError);
@@ -173,11 +157,9 @@ export async function GET(request: NextRequest) {
       return acc;
     }, {} as Record<string, any[]>);
 
-    // Get total chapters per book
+    // Get total chapters per book (for ALL organization books)
     const bookChapterCounts = (chaptersData || []).reduce((acc, chapter) => {
-      if (chapter.books) {
-        acc[chapter.book_id] = (acc[chapter.book_id] || 0) + 1;
-      }
+      acc[chapter.book_id] = (acc[chapter.book_id] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
@@ -223,9 +205,31 @@ export async function GET(request: NextRequest) {
       // Calculate total time spent
       const totalTimeSpent = userProgress.reduce((sum, p) => sum + (p.time_spent || 0), 0);
       
-      // Calculate book-specific progress
+      // Calculate book-specific progress for ALL organization books
+      const allBooksProgress = (allOrgBooks || []).map(book => {
+        const hasAccess = userBookAccess.includes(book.id);
+        const bookChapters = bookChapterCounts[book.id] || 0;
+        const userBookProgress = userProgress.filter(p => p.book_id === book.id);
+        const completedBookChapters = userBookProgress.filter(p => p.completed).length;
+        const bookProgressPercentage = bookChapters > 0 ? Math.round((completedBookChapters / bookChapters) * 100) : 0;
+        
+        return {
+          bookId: book.id,
+          bookTitle: book.title,
+          bookSlug: book.slug,
+          totalChapters: bookChapters,
+          completedChapters: completedBookChapters,
+          progressPercentage: bookProgressPercentage,
+          hasAccess: hasAccess,
+          lastActivity: userBookProgress.length > 0 
+            ? Math.max(...userBookProgress.map(p => new Date(p.completed_at || p.created_at).getTime()))
+            : null
+        };
+      });
+
+      // Also keep the old accessible-only progress for backward compatibility
       const bookProgress = userBookAccess.map(bookId => {
-        const book = uniqueBooks.find(b => b.id === bookId);
+        const book = accessibleBooks.find(b => b.id === bookId);
         const bookChapters = bookChapterCounts[bookId] || 0;
         const userBookProgress = userProgress.filter(p => p.book_id === bookId);
         const completedBookChapters = userBookProgress.filter(p => p.completed).length;
@@ -256,14 +260,16 @@ export async function GET(request: NextRequest) {
         completedChapters,
         progressPercentage,
         totalTimeSpent,
-        bookProgress,
+        bookProgress, // Only accessible books (for table display)
+        allBooksProgress, // ALL organization books (for modal display)
+        accessibleBooksCount: userBookAccess.length, // Number of books user has access to
         recentActivity: userProgress
           .sort((a, b) => new Date(b.completed_at || b.created_at).getTime() - new Date(a.completed_at || a.created_at).getTime())
           .slice(0, 5)
       };
     }) || [];
 
-    // Calculate organization-wide statistics
+    // Calculate organization-wide statistics using ALL books and chapters
     const totalChaptersInOrg = Object.values(bookChapterCounts).reduce((sum, count) => sum + count, 0);
     const averageProgress = userStats.length > 0 
       ? Math.round(userStats.reduce((sum, user) => sum + user.progressPercentage, 0) / userStats.length)
@@ -272,8 +278,8 @@ export async function GET(request: NextRequest) {
 
     const orgStats = {
       totalUsers: organizationUsers?.length || 0,
-      totalBooks: uniqueBooks.length,
-      totalChapters: totalChaptersInOrg,
+      totalBooks: (allOrgBooks || []).length, // Use ALL organization books
+      totalChapters: totalChaptersInOrg, // Use ALL chapters from all books
       averageProgress,
       totalTimeSpent,
       activeUsers: organizationUsers?.filter(user => 
@@ -287,7 +293,7 @@ export async function GET(request: NextRequest) {
       data: {
         organizationStats: orgStats,
         userProgress: userStats,
-        books: uniqueBooks.map(book => ({
+        books: (allOrgBooks || []).map(book => ({
           id: book.id,
           title: book.title,
           slug: book.slug,

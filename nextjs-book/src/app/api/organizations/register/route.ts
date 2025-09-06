@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import crypto from 'crypto';
 
 type Database = {
   public: {
@@ -78,34 +79,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user email already exists
-    const { data: existingUser } = await supabase
-      .from('users')
-      .select('id')
-      .eq('email', validatedData.email)
-      .single();
-
-    if (existingUser) {
-      return NextResponse.json(
-        { error: 'Email already registered' },
-        { status: 400 }
-      );
-    }
-
-    // Check if username is taken
-    const { data: existingUsername } = await supabase
-      .from('users')
-      .select('id')
-      .eq('username', validatedData.username)
-      .single();
-
-    if (existingUsername) {
-      return NextResponse.json(
-        { error: 'Username already taken' },
-        { status: 400 }
-      );
-    }
-
+    // Note: We no longer check for existing email globally since users can belong to multiple orgs
+    // We'll check after creating the organization to ensure email+org combo is unique
 
     // Set trial period (14 days)
     const trialEndsAt = new Date();
@@ -142,27 +117,92 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user in Supabase Auth first
-    const { data: authUser, error: authError } = await supabase.auth.admin.createUser({
-      email: validatedData.email,
-      password: validatedData.password,
-      email_confirm: true, // Auto-confirm email
-    });
+    // Check if email+organization combination already exists
+    const { data: existingEmailOrg } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', validatedData.email)
+      .eq('organization_id', organization.id)
+      .single();
 
-    if (authError || !authUser.user) {
-      console.error('Auth user creation error:', authError);
-      // Cleanup: delete the organization if auth user creation failed
+    if (existingEmailOrg) {
+      // Cleanup: delete the organization since email+org combo already exists
       await supabase.from('organizations').delete().eq('id', organization.id);
       return NextResponse.json(
-        { error: 'Failed to create user account' },
-        { status: 500 }
+        { error: 'User already exists in this organization' },
+        { status: 400 }
       );
     }
 
+    // Check if username+organization combination already exists
+    const { data: existingUsernameOrg } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', validatedData.username)
+      .eq('organization_id', organization.id)
+      .single();
+
+    if (existingUsernameOrg) {
+      // Cleanup: delete the organization since username+org combo already exists
+      await supabase.from('organizations').delete().eq('id', organization.id);
+      return NextResponse.json(
+        { error: 'Username already taken in this organization' },
+        { status: 400 }
+      );
+    }
+
+    // Create user in Supabase Auth first (or get existing one)
+    let authUser;
+    
+    // Check if auth user already exists
+    const { data: existingAuthUsers } = await supabase.auth.admin.listUsers();
+    const existingAuthUser = existingAuthUsers.users.find(u => u.email === validatedData.email);
+    
+    if (existingAuthUser) {
+      console.log('Using existing Supabase auth user:', existingAuthUser.id);
+      authUser = existingAuthUser;
+      
+      // For existing auth users, we need to update their password if they're becoming an owner
+      if (validatedData.password) {
+        const { error: updateError } = await supabase.auth.admin.updateUserById(
+          existingAuthUser.id,
+          { password: validatedData.password }
+        );
+        
+        if (updateError) {
+          console.warn('Failed to update password for existing user:', updateError);
+          // Continue anyway - they can reset password later
+        }
+      }
+    } else {
+      // Create new auth user
+      const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
+        email: validatedData.email,
+        password: validatedData.password,
+        email_confirm: true, // Auto-confirm email
+      });
+
+      if (authError || !newAuthUser.user) {
+        console.error('Auth user creation error:', authError);
+        // Cleanup: delete the organization if auth user creation failed
+        await supabase.from('organizations').delete().eq('id', organization.id);
+        return NextResponse.json(
+          { error: 'Failed to create user account' },
+          { status: 500 }
+        );
+      }
+      
+      authUser = newAuthUser.user;
+    }
+
     // Create user record in our custom users table
-    console.log('Creating user profile with auth ID:', authUser.user.id);
+    // For multi-org support, each user gets a separate record per organization
+    const userRecordId = crypto.randomUUID(); // Always use a new UUID for user records
+    
+    console.log('Creating user profile with record ID:', userRecordId);
+    console.log('Auth user ID:', authUser.id);
     console.log('User data:', {
-      id: authUser.user.id,
+      id: userRecordId,
       first_name: validatedData.firstName,
       last_name: validatedData.lastName,
       email: validatedData.email,
@@ -175,7 +215,8 @@ export async function POST(request: NextRequest) {
     const { data: user, error: userError } = await supabase
       .from('users')
       .insert({
-        id: authUser.user.id, // Use the auth user's ID
+        id: userRecordId, // Use a unique ID for each org-specific user record
+        auth_user_id: authUser.id, // Track the Supabase Auth user ID
         first_name: validatedData.firstName,
         last_name: validatedData.lastName,
         email: validatedData.email,
@@ -189,8 +230,11 @@ export async function POST(request: NextRequest) {
 
     if (userError || !user) {
       console.error('User profile creation error:', userError);
-      // Cleanup: delete the auth user and organization if profile creation failed
-      await supabase.auth.admin.deleteUser(authUser.user.id);
+      // Cleanup: delete the organization if profile creation failed
+      // NOTE: We don't delete the auth user if it was existing, only if we created it
+      if (!existingAuthUser) {
+        await supabase.auth.admin.deleteUser(authUser.id);
+      }
       await supabase.from('organizations').delete().eq('id', organization.id);
       return NextResponse.json(
         { error: 'Failed to create user profile' },
@@ -203,11 +247,15 @@ export async function POST(request: NextRequest) {
     // Return success response (excluding sensitive data)
     return NextResponse.json({
       success: true,
+      message: existingAuthUser ? 
+        'Organization created successfully. Your existing account has been linked to this new organization.' :
+        'Organization and account created successfully.',
       data: {
         organizationId: result.organization.id,
         organizationSlug: result.organization.slug,
         userId: result.user.id,
         trialEndsAt: result.organization.trial_ends_at,
+        isExistingUser: !!existingAuthUser,
       }
     });
 

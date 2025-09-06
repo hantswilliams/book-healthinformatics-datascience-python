@@ -3,8 +3,19 @@ import { getAuthenticatedUser, createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get authenticated user and organization info
-    const { user, error: authError } = await getAuthenticatedUser();
+    // Extract organization slug from the referer header (which contains the full URL)
+    const referer = request.headers.get('referer');
+    let orgSlug: string | undefined = undefined;
+    
+    if (referer) {
+      const urlMatch = referer.match(/\/org\/([^\/]+)/);
+      if (urlMatch && urlMatch[1]) {
+        orgSlug = urlMatch[1];
+      }
+    }
+    
+    // Get authenticated user and organization info with org context
+    const { user, error: authError } = await getAuthenticatedUser(orgSlug);
     
     if (authError || !user) {
       console.error('Authentication error:', authError);

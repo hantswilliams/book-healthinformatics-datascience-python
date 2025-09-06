@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   console.log('✅ POST request to check-user-role endpoint');
   console.log('📍 URL:', request.url);
+  console.log('🕐 Request timestamp:', new Date().toISOString());
   try {
     const cookieStore = await cookies();
     const supabase = createServerClient<Database>(
@@ -49,24 +50,61 @@ export async function POST(request: NextRequest) {
       }
     );
 
+    console.log('📨 About to parse request body...');
     const body = await request.json();
+    console.log('📄 Raw request body:', body);
+    
     const { email, orgSlug } = checkUserRoleSchema.parse(body);
+    console.log('✅ Parsed request data:', { email, orgSlug });
 
-    // Find the user's role in the specified organization
+    console.log(`🔍 Looking for organization with slug: "${orgSlug}"`);
+    console.log(`📧 Email: "${email}"`);
+
+    // First, get the organization by slug
+    console.log('🔍 About to query organizations table...');
+    console.log('🎯 Query: SELECT id, name, slug FROM organizations WHERE slug =', orgSlug);
+    
+    const { data: organization, error: orgError } = await supabase
+      .from('organizations')
+      .select('id, name, slug')
+      .eq('slug', orgSlug)
+      .single();
+      
+    console.log('🏢 Organization query completed');
+    console.log('📊 Data:', organization);
+    console.log('❌ Error:', orgError);
+
+    console.log(`📊 Organization query result:`, { organization, orgError });
+
+    if (orgError || !organization) {
+      console.error('❌ Organization not found for slug:', orgSlug);
+      console.error('Database error:', orgError);
+      
+      // Let's also check what organizations exist for debugging
+      const { data: allOrgs } = await supabase
+        .from('organizations')
+        .select('id, name, slug');
+      console.log('🗂️ All organizations in database:', allOrgs);
+      
+      return NextResponse.json(
+        { 
+          found: false,
+          message: `Organization not found for slug: ${orgSlug}`,
+          debug: {
+            requestedSlug: orgSlug,
+            availableOrgs: allOrgs?.map(org => org.slug) || []
+          }
+        },
+        { status: 404 }
+      );
+    }
+
+    // Then find the user's role in this specific organization
     const { data: users, error: userError } = await supabase
       .from('users')
-      .select(`
-        id,
-        email,
-        role,
-        organizations!users_organization_id_fkey(
-          id,
-          name,
-          slug
-        )
-      `)
+      .select('id, email, role, auth_user_id')
       .eq('email', email)
-      .eq('organizations.slug', orgSlug);
+      .eq('organization_id', organization.id);
 
     if (userError) {
       console.error('Database error looking up user role:', userError);
@@ -91,7 +129,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       found: true,
       role: user.role,
-      organization: user.organizations,
+      organization: organization,
       authMethods: {
         passwordLogin: user.role !== 'LEARNER', // Only non-learners can use password
         codeLogin: true // Everyone can use verification codes

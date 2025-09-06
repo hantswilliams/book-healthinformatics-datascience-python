@@ -14,6 +14,7 @@ interface BookProgress {
   completedChapters: number;
   progressPercentage: number;
   lastActivity: number | null;
+  hasAccess?: boolean; // For allBooksProgress to indicate if user has access
 }
 
 interface UserProgress {
@@ -29,7 +30,9 @@ interface UserProgress {
   progressPercentage: number;
   totalTimeSpent: number;
   bookProgress: BookProgress[];
+  allBooksProgress?: BookProgress[]; // ALL organization books with access status
   recentActivity: any[];
+  accessibleBooksCount?: number; // Number of books user has access to
 }
 
 interface OrganizationStats {
@@ -61,6 +64,8 @@ export default function ProgressDashboard() {
   const [error, setError] = useState('');
   const [selectedBook, setSelectedBook] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'name' | 'progress' | 'activity'>('progress');
+  const [selectedUser, setSelectedUser] = useState<UserProgress | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -149,6 +154,11 @@ export default function ProgressDashboard() {
     return users;
   };
 
+  const handleUserClick = (user: UserProgress) => {
+    setSelectedUser(user);
+    setIsModalOpen(true);
+  };
+
   const getRoleColor = (role: string) => {
     switch (role) {
       case 'OWNER': return 'bg-red-100 text-red-800';
@@ -234,7 +244,7 @@ export default function ProgressDashboard() {
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-purple-600">{progressData.organizationStats.totalBooks}</div>
-            <div className="text-sm text-gray-600">Available Books</div>
+            <div className="text-sm text-gray-600">Available Courses</div>
           </div>
           <div className="bg-white p-4 rounded-lg shadow">
             <div className="text-2xl font-bold text-orange-600">{progressData.organizationStats.totalChapters}</div>
@@ -306,6 +316,9 @@ export default function ProgressDashboard() {
                     Role
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Course Access
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Progress
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -318,7 +331,12 @@ export default function ProgressDashboard() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {sortedUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr 
+                    key={user.id} 
+                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                    onClick={() => handleUserClick(user)}
+                    title={user.progressPercentage > 100 ? "Click to see detailed progress breakdown" : "Click for detailed progress"}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-10 w-10">
@@ -342,15 +360,25 @@ export default function ProgressDashboard() {
                         {user.role}
                       </span>
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex items-center">
+                        <span className="text-lg mr-2">📚</span>
+                        <span className="font-medium">{user.accessibleBooksCount || user.bookProgress.length}</span>
+                        <span className="text-gray-500 ml-1">books</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="w-16 bg-gray-200 rounded-full h-2 mr-3">
                           <div 
-                            className="bg-blue-600 h-2 rounded-full" 
-                            style={{ width: `${user.progressPercentage}%` }}
+                            className={`h-2 rounded-full ${user.progressPercentage > 100 ? 'bg-green-600' : 'bg-blue-600'}`}
+                            style={{ width: `${Math.min(100, user.progressPercentage)}%` }}
                           ></div>
                         </div>
-                        <span className="text-sm text-gray-900">{user.progressPercentage}%</span>
+                        <span className={`text-sm ${user.progressPercentage > 100 ? 'text-green-600 font-semibold' : 'text-gray-900'}`}>
+                          {user.progressPercentage}%
+                          {user.progressPercentage > 100 && <span className="text-xs ml-1">📊</span>}
+                        </span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -375,6 +403,151 @@ export default function ProgressDashboard() {
             </div>
           )}
         </div>
+
+        {/* Progress Details Modal */}
+        {isModalOpen && selectedUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  Progress Details - {selectedUser.firstName} {selectedUser.lastName}
+                </h3>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-8rem)]">
+                {/* User Summary */}
+                <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {selectedUser.accessibleBooksCount || selectedUser.bookProgress.length}
+                      </div>
+                      <div className="text-sm text-gray-600">Accessible Books</div>
+                      {selectedUser.allBooksProgress && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          of {selectedUser.allBooksProgress.length} total
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <div className={`text-2xl font-bold ${selectedUser.progressPercentage > 100 ? 'text-green-600' : 'text-blue-600'}`}>
+                        {selectedUser.progressPercentage}%
+                      </div>
+                      <div className="text-sm text-gray-600">Overall Progress</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-orange-600">
+                        {selectedUser.completedChapters}/{selectedUser.totalChapters}
+                      </div>
+                      <div className="text-sm text-gray-600">Chapters</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-purple-600">
+                        {formatTimeSpent(selectedUser.totalTimeSpent)}
+                      </div>
+                      <div className="text-sm text-gray-600">Time Spent</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Book-by-Book Progress */}
+                <div className="space-y-4">
+                  <h4 className="text-md font-semibold text-gray-900 mb-4">Progress by Course (All Organization Courses)</h4>
+                  {(selectedUser.allBooksProgress || selectedUser.bookProgress).length > 0 ? (
+                    (selectedUser.allBooksProgress || selectedUser.bookProgress)
+                      .sort((a, b) => {
+                        // Sort by access status first (accessible first), then by progress
+                        if (a.hasAccess !== undefined && b.hasAccess !== undefined) {
+                          if (a.hasAccess && !b.hasAccess) return -1;
+                          if (!a.hasAccess && b.hasAccess) return 1;
+                        }
+                        return b.progressPercentage - a.progressPercentage;
+                      })
+                      .map((book) => (
+                      <div key={book.bookId} className={`border rounded-lg p-4 ${book.hasAccess === false ? 'border-gray-300 bg-gray-50' : 'border-gray-200 bg-white'}`}>
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h5 className={`font-medium ${book.hasAccess === false ? 'text-gray-600' : 'text-gray-900'}`}>
+                                {book.bookTitle}
+                              </h5>
+                              {book.hasAccess === false && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                                  🔒 No Access
+                                </span>
+                              )}
+                              {book.hasAccess === true && (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                                  ✓ Access Granted
+                                </span>
+                              )}
+                            </div>
+                            <div className={`text-sm ${book.hasAccess === false ? 'text-gray-400' : 'text-gray-500'}`}>
+                              {book.completedChapters} of {book.totalChapters} chapters completed
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <div className={`text-lg font-semibold ${
+                              book.progressPercentage > 100 
+                                ? 'text-green-600' 
+                                : book.hasAccess === false 
+                                  ? 'text-gray-500' 
+                                  : 'text-blue-600'
+                            }`}>
+                              {book.progressPercentage}%
+                            </div>
+                            {book.lastActivity && (
+                              <div className="text-xs text-gray-500">
+                                Last activity: {formatLastActivity(new Date(book.lastActivity).toISOString())}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div 
+                            className={`h-2 rounded-full ${
+                              book.progressPercentage > 100 
+                                ? 'bg-green-600' 
+                                : book.hasAccess === false 
+                                  ? 'bg-gray-400' 
+                                  : 'bg-blue-600'
+                            }`}
+                            style={{ width: `${Math.min(100, book.progressPercentage)}%` }}
+                          ></div>
+                        </div>
+                        {book.progressPercentage > 100 && (
+                          <div className="mt-2 text-xs text-orange-600">
+                            ⚠️ User completed chapters from this course when it was accessible
+                          </div>
+                        )}
+                        {book.hasAccess === false && book.progressPercentage === 0 && (
+                          <div className="mt-2 text-xs text-gray-500">
+                            📚 Course not accessible to this user
+                          </div>
+                        )}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center text-gray-500 py-8">
+                      <svg className="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      <p>No progress data available for accessible courses.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

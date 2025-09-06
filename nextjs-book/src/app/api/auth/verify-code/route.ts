@@ -167,16 +167,17 @@ export async function POST(request: NextRequest) {
         console.log('✅ Found existing Supabase auth user:', existingUser.id);
         authUser = existingUser;
         
-        // Update the user record ID if it doesn't match
-        if (existingUser.id !== user.id) {
-          console.log(`🔄 Updating user record ID from ${user.id} to ${existingUser.id}`);
+        // Update the user record auth_user_id if it doesn't match
+        if (existingUser.id !== user.auth_user_id) {
+          console.log(`🔄 Updating user record auth_user_id from ${user.auth_user_id} to ${existingUser.id}`);
           await supabase
             .from('users')
-            .update({ id: existingUser.id })
-            .eq('email', email);
+            .update({ auth_user_id: existingUser.id })
+            .eq('email', email)
+            .eq('organization_id', user.organization_id);
           
           // Update our local user object for the session generation
-          user.id = existingUser.id;
+          user.auth_user_id = existingUser.id;
         }
       } else {
         // Create new Supabase auth user with a new ID
@@ -199,11 +200,12 @@ export async function POST(request: NextRequest) {
           // Update our user record with the new auth user ID
           await supabase
             .from('users')
-            .update({ id: newAuthUser.user.id })
-            .eq('email', email);
+            .update({ auth_user_id: newAuthUser.user.id })
+            .eq('email', email)
+            .eq('organization_id', user.organization_id);
           
           // Update our local user object for the session generation
-          user.id = newAuthUser.user.id;
+          user.auth_user_id = newAuthUser.user.id;
         }
       }
 

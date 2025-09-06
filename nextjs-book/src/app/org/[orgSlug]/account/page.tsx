@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useSupabase } from '@/lib/SupabaseProvider';
 
 export default function AccountPage() {
-  const { user, userProfile, organization, loading: authLoading } = useSupabase();
+  const { user, userProfile, organization, loading: authLoading, refreshUser } = useSupabase();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     firstName: '',
@@ -49,10 +49,11 @@ export default function AccountPage() {
       });
 
       if (response.ok) {
+        const data = await response.json();
         setMessage('Profile updated successfully!');
         setIsEditing(false);
-        // Update the session
-        await update();
+        // Refresh the user profile data
+        await refreshUser();
       } else {
         const data = await response.json();
         setMessage(data.error || 'Failed to update profile');

@@ -1,123 +1,134 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import type { Database } from '@/lib/supabase';
+import { getAuthenticatedUser, createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    // Extract organization slug from the referer header
+    const referer = request.headers.get('referer');
+    let orgSlug: string | undefined = undefined;
     
-    // Create Supabase client for server-side authentication
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              // The `setAll` method was called from a Server Component.
-            }
-          },
-        },
+    if (referer) {
+      const urlMatch = referer.match(/\/org\/([^\/]+)/);
+      if (urlMatch && urlMatch[1]) {
+        orgSlug = urlMatch[1];
       }
-    );
+    }
 
-    // Get the authenticated user
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !authUser) {
+    // Get authenticated user using the helper function
+    const { user, error: authError } = await getAuthenticatedUser(orgSlug);
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user's organization
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('organization_id')
-      .eq('id', authUser.id)
-      .eq('is_active', true)
-      .single();
-
-    if (userError || !user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    // Check if user has permission to view organization stats
+    if (!['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(user.role)) {
+      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
 
-    // Get organization statistics
-    const [
-      // Books accessible to organization (via BookAccess)
-      orgBookAccess,
-      // Books created by this organization
-      orgCreatedBooks,
-      // Total progress records for organization users
-      totalProgress
-    ] = await Promise.all([
-      supabase
-        .from('book_access')
-        .select(`
-          book_id,
-          books(id)
-        `)
-        .eq('organization_id', user.organization_id),
-      supabase
-        .from('books')
-        .select('id')
-        .eq('organization_id', user.organization_id),
-      supabase
-        .from('progress')
-        .select(`
-          completed,
-          time_spent,
-          users!inner(organization_id)
-        `)
-        .eq('users.organization_id', user.organization_id)
-    ]);
+    const supabase = await createClient();
 
-    // Count active users in organization
-    const { count: activeUsers } = await supabase
+    // Get organization users count
+    const { count: totalUsers, error: usersError } = await supabase
       .from('users')
       .select('*', { count: 'exact', head: true })
       .eq('organization_id', user.organization_id)
       .eq('is_active', true);
 
-    // Handle data extraction with error checking
-    const bookAccessData = orgBookAccess.data || [];
-    const createdBooksData = orgCreatedBooks.data || [];
-    const progressData = totalProgress.data || [];
+    if (usersError) {
+      console.error('Error fetching users count:', usersError);
+      return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });
+    }
 
-    // Calculate unique books (combine BookAccess and organization-created books)
-    const bookIds = new Set([
-      ...bookAccessData.map((access: any) => access.books?.id).filter(Boolean),
-      ...createdBooksData.map((book: any) => book.id)
-    ]);
-
-    const totalBooks = bookIds.size;
+    // Get active users (logged in within last 7 days)
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
-    // Calculate completion statistics
-    const completedProgress = progressData.filter((p: any) => p.completed);
-    const completionRate = progressData.length > 0 
-      ? Math.round((completedProgress.length / progressData.length) * 100)
-      : 0;
+    const { count: activeUsers, error: activeUsersError } = await supabase
+      .from('users')
+      .select('*', { count: 'exact', head: true })
+      .eq('organization_id', user.organization_id)
+      .eq('is_active', true)
+      .gte('last_login_at', sevenDaysAgo.toISOString());
 
-    // Calculate total time spent (in minutes)
-    const totalTimeSpent = progressData.reduce((sum: number, p: any) => sum + (p.time_spent || 0), 0);
+    if (activeUsersError) {
+      console.error('Error fetching active users:', activeUsersError);
+    }
+
+    // Get books accessible to the organization
+    const { data: bookAccess, error: bookAccessError } = await supabase
+      .from('book_access')
+      .select(`
+        book_id,
+        books:book_id (
+          id,
+          title
+        )
+      `)
+      .eq('organization_id', user.organization_id);
+
+    if (bookAccessError) {
+      console.error('Error fetching book access:', bookAccessError);
+      return NextResponse.json({ error: 'Failed to fetch books' }, { status: 500 });
+    }
+
+    // Get unique books
+    const uniqueBooks = bookAccess?.reduce((acc, item) => {
+      if (item.books && !acc.find(book => book.id === item.books.id)) {
+        acc.push(item.books);
+      }
+      return acc;
+    }, [] as any[]) || [];
+
+    // Get total chapters from accessible books
+    const bookIds = uniqueBooks.map(book => book.id);
+    let totalChapters = 0;
+    if (bookIds.length > 0) {
+      const { count: chaptersCount, error: chaptersError } = await supabase
+        .from('chapters')
+        .select('*', { count: 'exact', head: true })
+        .in('book_id', bookIds);
+
+      if (chaptersError) {
+        console.error('Error fetching chapters count:', chaptersError);
+      } else {
+        totalChapters = chaptersCount || 0;
+      }
+    }
+
+    // Get progress data for the organization
+    const { data: progressData, error: progressError } = await supabase
+      .from('progress')
+      .select('user_id, completed')
+      .eq('organization_id', user.organization_id);
+
+    if (progressError) {
+      console.error('Error fetching progress data:', progressError);
+    }
+
+    // Calculate completion stats
+    const totalProgress = progressData?.length || 0;
+    const completedProgress = progressData?.filter(p => p.completed).length || 0;
+    const completionRate = totalProgress > 0 ? Math.round((completedProgress / totalProgress) * 100) : 0;
+
+    const organizationStats = {
+      users: {
+        total: totalUsers || 0,
+        active: activeUsers || 0
+      },
+      content: {
+        books: uniqueBooks.length,
+        chapters: totalChapters
+      },
+      engagement: {
+        totalProgress,
+        completedProgress,
+        completionRate
+      }
+    };
 
     return NextResponse.json({
       success: true,
-      data: {
-        totalBooks,
-        activeUsers,
-        completionRate,
-        totalProgress: progressData.length,
-        completedProgress: completedProgress.length,
-        totalTimeSpent, // in minutes
-        hasData: progressData.length > 0 // indicates if there's actual progress data
-      }
+      data: organizationStats
     });
 
   } catch (error) {

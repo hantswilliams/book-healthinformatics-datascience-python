@@ -64,23 +64,36 @@ export async function middleware(request: NextRequest) {
     }
 
     // For authenticated routes, verify user session
+    console.log('🛡️ Middleware: Checking auth for:', pathname);
+    
     // First check if we have session cookies
-    const hasAuthCookies = request.cookies.getAll().some(cookie => 
-      cookie.name.startsWith('sb-') && cookie.value
-    );
+    const allCookies = request.cookies.getAll();
+    const authCookies = allCookies.filter(cookie => cookie.name.startsWith('sb-'));
+    const hasAuthCookies = authCookies.some(cookie => cookie.value);
+    
+    console.log('🍪 Auth cookies found:', authCookies.length);
+    console.log('🍪 Has valid auth cookies:', hasAuthCookies);
 
     if (!hasAuthCookies) {
+      console.log('❌ Middleware: No auth cookies, redirecting to login');
       return NextResponse.redirect(new URL(`/org/${orgSlug}/login`, request.url));
     }
 
     // Try to get user, but be more lenient on errors during cookie refresh
+    console.log('👤 Middleware: Getting user from session...');
     const { data: { user }, error } = await supabase.auth.getUser();
+    
+    console.log('👤 Middleware: User ID:', user?.id || 'none');
+    console.log('❌ Middleware: Auth error:', error?.message || 'none');
 
     // Only redirect if we're certain there's no valid session
     // Ignore temporary network errors or token refresh issues
     if (!user && error && !error.message?.includes('refresh')) {
+      console.log('❌ Middleware: No valid user session, redirecting to login');
       return NextResponse.redirect(new URL(`/org/${orgSlug}/login`, request.url));
     }
+    
+    console.log('✅ Middleware: Auth check passed, allowing access');
 
     // If we have cookies but user is null (likely during refresh), allow through
     // The client-side provider will handle the final authentication state

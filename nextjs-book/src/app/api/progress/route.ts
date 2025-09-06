@@ -3,7 +3,18 @@ import { getAuthenticatedUser, createClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   try {
-    const { user, error: authError } = await getAuthenticatedUser();
+    // Extract organization slug from the referer header
+    const referer = request.headers.get('referer');
+    let orgSlug: string | undefined = undefined;
+    
+    if (referer) {
+      const urlMatch = referer.match(/\/org\/([^\/]+)/);
+      if (urlMatch && urlMatch[1]) {
+        orgSlug = urlMatch[1];
+      }
+    }
+
+    const { user, error: authError } = await getAuthenticatedUser(orgSlug);
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -67,7 +78,18 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const { user, error: authError } = await getAuthenticatedUser();
+    // Extract organization slug from the referer header
+    const referer = request.headers.get('referer');
+    let orgSlug: string | undefined = undefined;
+    
+    if (referer) {
+      const urlMatch = referer.match(/\/org\/([^\/]+)/);
+      if (urlMatch && urlMatch[1]) {
+        orgSlug = urlMatch[1];
+      }
+    }
+
+    const { user, error: authError } = await getAuthenticatedUser(orgSlug);
     
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

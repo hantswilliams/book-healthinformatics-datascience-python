@@ -30,6 +30,8 @@ interface SupabaseContextType {
 const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined);
 
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
+  console.log('🚀🚀🚀 SupabaseProvider: Component mounted/rendered');
+  
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<SupabaseUser | null>(null);
   const [organization, setOrganization] = useState<Organization | null>(null);
@@ -37,43 +39,104 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   
   const supabase = createClient();
+  console.log('🔌 SupabaseProvider: Supabase client created');
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      console.log('Fetching user profile for ID:', userId);
-      const { data: profile, error } = await supabase
-        .from('users')
-        .select(`
-          *,
-          organization:organizations(*)
-        `)
-        .eq('id', userId)
-        .eq('is_active', true)
-        .single();
-
-      console.log('Profile query result - data:', profile, 'error:', error);
-
-      if (error) {
-        console.error('Error fetching user profile:', error);
+      console.log('🔍 SupabaseProvider: Fetching user profile for auth user ID:', userId);
+      console.log('🌍 Current URL:', window.location.href);
+      
+      // Get organization context from URL
+      const orgSlug = window.location.pathname.split('/')[2]; // /org/[orgSlug]/...
+      
+      console.log('🔍 SupabaseProvider: Extracted orgSlug from URL:', orgSlug);
+      console.log('🌐 SupabaseProvider: Current URL:', window.location.href);
+      
+      if (orgSlug && orgSlug !== 'null' && orgSlug !== 'undefined') {
+        console.log('✅ SupabaseProvider: Valid orgSlug found, fetching organization...');
         
-        // Try to fetch without organization join to debug
-        const { data: basicProfile, error: basicError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', userId)
+        // First get the organization
+        const { data: org, error: orgError } = await supabase
+          .from('organizations')
+          .select('id')
+          .eq('slug', orgSlug)
           .single();
-          
-        console.log('Basic profile query - data:', basicProfile, 'error:', basicError);
-        return;
-      }
+        
+        if (orgError || !org) {
+          console.error('❌ SupabaseProvider: Organization lookup failed');
+          console.error('🔍 SupabaseProvider: Searched for orgSlug:', orgSlug);
+          console.error('❌ SupabaseProvider: Database error:', orgError);
+          console.error('📊 SupabaseProvider: Org result:', org);
+          console.error('Organization not found:', orgError);
+          return;
+        }
+        
+        // Then get the user profile for this organization
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select(`
+            *,
+            organization:organizations(*)
+          `)
+          .eq('auth_user_id', userId)
+          .eq('organization_id', org.id)
+          .eq('is_active', true)
+          .single();
+        
+        console.log('Profile query result - data:', profile, 'error:', error);
+        
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          return;
+        }
 
-      if (profile) {
-        console.log('Setting user profile:', profile);
-        console.log('Setting organization:', profile.organization);
-        setUserProfile(profile);
-        setOrganization(profile.organization as Organization);
+        if (profile) {
+          console.log('✅ SupabaseProvider: Setting user profile:', profile);
+          console.log('✅ SupabaseProvider: Setting organization:', profile.organization);
+          setUserProfile(profile);
+          setOrganization(profile.organization as Organization);
+        } else {
+          console.log('❌ SupabaseProvider: No user profile found for auth user ID:', userId, 'in org:', orgSlug);
+          console.log('❌ This will likely cause a redirect to login');
+        }
       } else {
-        console.log('No user profile found for user ID:', userId);
+        // Fallback to old behavior if no org context (shouldn't happen in multi-org setup)
+        console.log('No organization context found, using fallback');
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select(`
+            *,
+            organization:organizations(*)
+          `)
+          .eq('auth_user_id', userId)
+          .eq('is_active', true)
+          .limit(1)
+          .single();
+
+        console.log('Fallback profile query result - data:', profile, 'error:', error);
+
+        if (error) {
+          console.error('Error fetching user profile:', error);
+          
+          // Try to fetch without organization join to debug
+          const { data: basicProfile, error: basicError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('auth_user_id', userId)
+            .single();
+            
+          console.log('Basic profile query - data:', basicProfile, 'error:', basicError);
+          return;
+        }
+
+        if (profile) {
+          console.log('Setting user profile:', profile);
+          console.log('Setting organization:', profile.organization);
+          setUserProfile(profile);
+          setOrganization(profile.organization as Organization);
+        } else {
+          console.log('No user profile found for auth user ID:', userId);
+        }
       }
     } catch (error) {
       console.error('Error fetching user profile:', error);
@@ -176,8 +239,16 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   };
 
   useEffect(() => {
-    // Get initial session with improved error handling
+    console.log('🚀 SupabaseProvider: useEffect starting...');
+    console.log('📍 SupabaseProvider: Current URL in useEffect:', typeof window !== 'undefined' ? window.location.href : 'SSR');
+    
+    // Get initial session with improved error handling  
+    console.log('🔍 SupabaseProvider: Calling supabase.auth.getSession()...');
     supabase.auth.getSession().then(({ data: { session: initialSession }, error }) => {
+      console.log('🔍 SupabaseProvider: Initial session check');
+      console.log('👤 Initial user:', initialSession?.user?.id || 'none');
+      console.log('❌ Session error:', error || 'none');
+      
       if (error) {
         console.error('Error getting initial session:', error);
       }
@@ -186,10 +257,12 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
       setUser(initialSession?.user ?? null);
       
       if (initialSession?.user) {
+        console.log('✅ SupabaseProvider: Initial user found, fetching profile...');
         fetchUserProfile(initialSession.user.id).finally(() => {
           setLoading(false);
         });
       } else {
+        console.log('❌ SupabaseProvider: No initial user, setting loading to false');
         setLoading(false);
       }
     }).catch((error) => {
@@ -200,12 +273,17 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event: AuthChangeEvent, currentSession: Session | null) => {
+        console.log('🔄 SupabaseProvider: Auth state changed:', event);
+        console.log('👤 Current session user:', currentSession?.user?.id || 'none');
+        
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         
         if (currentSession?.user) {
+          console.log('✅ SupabaseProvider: User session found, fetching profile...');
           await fetchUserProfile(currentSession.user.id);
         } else {
+          console.log('❌ SupabaseProvider: No user session, clearing profile');
           setUserProfile(null);
           setOrganization(null);
         }

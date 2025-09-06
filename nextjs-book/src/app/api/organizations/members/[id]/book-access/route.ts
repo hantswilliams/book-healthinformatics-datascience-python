@@ -9,6 +9,17 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Extract organization slug from the referer header
+    const referer = request.headers.get('referer');
+    let orgSlug: string | undefined = undefined;
+    
+    if (referer) {
+      const urlMatch = referer.match(/\/org\/([^\/]+)/);
+      if (urlMatch && urlMatch[1]) {
+        orgSlug = urlMatch[1];
+      }
+    }
+
     const cookieStore = await cookies();
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,12 +48,45 @@ export async function GET(
       );
     }
 
-    // Get current user's details from database
-    const { data: currentUser, error: userError } = await supabase
-      .from('users')
-      .select('id, role, organization_id')
-      .eq('id', authUser.id)
-      .single();
+    // Get current user's details from database using auth_user_id and org context
+    let currentUser, userError;
+    
+    if (orgSlug) {
+      // First get the organization
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('slug', orgSlug)
+        .single();
+      
+      if (orgError || !org) {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+      
+      // Then get the user profile for this organization
+      const result = await supabase
+        .from('users')
+        .select('id, role, organization_id')
+        .eq('auth_user_id', authUser.id)
+        .eq('organization_id', org.id)
+        .eq('is_active', true)
+        .single();
+        
+      currentUser = result.data;
+      userError = result.error;
+    } else {
+      // Fallback to first user profile
+      const result = await supabase
+        .from('users')
+        .select('id, role, organization_id')
+        .eq('auth_user_id', authUser.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+        
+      currentUser = result.data;
+      userError = result.error;
+    }
 
     if (userError || !currentUser || !['OWNER', 'ADMIN'].includes(currentUser.role)) {
       return NextResponse.json(
@@ -139,6 +183,17 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Extract organization slug from the referer header
+    const referer = request.headers.get('referer');
+    let orgSlug: string | undefined = undefined;
+    
+    if (referer) {
+      const urlMatch = referer.match(/\/org\/([^\/]+)/);
+      if (urlMatch && urlMatch[1]) {
+        orgSlug = urlMatch[1];
+      }
+    }
+
     const cookieStore = await cookies();
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -167,12 +222,45 @@ export async function POST(
       );
     }
 
-    // Get current user's details from database
-    const { data: currentUser, error: userError } = await supabase
-      .from('users')
-      .select('id, role, organization_id')
-      .eq('id', authUser.id)
-      .single();
+    // Get current user's details from database using auth_user_id and org context
+    let currentUser, userError;
+    
+    if (orgSlug) {
+      // First get the organization
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('slug', orgSlug)
+        .single();
+      
+      if (orgError || !org) {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+      
+      // Then get the user profile for this organization
+      const result = await supabase
+        .from('users')
+        .select('id, role, organization_id')
+        .eq('auth_user_id', authUser.id)
+        .eq('organization_id', org.id)
+        .eq('is_active', true)
+        .single();
+        
+      currentUser = result.data;
+      userError = result.error;
+    } else {
+      // Fallback to first user profile
+      const result = await supabase
+        .from('users')
+        .select('id, role, organization_id')
+        .eq('auth_user_id', authUser.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+        
+      currentUser = result.data;
+      userError = result.error;
+    }
 
     if (userError || !currentUser || !['OWNER', 'ADMIN'].includes(currentUser.role)) {
       return NextResponse.json(

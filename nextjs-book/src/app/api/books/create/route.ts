@@ -44,6 +44,17 @@ const createBookSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    // Extract organization slug from the referer header
+    const referer = request.headers.get('referer');
+    let orgSlug: string | undefined = undefined;
+    
+    if (referer) {
+      const urlMatch = referer.match(/\/org\/([^\/]+)/);
+      if (urlMatch && urlMatch[1]) {
+        orgSlug = urlMatch[1];
+      }
+    }
+
     const cookieStore = await cookies();
     
     const supabase = createServerClient<Database>(
@@ -69,16 +80,51 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user with organization details
-    const { data: userWithOrg, error: userError } = await supabase
-      .from('users')
-      .select(`
-        *,
-        organization:organizations(*)
-      `)
-      .eq('id', user.id)
-      .eq('is_active', true)
-      .single();
+    // Get user with organization details using auth_user_id and org context
+    let userWithOrg, userError;
+    
+    if (orgSlug) {
+      // First get the organization
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('slug', orgSlug)
+        .single();
+      
+      if (orgError || !org) {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+      
+      // Then get the user profile for this organization
+      const result = await supabase
+        .from('users')
+        .select(`
+          *,
+          organization:organizations(*)
+        `)
+        .eq('auth_user_id', user.id)
+        .eq('organization_id', org.id)
+        .eq('is_active', true)
+        .single();
+        
+      userWithOrg = result.data;
+      userError = result.error;
+    } else {
+      // Fallback to first user profile
+      const result = await supabase
+        .from('users')
+        .select(`
+          *,
+          organization:organizations(*)
+        `)
+        .eq('auth_user_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+        
+      userWithOrg = result.data;
+      userError = result.error;
+    }
 
     if (userError || !userWithOrg || !userWithOrg.organization) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
@@ -142,7 +188,7 @@ export async function POST(request: NextRequest) {
         category: validatedData.category,
         tags: JSON.stringify(validatedData.tags),
         organization_id: userWithOrg.organization.id,
-        created_by: user.id,
+        created_by: userWithOrg.id,
         is_published: true,
         is_public: false,
         display_order: nextOrder

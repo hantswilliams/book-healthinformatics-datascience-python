@@ -30,7 +30,7 @@ export async function createClient() {
 }
 
 // Helper function to get authenticated user with organization
-export async function getAuthenticatedUser() {
+export async function getAuthenticatedUser(orgSlug?: string) {
   const supabase = await createClient();
   
   try {
@@ -40,26 +40,63 @@ export async function getAuthenticatedUser() {
       return { user: null, organization: null, error: authError };
     }
 
-    // Get user details with organization
-    const { data: userWithOrg, error: userError } = await supabase
-      .from('users')
-      .select(`
-        *,
-        organization:organizations(*)
-      `)
-      .eq('id', user.id)
-      .eq('is_active', true)
-      .single();
+    // If orgSlug is provided, get user for specific organization
+    if (orgSlug) {
+      // First get the organization
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('slug', orgSlug)
+        .single();
+      
+      if (orgError || !org) {
+        return { user: null, organization: null, error: orgError };
+      }
+      
+      // Then get the user profile for this organization
+      const { data: userWithOrg, error: userError } = await supabase
+        .from('users')
+        .select(`
+          *,
+          organization:organizations(*)
+        `)
+        .eq('auth_user_id', user.id)
+        .eq('organization_id', org.id)
+        .eq('is_active', true)
+        .single();
 
-    if (userError || !userWithOrg) {
-      return { user: null, organization: null, error: userError };
+      if (userError || !userWithOrg) {
+        return { user: null, organization: null, error: userError };
+      }
+
+      return { 
+        user: userWithOrg, 
+        organization: userWithOrg.organization,
+        error: null 
+      };
+    } else {
+      // Fallback: get first active user profile (for backwards compatibility)
+      const { data: userWithOrg, error: userError } = await supabase
+        .from('users')
+        .select(`
+          *,
+          organization:organizations(*)
+        `)
+        .eq('auth_user_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+
+      if (userError || !userWithOrg) {
+        return { user: null, organization: null, error: userError };
+      }
+
+      return { 
+        user: userWithOrg, 
+        organization: userWithOrg.organization,
+        error: null 
+      };
     }
-
-    return { 
-      user: userWithOrg, 
-      organization: userWithOrg.organization,
-      error: null 
-    };
   } catch (error) {
     console.error('Error getting authenticated user:', error);
     return { user: null, organization: null, error };
@@ -79,7 +116,7 @@ export async function checkOrganizationAccess(organizationSlug: string, userId: 
         is_active,
         organization:organizations!inner(slug, id)
       `)
-      .eq('id', userId)
+      .eq('auth_user_id', userId)
       .eq('organization.slug', organizationSlug)
       .eq('is_active', true)
       .single();

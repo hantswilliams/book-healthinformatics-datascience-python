@@ -97,27 +97,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user is already a member of this or another organization
-    const { data: existingUser, error: userCheckError } = await supabase
+    // Check if user is already a member of THIS organization (users can belong to multiple orgs now)
+    const { data: existingUserInThisOrg, error: userCheckError } = await supabase
       .from('users')
-      .select('organization_id, id')
+      .select('id')
       .eq('email', email)
+      .eq('organization_id', userProfile.organization_id)
       .maybeSingle();
 
     if (userCheckError) {
-      console.error('Error checking existing user:', userCheckError);
+      console.error('Error checking existing user in organization:', userCheckError);
     }
 
-    if (existingUser && existingUser.organization_id === userProfile.organization_id) {
+    if (existingUserInThisOrg) {
       return NextResponse.json(
         { error: 'User is already a member of this organization' },
-        { status: 400 }
-      );
-    }
-
-    if (existingUser && existingUser.organization_id !== userProfile.organization_id) {
-      return NextResponse.json(
-        { error: 'User is already a member of another organization' },
         { status: 400 }
       );
     }
@@ -125,13 +119,35 @@ export async function POST(request: NextRequest) {
     // Generate a unique user ID for the new user
     const newUserId = crypto.randomUUID();
     
+    // Generate unique username within this organization
+    const baseUsername = email.split('@')[0];
+    let username = baseUsername;
+    let counter = 1;
+    
+    // Check if username is unique within this organization
+    while (true) {
+      const { data: existingUsername } = await supabase
+        .from('users')
+        .select('id')
+        .eq('username', username)
+        .eq('organization_id', userProfile.organization_id)
+        .maybeSingle();
+      
+      if (!existingUsername) break; // Username is unique
+      
+      // Try with counter
+      username = `${baseUsername}${counter}`;
+      counter++;
+    }
+    
     // Create user directly in the users table
     const { data: newUser, error: createUserError } = await supabase
       .from('users')
       .insert({
         id: newUserId,
+        auth_user_id: null, // Will be set when user first authenticates
         email,
-        username: email.split('@')[0],
+        username,
         first_name: null,
         last_name: email.split('@')[0], // Use email prefix as temporary last name
         organization_id: userProfile.organization_id,

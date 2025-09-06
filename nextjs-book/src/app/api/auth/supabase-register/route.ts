@@ -14,16 +14,32 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Check if user already exists
-    const { data: existingUser } = await supabase
+    // Check if email+organization combination already exists
+    const { data: existingEmailOrg } = await supabase
       .from('users')
-      .select('id, email, username')
-      .or(`email.eq.${email},username.eq.${username}`)
+      .select('id')
+      .eq('email', email)
+      .eq('organization_id', organizationId)
       .single();
 
-    if (existingUser) {
+    if (existingEmailOrg) {
       return NextResponse.json(
-        { error: 'User with this email or username already exists' },
+        { error: 'User already exists in this organization' },
+        { status: 400 }
+      );
+    }
+
+    // Check if username+organization combination already exists
+    const { data: existingUsernameOrg } = await supabase
+      .from('users')
+      .select('id')
+      .eq('username', username)
+      .eq('organization_id', organizationId)
+      .single();
+
+    if (existingUsernameOrg) {
+      return NextResponse.json(
+        { error: 'Username already taken in this organization' },
         { status: 400 }
       );
     }
@@ -60,6 +76,7 @@ export async function POST(request: NextRequest) {
       .from('users')
       .insert({
         id: authData.user.id,
+        auth_user_id: authData.user.id, // For new users, id and auth_user_id are the same
         email,
         username,
         first_name: firstName || null,

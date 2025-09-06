@@ -5,6 +5,17 @@ import { Database } from '@/lib/supabase-types';
 
 export async function GET(request: NextRequest) {
   try {
+    // Extract organization slug from the referer header
+    const referer = request.headers.get('referer');
+    let orgSlug: string | undefined = undefined;
+    
+    if (referer) {
+      const urlMatch = referer.match(/\/org\/([^\/]+)/);
+      if (urlMatch && urlMatch[1]) {
+        orgSlug = urlMatch[1];
+      }
+    }
+
     const cookieStore = await cookies();
     
     const supabase = createServerClient<Database>(
@@ -30,12 +41,45 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Get user profile to check role and organization
-    const { data: userProfile, error: profileError } = await supabase
-      .from('users')
-      .select('role, organization_id')
-      .eq('id', user.id)
-      .single();
+    // Get user profile to check role and organization using auth_user_id and org context
+    let userProfile, profileError;
+    
+    if (orgSlug) {
+      // First get the organization
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('slug', orgSlug)
+        .single();
+      
+      if (orgError || !org) {
+        return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+      }
+      
+      // Then get the user profile for this organization
+      const result = await supabase
+        .from('users')
+        .select('role, organization_id')
+        .eq('auth_user_id', user.id)
+        .eq('organization_id', org.id)
+        .eq('is_active', true)
+        .single();
+        
+      userProfile = result.data;
+      profileError = result.error;
+    } else {
+      // Fallback to first user profile
+      const result = await supabase
+        .from('users')
+        .select('role, organization_id')
+        .eq('auth_user_id', user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+        
+      userProfile = result.data;
+      profileError = result.error;
+    }
 
     if (profileError || !userProfile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });

@@ -1,43 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
-import type { Database } from '@/lib/supabase';
+import { getAuthenticatedUser, createClient } from '@/lib/supabase-server';
 
 export async function PATCH(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
+    // Extract organization slug from the referer header
+    const referer = request.headers.get('referer');
+    let orgSlug: string | undefined = undefined;
     
-    // Create Supabase client for server-side authentication
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll();
-          },
-          setAll(cookiesToSet) {
-            try {
-              cookiesToSet.forEach(({ name, value, options }) =>
-                cookieStore.set(name, value, options)
-              );
-            } catch {
-              // The `setAll` method was called from a Server Component.
-            }
-          },
-        },
+    if (referer) {
+      const urlMatch = referer.match(/\/org\/([^\/]+)/);
+      if (urlMatch && urlMatch[1]) {
+        orgSlug = urlMatch[1];
       }
-    );
-
-    // Get the authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
     }
+
+    const { user, error: authError } = await getAuthenticatedUser(orgSlug);
+    if (authError || !user) {
+      console.error('Auth error in user update:', authError);
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    console.log('User update - authenticated user:', {
+      id: user.id,
+      email: user.email,
+      organizationId: user.organization_id,
+      role: user.role
+    });
+
+    const supabase = await createClient();
 
     const { firstName, lastName, email } = await request.json();
 
@@ -48,33 +38,20 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    // Check if email is already taken by another user
+    // Check if email is already taken by another user in the same organization
     const { data: existingUser } = await supabase
       .from('users')
       .select('id')
       .eq('email', email)
+      .eq('organization_id', user.organization_id)
       .neq('id', user.id)
       .single();
 
     if (existingUser) {
       return NextResponse.json(
-        { error: 'This email is already in use by another account' },
+        { error: 'This email is already in use by another account in this organization' },
         { status: 400 }
       );
-    }
-
-    // Update user in Supabase Auth (for email)
-    if (email !== user.email) {
-      const { error: updateAuthError } = await supabase.auth.updateUser({
-        email: email
-      });
-      
-      if (updateAuthError) {
-        return NextResponse.json(
-          { error: 'Failed to update email in authentication system' },
-          { status: 400 }
-        );
-      }
     }
 
     // Update user profile in our users table
@@ -84,14 +61,17 @@ export async function PATCH(request: NextRequest) {
         first_name: firstName || null,
         last_name: lastName,
         email,
+        updated_at: new Date().toISOString()
       })
       .eq('id', user.id)
       .select('id, username, email, first_name, last_name, role')
       .single();
 
     if (updateError || !updatedUser) {
+      console.error('Profile update error:', updateError);
+      console.error('Updated user result:', updatedUser);
       return NextResponse.json(
-        { error: 'Failed to update profile' },
+        { error: 'Failed to update profile', details: updateError?.message || 'Unknown error' },
         { status: 500 }
       );
     }
