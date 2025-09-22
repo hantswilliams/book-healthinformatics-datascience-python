@@ -29,6 +29,10 @@ interface SubscriptionStatus {
     currentPeriodEnd: string;
     cancelAtPeriodEnd: boolean;
   };
+  billing?: {
+    status: string;
+    tier: string;
+  };
   permissions: {
     canManageBilling: boolean;
     canInviteUsers: boolean;
@@ -187,13 +191,8 @@ export default function Dashboard() {
               <p className="mt-1 text-sm text-zinc-600 ">Welcome back, {userProfile.first_name || user.email?.split('@')[0]}. Here's your overview.</p>
             </div>
             <div className="flex items-center gap-3">
-              <Badge tone={statusTone(userOrganization.subscription_status).tone}>
-                {userOrganization.subscription_status === 'TRIAL'
-                  ? `Trial · ${Math.max(0, Math.ceil((new Date(userOrganization.trial_ends_at || '').getTime() - Date.now()) / (1000 * 60 * 60 * 24)))}d left`
-                  : statusTone(userOrganization.subscription_status).label}
-              </Badge>
-              <Badge tone={tierTone(userOrganization.subscription_tier).tone}>
-                {tierTone(userOrganization.subscription_tier).label}
+              <Badge tone={tierTone(subscriptionStatus.billing?.tier?.toUpperCase() || subscriptionStatus.organization.subscriptionTier).tone}>
+                {tierTone(subscriptionStatus.billing?.tier?.toUpperCase() || subscriptionStatus.organization.subscriptionTier).label}
               </Badge>
             </div>
           </div>
@@ -202,9 +201,13 @@ export default function Dashboard() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         {/* Alert for trial ending soon - only show if no billing setup */}
-        {userOrganization.subscription_status === 'TRIAL' && userOrganization.trial_ends_at && !userOrganization.stripe_customer_id && (() => {
-          const daysRemaining = Math.max(0, Math.ceil((new Date(userOrganization.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
-          return daysRemaining <= 3 ? (
+        {(() => {
+          const currentStatus = subscriptionStatus.billing?.status?.toUpperCase() || subscriptionStatus.organization.subscriptionStatus;
+          const hasStripeCustomer = subscriptionStatus.organization.hasStripeCustomer;
+
+          if (currentStatus === 'TRIAL' && userOrganization.trial_ends_at && !hasStripeCustomer) {
+            const daysRemaining = Math.max(0, Math.ceil((new Date(userOrganization.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+            return daysRemaining <= 3 ? (
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">
               <div className="flex">
                 <div className="flex-shrink-0">
@@ -224,7 +227,9 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          ) : null;
+            ) : null;
+          }
+          return null;
         })()}
 
         {/* Stats Overview */}
@@ -236,7 +241,7 @@ export default function Dashboard() {
           />
           <StatCard
             label="Plan"
-            value={userOrganization.subscription_tier}
+            value={subscriptionStatus.billing?.tier || subscriptionStatus.organization.subscriptionTier}
             icon={(<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>)}
           />
             <StatCard

@@ -42,8 +42,37 @@ export async function GET(request: NextRequest) {
       .eq('organization_id', organization.id)
       .eq('is_active', true);
 
-    // For now, return a basic subscription status
-    // This can be enhanced later with actual subscription logic
+    // Get the latest billing event to determine actual status
+    const { data: latestBillingEvent } = await supabase
+      .from('billing_events')
+      .select('*')
+      .eq('organization_id', organization.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+
+    // Parse billing metadata to get actual status and tier
+    let billingStatus = organization.subscription_status;
+    let billingTier = organization.subscription_tier;
+    let billingMetadata = null;
+
+    if (latestBillingEvent && latestBillingEvent.metadata) {
+      const metadata = typeof latestBillingEvent.metadata === 'string'
+        ? JSON.parse(latestBillingEvent.metadata)
+        : latestBillingEvent.metadata;
+
+      if (metadata.status) {
+        billingStatus = metadata.status.toUpperCase();
+        billingMetadata = {
+          status: metadata.status,
+          tier: metadata.tier || billingTier
+        };
+      }
+      if (metadata.tier) {
+        billingTier = metadata.tier.toUpperCase();
+      }
+    }
+
     const subscriptionStatus = {
       organization: {
         id: organization.id,
@@ -51,21 +80,24 @@ export async function GET(request: NextRequest) {
         slug: organization.slug,
         description: organization.description,
         currentSeats: userCount || 0,
-        maxSeats: 100, // Default for free tier
-        subscriptionStatus: 'ACTIVE',
-        subscriptionTier: 'FREE',
+        maxSeats: organization.max_seats || 100,
+        subscriptionStatus: billingStatus,
+        subscriptionTier: billingTier,
         createdAt: organization.created_at,
+        hasStripeCustomer: !!organization.stripe_customer_id,
+        trialEndsAt: organization.trial_ends_at,
       },
+      billing: billingMetadata,
       permissions: {
         canManageBilling: user.role === 'OWNER',
         canInviteUsers: ['OWNER', 'ADMIN'].includes(user.role),
         canManageContent: ['OWNER', 'ADMIN'].includes(user.role),
       },
       features: {
-        maxUsers: 100,
+        maxUsers: organization.max_seats || 100,
         maxBooks: 10,
         analyticsEnabled: true,
-        advancedReports: false
+        advancedReports: billingTier === 'PRO' || billingTier === 'ENTERPRISE'
       }
     };
 
