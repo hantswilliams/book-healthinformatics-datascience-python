@@ -201,8 +201,8 @@ export default function Dashboard() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
-        {/* Alert for trial ending soon */}
-        {userOrganization.subscription_status === 'TRIAL' && userOrganization.trial_ends_at && (() => {
+        {/* Alert for trial ending soon - only show if no billing setup */}
+        {userOrganization.subscription_status === 'TRIAL' && userOrganization.trial_ends_at && !userOrganization.stripe_customer_id && (() => {
           const daysRemaining = Math.max(0, Math.ceil((new Date(userOrganization.trial_ends_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
           return daysRemaining <= 3 ? (
             <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6">

@@ -75,13 +75,38 @@ export async function POST(request: NextRequest) {
 
     console.log('📊 Applying tier:', subscriptionTier, 'with seats:', maxSeats);
 
+    // Determine subscription status based on billing events
+    let subscriptionStatus: 'TRIAL' | 'ACTIVE' | 'PAST_DUE' | 'CANCELED' | 'UNPAID' = 'TRIAL';
+
+    // Check for payment success events to determine if billing is active
+    const { data: paymentEvents, error: paymentError } = await supabase
+      .from('billing_events')
+      .select('*')
+      .eq('organization_id', organization.id)
+      .in('event_type', ['PAYMENT_SUCCEEDED', 'SUBSCRIPTION_CREATED'])
+      .order('created_at', { ascending: false });
+
+    if (!paymentError && paymentEvents && paymentEvents.length > 0) {
+      // If we have successful payments or active subscriptions, set to ACTIVE
+      const hasSuccessfulPayment = paymentEvents.some(event =>
+        event.event_type === 'PAYMENT_SUCCEEDED' ||
+        (event.event_type === 'SUBSCRIPTION_CREATED' && metadata?.status === 'active')
+      );
+
+      if (hasSuccessfulPayment) {
+        subscriptionStatus = 'ACTIVE';
+      }
+    }
+
+    console.log('📊 Determined subscription status:', subscriptionStatus);
+
     // Update organization based on latest billing event
     const { error: updateError } = await supabase
       .from('organizations')
       .update({
         subscription_tier: subscriptionTier,
         max_seats: maxSeats,
-        subscription_status: 'TRIAL',
+        subscription_status: subscriptionStatus,
         updated_at: new Date().toISOString(),
       })
       .eq('id', organization.id);
@@ -96,6 +121,7 @@ export async function POST(request: NextRequest) {
       data: {
         tier: subscriptionTier,
         maxSeats,
+        status: subscriptionStatus,
         eventType: latestEvent.event_type,
         appliedAt: new Date().toISOString()
       }
