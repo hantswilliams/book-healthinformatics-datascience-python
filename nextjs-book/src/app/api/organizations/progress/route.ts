@@ -96,30 +96,39 @@ export async function GET(request: NextRequest) {
       return acc;
     }, [] as any[]) || [];
 
-    // Get all progress data for the organization
-    const { data: progressData, error: progressError } = await supabase
-      .from('progress')
-      .select(`
-        id,
-        user_id,
-        book_id,
-        chapter_id,
-        completed,
-        completed_at,
-        time_spent,
-        score,
-        chapters:chapter_id (
+    // Get all progress data for the organization books
+    const allBookIds = (allOrgBooks || []).map(book => book.id);
+    let progressData = [];
+    let progressError = null;
+
+    if (allBookIds.length > 0) {
+      const result = await supabase
+        .from('progress')
+        .select(`
           id,
-          title,
-          book_id
-        ),
-        books:book_id (
-          id,
-          title,
-          slug
-        )
-      `)
-      .eq('books.organization_id', currentUser.organization_id);
+          user_id,
+          book_id,
+          chapter_id,
+          completed,
+          completed_at,
+          time_spent,
+          score,
+          chapters:chapter_id (
+            id,
+            title,
+            book_id
+          ),
+          books:book_id (
+            id,
+            title,
+            slug
+          )
+        `)
+        .in('book_id', allBookIds);
+
+      progressData = result.data;
+      progressError = result.error;
+    }
 
     if (progressError) {
       console.error('Error fetching progress data:', progressError);

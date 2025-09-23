@@ -173,6 +173,11 @@ export default function OrganizationSettings() {
       setSuccess('Organization has been reset successfully. All books and chapters have been deleted.');
       setShowResetConfirm(false);
       setResetConfirmText('');
+
+      // Refresh the page to reflect the changes
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
       
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to reset organization');

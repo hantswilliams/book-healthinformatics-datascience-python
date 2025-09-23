@@ -95,11 +95,19 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Get progress data for the organization
-    const { data: progressData, error: progressError } = await supabase
-      .from('progress')
-      .select('user_id, completed')
-      .eq('organization_id', user.organization_id);
+    // Get progress data for the organization (via books)
+    let progressData = [];
+    let progressError = null;
+
+    if (bookIds.length > 0) {
+      const result = await supabase
+        .from('progress')
+        .select('user_id, completed')
+        .in('book_id', bookIds);
+
+      progressData = result.data;
+      progressError = result.error;
+    }
 
     if (progressError) {
       console.error('Error fetching progress data:', progressError);
