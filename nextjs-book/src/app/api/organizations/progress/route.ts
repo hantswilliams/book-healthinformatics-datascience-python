@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all chapters for ALL books in this organization (for stats)
-    const allBookIds = (allOrgBooks || []).map(book => book.id);
+    // Note: allBookIds was already declared above
     const { data: chaptersData, error: chaptersError } = await supabase
       .from('chapters')
       .select(`
