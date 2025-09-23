@@ -181,25 +181,51 @@ export default function Dashboard() {
   const { permissions } = subscriptionStatus;
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <div className="border-b border-zinc-200  bg-zinc-50/80  backdrop-blur supports-[backdrop-filter]:bg-white/50 ">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 ">{userOrganization.name}</h1>
-              <p className="mt-1 text-sm text-zinc-600 ">Welcome back, {userProfile.first_name || user.email?.split('@')[0]}. Here's your overview.</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50/50">
+      {/* Modern Header */}
+      <div className="border-b border-slate-200/60 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-6 py-8">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            {/* Main Header Content */}
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                <h1 className="text-3xl font-bold tracking-tight text-slate-900">{userOrganization.name}</h1>
+                <Badge tone={tierTone(subscriptionStatus.billing?.tier?.toUpperCase() || subscriptionStatus.organization.subscriptionTier).tone}>
+                  {tierTone(subscriptionStatus.billing?.tier?.toUpperCase() || subscriptionStatus.organization.subscriptionTier).label}
+                </Badge>
+              </div>
+              <p className="text-slate-600">Welcome back, {userProfile.first_name || user.email?.split('@')[0]}. Here's your organization overview.</p>
             </div>
-            <div className="flex items-center gap-3">
-              <Badge tone={tierTone(subscriptionStatus.billing?.tier?.toUpperCase() || subscriptionStatus.organization.subscriptionTier).tone}>
-                {tierTone(subscriptionStatus.billing?.tier?.toUpperCase() || subscriptionStatus.organization.subscriptionTier).label}
-              </Badge>
+
+            {/* Quick Organization Info */}
+            <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                <span className="font-medium text-slate-700">Your Role:</span>
+                <span className="text-slate-600">{userProfile.role}</span>
+              </div>
+              <div className="hidden sm:flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
+                <span className="font-medium text-slate-700">Team:</span>
+                <span className="text-slate-600">{subscriptionStatus?.organization?.currentSeats || 0}/{userOrganization.max_seats}</span>
+              </div>
+              {userOrganization.subscription_ends_at && (
+                <div className="hidden lg:flex items-center gap-2">
+                  <div className="h-2 w-2 rounded-full bg-amber-500"></div>
+                  <span className="font-medium text-slate-700">
+                    {userOrganization.subscription_status === 'TRIAL' ? 'Trial Ends:' : 'Next Billing:'}
+                  </span>
+                  <span className="text-slate-600">
+                    {new Date(userOrganization.subscription_ends_at).toLocaleDateString()}
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
+      <div className="mx-auto max-w-7xl px-6 py-8">
         {/* Alert for trial ending soon - only show if no billing setup */}
         {(() => {
           const currentStatus = subscriptionStatus.billing?.status?.toUpperCase() || subscriptionStatus.organization.subscriptionStatus;
@@ -232,158 +258,251 @@ export default function Dashboard() {
           return null;
         })()}
 
-        {/* Stats Overview */}
-        <div className="mb-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            label="Team Members"
-            value={<>{subscriptionStatus?.organization?.currentSeats || 0} / {userOrganization.max_seats}</>}
-            icon={(<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" /></svg>)}
-          />
-          <StatCard
-            label="Plan"
-            value={subscriptionStatus.billing?.tier || subscriptionStatus.organization.subscriptionTier}
-            icon={(<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>)}
-          />
-            <StatCard
-              label="Courses"
-              value={organizationStats?.totalBooks || 0}
-              icon={(<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>)}
-            />
-          <StatCard
-            label="Completion Rate"
-            value={organizationStats?.hasData ? `${organizationStats.completionRate}%` : 'No data'}
-            icon={(<svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>)}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Quick Actions */}
-          <div className="lg:col-span-2">
-            <Card padding="lg" className="h-full">
-              <h3 className="mb-6 text-sm font-semibold uppercase tracking-wide text-zinc-600">Quick Actions</h3>
-              <div className="space-y-1">
-                  {['OWNER', 'ADMIN'].includes(userProfile?.role || '') && (
-                    <Link
-                      href={`/org/${orgSlug}/dashboard/team`}
-                      className="group flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 backdrop-blur-sm transition hover:border-indigo-300 hover:bg-indigo-50"
-                    >
-                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-zinc-900">Team Management</h4>
-                        <p className="text-xs text-zinc-600">Manage team members and course access</p>
-                      </div>
-                    </Link>
-                  )}
-
-                  {permissions.canManageContent && (
-                    <Link
-                      href={`/org/${orgSlug}/dashboard/content`}
-                      className="group flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 backdrop-blur-sm transition hover:border-indigo-300 hover:bg-indigo-50"
-                    >
-                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-zinc-900">Content Management</h4>
-                        <p className="text-xs text-zinc-600">Build custom Python courses</p>
-                      </div>
-                    </Link>
-                  )}
-
-                  <Link
-                    href={`/org/${orgSlug}/dashboard/progress`}
-                    className="group flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 backdrop-blur-sm transition hover:border-indigo-300 hover:bg-indigo-50"
-                  >
-                    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
-                      <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium text-zinc-900">Chapter Completion</h4>
-                      <p className="text-xs text-zinc-600">Track team learning progress & completion</p>
-                    </div>
-                  </Link>
-
-                  {['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(userProfile?.role || '') && (
-                    <Link
-                      href={`/org/${orgSlug}/dashboard/code-tracking`}
-                      className="group flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 backdrop-blur-sm transition hover:border-indigo-300 hover:bg-indigo-50"
-                    >
-                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-zinc-900">Activity Analytics</h4>
-                        <p className="text-xs text-zinc-600">Monitor code executions & assessments</p>
-                      </div>
-                    </Link>
-                  )}
-
-                  {permissions.canManageBilling && (
-                    <Link
-                      href={`/org/${orgSlug}/dashboard/billing`}
-                      className="group flex items-center gap-3 rounded-lg border border-zinc-200 bg-zinc-50/80 p-3 backdrop-blur-sm transition hover:border-indigo-300 hover:bg-indigo-50"
-                    >
-                      <div className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 group-hover:bg-indigo-100">
-                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-medium text-zinc-900">Billing Management</h4>
-                        <p className="text-xs text-zinc-600">Update payment methods and billing</p>
-                      </div>
-                    </Link>
-                  )}
-                </div>
-            </Card>
+        {/* Enhanced Stats Overview */}
+        <div className="mb-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Team Members Card */}
+          <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-all duration-300 hover:shadow-lg hover:ring-slate-300/50">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-600">Team Members</p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {subscriptionStatus?.organization?.currentSeats || 0}
+                  <span className="text-lg font-normal text-slate-500">/{userOrganization.max_seats}</span>
+                </p>
+              </div>
+              <div className="rounded-xl bg-blue-50 p-3">
+                <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+            </div>
+            {/* Progress Bar */}
+            <div className="mt-4">
+              <div className="h-2 rounded-full bg-slate-100">
+                <div
+                  className="h-2 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 transition-all duration-500"
+                  style={{ width: `${Math.min(((subscriptionStatus?.organization?.currentSeats || 0) / userOrganization.max_seats) * 100, 100)}%` }}
+                ></div>
+              </div>
+            </div>
           </div>
 
-          {/* Organization Info */}
-          <Card padding="lg">
-            <h3 className="mb-5 text-sm font-semibold uppercase tracking-wide text-zinc-600">Organization Info</h3>
-            <dl className="space-y-4">
-              <div className="flex items-start justify-between gap-4">
-                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">Organization</dt>
-                <dd className="text-sm font-medium text-zinc-900">{userOrganization.name}</dd>
+          {/* Plan Card */}
+          <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-all duration-300 hover:shadow-lg hover:ring-slate-300/50">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-600">Current Plan</p>
+                <p className="text-2xl font-bold text-slate-900">
+                  {subscriptionStatus.billing?.tier || subscriptionStatus.organization.subscriptionTier}
+                </p>
               </div>
-              <div className="flex items-start justify-between gap-4">
-                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">Slug</dt>
-                <dd className="text-sm font-medium text-zinc-900">{userOrganization.slug}</dd>
+              <div className="rounded-xl bg-emerald-50 p-3">
+                <svg className="h-6 w-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
               </div>
-              <div className="flex items-start justify-between gap-4">
-                <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">Your Role</dt>
-                <dd className="text-sm font-medium text-zinc-900">{userProfile.role}</dd>
+            </div>
+            <div className="mt-4">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-2 rounded-full bg-emerald-500"></div>
+                <span className="text-sm text-slate-600">Active subscription</span>
               </div>
-              {userOrganization.subscription_ends_at && (
-                <div className="flex items-start justify-between gap-4">
-                  <dt className="text-xs font-medium uppercase tracking-wide text-zinc-500">
-                    {userOrganization.subscription_status === 'TRIAL' ? 'Trial Ends' : 'Next Billing'}
-                  </dt>
-                  <dd className="text-sm font-medium text-zinc-900">
-                    {new Date(userOrganization.subscription_ends_at).toLocaleDateString()}
-                  </dd>
+            </div>
+          </div>
+
+          {/* Courses Card */}
+          <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-all duration-300 hover:shadow-lg hover:ring-slate-300/50">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-600">Available Courses</p>
+                <p className="text-3xl font-bold text-slate-900">{organizationStats?.totalBooks || 0}</p>
+              </div>
+              <div className="rounded-xl bg-purple-50 p-3">
+                <svg className="h-6 w-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+            </div>
+            <div className="mt-4">
+              <p className="text-sm text-slate-600">Ready for learning</p>
+            </div>
+          </div>
+
+          {/* Completion Rate Card */}
+          <div className="group relative overflow-hidden rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-all duration-300 hover:shadow-lg hover:ring-slate-300/50">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <p className="text-sm font-medium text-slate-600">Completion Rate</p>
+                <p className="text-3xl font-bold text-slate-900">
+                  {organizationStats?.hasData ? `${organizationStats.completionRate}%` : '—'}
+                </p>
+              </div>
+              <div className="rounded-xl bg-amber-50 p-3">
+                <svg className="h-6 w-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                </svg>
+              </div>
+            </div>
+            {/* Completion Progress Ring */}
+            {organizationStats?.hasData ? (
+              <div className="mt-4">
+                <div className="flex items-center gap-3">
+                  <div className="relative h-8 w-8">
+                    <svg className="h-8 w-8 -rotate-90 transform" viewBox="0 0 32 32">
+                      <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="4" fill="none" className="text-slate-200" />
+                      <circle
+                        cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="4" fill="none"
+                        className="text-amber-500"
+                        strokeDasharray={`${(organizationStats.completionRate / 100) * 87.96} 87.96`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-sm text-slate-600">Team progress</span>
                 </div>
-              )}
-            </dl>
-            {permissions.canManageBilling && (
-              <div className="mt-6">
-                <Link
-                  href={`/org/${orgSlug}/dashboard/settings`}
-                  className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
-                >
-                  Organization Settings →
-                </Link>
+              </div>
+            ) : (
+              <div className="mt-4">
+                <p className="text-sm text-slate-500">No activity yet</p>
               </div>
             )}
-          </Card>
+          </div>
+        </div>
+
+        {/* Main Dashboard Content */}
+        <div className="space-y-8">
+          {/* Quick Actions - Modern Grid */}
+          <div>
+            <div className="mb-6">
+              <h2 className="text-xl font-semibold text-slate-900">Quick Actions</h2>
+              <p className="mt-1 text-sm text-slate-600">Access frequently used tools and features</p>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {['OWNER', 'ADMIN'].includes(userProfile?.role || '') && (
+                <Link
+                  href={`/org/${orgSlug}/dashboard/team`}
+                  className="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-all duration-300 hover:shadow-md hover:ring-slate-300/50 hover:-translate-y-1"
+                >
+                  <div className="absolute top-0 right-0 h-16 w-16 rounded-bl-3xl bg-gradient-to-br from-blue-500/10 to-blue-600/20"></div>
+                  <div className="relative">
+                    <div className="mb-4 inline-flex rounded-xl bg-blue-50 p-3">
+                      <svg className="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-slate-900">Team Management</h3>
+                    <p className="mt-1 text-sm text-slate-600">Manage team members and course access</p>
+                  </div>
+                </Link>
+              )}
+
+              {permissions.canManageContent && (
+                <Link
+                  href={`/org/${orgSlug}/dashboard/content`}
+                  className="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-all duration-300 hover:shadow-md hover:ring-slate-300/50 hover:-translate-y-1"
+                >
+                  <div className="absolute top-0 right-0 h-16 w-16 rounded-bl-3xl bg-gradient-to-br from-purple-500/10 to-purple-600/20"></div>
+                  <div className="relative">
+                    <div className="mb-4 inline-flex rounded-xl bg-purple-50 p-3">
+                      <svg className="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-slate-900">Content Management</h3>
+                    <p className="mt-1 text-sm text-slate-600">Build custom Python courses</p>
+                  </div>
+                </Link>
+              )}
+
+              <Link
+                href={`/org/${orgSlug}/dashboard/progress`}
+                className="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-all duration-300 hover:shadow-md hover:ring-slate-300/50 hover:-translate-y-1"
+              >
+                <div className="absolute top-0 right-0 h-16 w-16 rounded-bl-3xl bg-gradient-to-br from-emerald-500/10 to-emerald-600/20"></div>
+                <div className="relative">
+                  <div className="mb-4 inline-flex rounded-xl bg-emerald-50 p-3">
+                    <svg className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v4a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-semibold text-slate-900">Chapter Completion</h3>
+                  <p className="mt-1 text-sm text-slate-600">Track team learning progress & completion</p>
+                </div>
+              </Link>
+
+              {['OWNER', 'ADMIN', 'INSTRUCTOR'].includes(userProfile?.role || '') && (
+                <Link
+                  href={`/org/${orgSlug}/dashboard/code-tracking`}
+                  className="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-all duration-300 hover:shadow-md hover:ring-slate-300/50 hover:-translate-y-1"
+                >
+                  <div className="absolute top-0 right-0 h-16 w-16 rounded-bl-3xl bg-gradient-to-br from-indigo-500/10 to-indigo-600/20"></div>
+                  <div className="relative">
+                    <div className="mb-4 inline-flex rounded-xl bg-indigo-50 p-3">
+                      <svg className="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-slate-900">Activity Analytics</h3>
+                    <p className="mt-1 text-sm text-slate-600">Monitor code executions & assessments</p>
+                  </div>
+                </Link>
+              )}
+
+              {permissions.canManageBilling && (
+                <Link
+                  href={`/org/${orgSlug}/dashboard/billing`}
+                  className="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-all duration-300 hover:shadow-md hover:ring-slate-300/50 hover:-translate-y-1"
+                >
+                  <div className="absolute top-0 right-0 h-16 w-16 rounded-bl-3xl bg-gradient-to-br from-amber-500/10 to-amber-600/20"></div>
+                  <div className="relative">
+                    <div className="mb-4 inline-flex rounded-xl bg-amber-50 p-3">
+                      <svg className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-slate-900">Billing Management</h3>
+                    <p className="mt-1 text-sm text-slate-600">Update payment methods and billing</p>
+                  </div>
+                </Link>
+              )}
+
+              {permissions.canManageBilling && (
+                <Link
+                  href={`/org/${orgSlug}/dashboard/settings`}
+                  className="group relative overflow-hidden rounded-xl bg-white p-6 shadow-sm ring-1 ring-slate-200/50 transition-all duration-300 hover:shadow-md hover:ring-slate-300/50 hover:-translate-y-1"
+                >
+                  <div className="absolute top-0 right-0 h-16 w-16 rounded-bl-3xl bg-gradient-to-br from-slate-500/10 to-slate-600/20"></div>
+                  <div className="relative">
+                    <div className="mb-4 inline-flex rounded-xl bg-slate-50 p-3">
+                      <svg className="h-6 w-6 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="font-semibold text-slate-900">Organization Settings</h3>
+                    <p className="mt-1 text-sm text-slate-600">Configure organization preferences</p>
+                  </div>
+                </Link>
+              )}
+            </div>
+          </div>
         </div>
 
         {error && (
-          <Card padding="sm" className="mt-8 border-rose-200 bg-rose-50 text-rose-700">
-            <div className="text-sm">{error}</div>
-          </Card>
+          <div className="mt-8 rounded-xl border border-red-200 bg-red-50 p-4">
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-red-100 p-2">
+                <svg className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="font-medium text-red-900">Dashboard Error</h3>
+                <p className="text-sm text-red-700">{error}</p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

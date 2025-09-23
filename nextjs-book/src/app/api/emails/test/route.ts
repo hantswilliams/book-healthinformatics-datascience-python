@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const testEmailHtml = createEmailTemplate({
       title: 'Email System Test',
       content: `
-        <p>This is a test email from your Python Interactive Learning Platform!</p>
+        <p>This is a test email from your Coding Interactive Learning Platform!</p>
         
         <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 24px 0;">
           <h3 style="margin: 0 0 8px 0; color: #1f2937;">✅ Email System Working</h3>
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
           <li>🎯 Status: Successfully delivered</li>
         </ul>
       `,
-      footerText: 'Python Interactive Learning Platform • Email Test'
+      footerText: 'Coding Interactive Learning Platform • Email Test'
     });
 
     const result = await sendEmail({

@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     try {
       const emailHtml = createVerificationCodeEmail({
         userName: user.first_name || user.username || email.split('@')[0],
-        organizationName: user.organizations?.name || 'Python Interactive',
+        organizationName: user.organizations?.name || 'Coding Interactive',
         verificationCode: code,
         expiresInMinutes: 10
       });
