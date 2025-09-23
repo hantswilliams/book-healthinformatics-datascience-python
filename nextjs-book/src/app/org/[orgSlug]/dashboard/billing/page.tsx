@@ -163,60 +163,57 @@ export default function BillingOverview() {
         </p>
       </div>
 
-      {/* Main Actions */}
-      <div className="grid gap-6 md:grid-cols-2">
-        {/* Manage Current Subscription */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center mb-4">
-            <CreditCard className="w-6 h-6 text-cyan-500 mr-3" />
-            <h2 className="text-lg font-semibold text-gray-900">Current Subscription</h2>
+      {/* Select Plan - Full Width */}
+      <div className="bg-white rounded-lg border border-gray-200 p-8">
+        <div className="flex items-center mb-6">
+          <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center mr-4">
+            <div className="w-4 h-4 bg-emerald-500 rounded-full"></div>
           </div>
-          <p className="text-gray-600 mb-6">
-            View your current plan, update payment methods, download invoices, and manage your subscription.
-          </p>
-          <div className="space-y-2">
-            <button
-              onClick={handleManageBilling}
-              disabled={isRedirecting}
-              className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center"
-            >
-              {isRedirecting ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <ExternalLink className="w-4 h-4 mr-2" />
-              )}
-              Manage Billing
-            </button>
-          </div>
+          <h2 className="text-2xl font-semibold text-gray-900">Select Plan</h2>
         </div>
+        <p className="text-gray-600 mb-8 text-lg">
+          Get access to more learners, advanced features, and priority support.
+        </p>
+        <div className="grid gap-4 md:grid-cols-2 max-w-4xl">
+          <button
+            onClick={() => handleUpgrade('STARTER')}
+            disabled={isRedirecting}
+            className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white px-6 py-4 rounded-lg font-medium transition-colors text-lg"
+          >
+            Starter - 25 users - $29/month
+          </button>
+          <button
+            onClick={() => handleUpgrade('PRO')}
+            disabled={isRedirecting}
+            className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white px-6 py-4 rounded-lg font-medium transition-colors text-lg"
+          >
+            Professional - 500 users - $99/month
+          </button>
+        </div>
+      </div>
 
-        {/* Upgrade Plan */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center mb-4">
-            <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center mr-3">
-              <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+      {/* Manage Billing - Compact */}
+      <div className="bg-gray-50 rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <CreditCard className="w-5 h-5 text-cyan-500 mr-3" />
+            <div>
+              <h3 className="text-sm font-medium text-gray-900">Manage Billing</h3>
+              <p className="text-xs text-gray-600">View invoices, update payment methods</p>
             </div>
-            <h2 className="text-lg font-semibold text-gray-900">Change Plan</h2>
           </div>
-          <p className="text-gray-600 mb-6">
-            Get access to more learners, advanced features, and priority support.
-          </p>
-          <div className="space-y-3">
-            <button
-              onClick={() => handleUpgrade('STARTER')}
-              disabled={isRedirecting}
-              className="w-full bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Starter - 25 users - $29/month
-            </button>
-            <button
-              onClick={() => handleUpgrade('PRO')}
-              disabled={isRedirecting}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              Professional 500 users - $99/month
-            </button>
-          </div>
+          <button
+            onClick={handleManageBilling}
+            disabled={isRedirecting}
+            className="bg-cyan-600 hover:bg-cyan-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors flex items-center"
+          >
+            {isRedirecting ? (
+              <Loader2 className="w-4 h-4 animate-spin mr-2" />
+            ) : (
+              <ExternalLink className="w-4 h-4 mr-2" />
+            )}
+            Manage
+          </button>
         </div>
       </div>
 
