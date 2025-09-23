@@ -157,9 +157,20 @@ export async function DELETE(request: NextRequest) {
       // Don't throw - this is not critical
     }
 
+    // Delete organization resources (custom resources)
+    const { error: resourcesError } = await supabase
+      .from('organization_resources')
+      .delete()
+      .eq('organization_id', organization.id);
+
+    if (resourcesError) {
+      console.error('Error deleting organization resources:', resourcesError);
+      // Don't throw - this is not critical
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Organization has been reset successfully. All books and chapters have been deleted.'
+      message: 'Organization has been reset successfully. All books, chapters, and custom resources have been deleted.'
     });
 
   } catch (error) {

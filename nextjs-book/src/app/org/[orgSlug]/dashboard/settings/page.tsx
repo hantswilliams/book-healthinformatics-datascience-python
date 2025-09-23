@@ -170,7 +170,7 @@ export default function OrganizationSettings() {
         throw new Error(result.error || 'Failed to reset organization');
       }
 
-      setSuccess('Organization has been reset successfully. All books and chapters have been deleted.');
+      setSuccess('Organization has been reset successfully. All books, chapters, and custom resources have been deleted.');
       setShowResetConfirm(false);
       setResetConfirmText('');
 
@@ -471,6 +471,42 @@ export default function OrganizationSettings() {
           </div>
         </div>
 
+        {/* Resources Management Section - Only show for OWNER and ADMIN */}
+        {(userProfile?.role === 'OWNER' || userProfile?.role === 'ADMIN') && (
+          <div className="mt-8">
+            <div className="bg-white shadow rounded-lg border-l-4 border-blue-500">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  <h3 className="text-lg font-medium text-gray-900">Organization Resources</h3>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  Manage custom resources that will be displayed on your organization's resources page.
+                </p>
+              </div>
+              <div className="px-6 py-4">
+                <div className="text-center py-6">
+                  <svg className="w-12 h-12 text-blue-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                  </svg>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">Resources Management</h4>
+                  <p className="text-gray-600 mb-4 max-w-sm mx-auto">
+                    Add custom learning resources, tools, and documentation links for your organization members.
+                  </p>
+                  <button
+                    onClick={() => window.location.href = `/org/${orgSlug}/dashboard/settings/resources`}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+                  >
+                    Manage Resources
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Dangerous Actions Section - Only show for OWNER */}
         {userProfile?.role === 'OWNER' && (
           <div className="mt-8">
@@ -497,7 +533,7 @@ export default function OrganizationSettings() {
                     <div className="ml-3 flex-1">
                       <h4 className="text-sm font-medium text-red-800">Reset Organization</h4>
                       <p className="text-sm text-red-700 mt-1">
-                        Permanently delete all books, chapters, and learning content associated with this organization. 
+                        Permanently delete all books, chapters, custom resources, and learning content associated with this organization.
                         This action cannot be undone and will remove all content created by your organization.
                       </p>
                       <div className="mt-4">
@@ -530,11 +566,11 @@ export default function OrganizationSettings() {
               <h3 className="text-lg leading-6 font-medium text-gray-900 mt-4">Reset Organization</h3>
               <div className="mt-2 px-7 py-3">
                 <p className="text-sm text-gray-500">
-                  This will permanently delete <strong>ALL books and chapters</strong> associated with your organization: 
+                  This will permanently delete <strong>ALL books, chapters, and custom resources</strong> associated with your organization:
                   <span className="font-semibold text-gray-900"> "{organization?.name}"</span>
                 </p>
                 <p className="text-sm text-gray-500 mt-2">
-                  This action cannot be undone. All learning content will be lost forever.
+                  This action cannot be undone. All learning content and custom resources will be lost forever.
                 </p>
                 <div className="mt-4">
                   <label className="block text-sm font-medium text-zinc-700 mb-2">
