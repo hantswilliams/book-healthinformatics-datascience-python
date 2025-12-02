@@ -54,7 +54,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('📄 Raw request body:', body);
     
-    const { email, orgSlug } = checkUserRoleSchema.parse(body);
+    const { email: rawEmail, orgSlug } = checkUserRoleSchema.parse(body);
+    const email = rawEmail.toLowerCase();
     console.log('✅ Parsed request data:', { email, orgSlug });
 
     console.log(`🔍 Looking for organization with slug: "${orgSlug}"`);
