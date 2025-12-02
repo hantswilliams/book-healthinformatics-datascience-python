@@ -34,7 +34,9 @@ export async function POST(request: NextRequest) {
     );
 
     const body = await request.json();
-    const { email, orgSlug } = sendCodeSchema.parse(body);
+    // Normalize email for consistent lookups
+    const { email: rawEmail, orgSlug } = sendCodeSchema.parse(body);
+    const email = rawEmail.toLowerCase();
 
     // Check if user exists in our system - proper join syntax for foreign key relationship
     const { data: users, error: userError } = await supabase

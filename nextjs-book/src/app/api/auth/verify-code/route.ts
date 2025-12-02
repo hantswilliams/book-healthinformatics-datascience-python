@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
     );
 
     const body = await request.json();
-    const { email, code, orgSlug } = verifyCodeSchema.parse(body);
+    // Normalize email to avoid case-sensitive mismatches
+    const { email: rawEmail, code, orgSlug } = verifyCodeSchema.parse(body);
+    const email = rawEmail.toLowerCase();
 
     console.log(`🔍 Verifying code: ${code} for email: ${email}`);
 
@@ -159,28 +161,46 @@ export async function POST(request: NextRequest) {
       // Create or get Supabase auth user
       let authUser;
       
-      // First, try to get existing auth user by email (more reliable than ID lookup)
-      const { data: existingAuthUserByEmail } = await supabase.auth.admin.listUsers();
-      const existingUser = existingAuthUserByEmail.users.find(u => u.email === email);
-      
-      if (existingUser) {
-        console.log('✅ Found existing Supabase auth user:', existingUser.id);
-        authUser = existingUser;
-        
-        // Update the user record auth_user_id if it doesn't match
-        if (existingUser.id !== user.auth_user_id) {
-          console.log(`🔄 Updating user record auth_user_id from ${user.auth_user_id} to ${existingUser.id}`);
-          await supabase
-            .from('users')
-            .update({ auth_user_id: existingUser.id })
-            .eq('email', email)
-            .eq('organization_id', user.organization_id);
-          
-          // Update our local user object for the session generation
-          user.auth_user_id = existingUser.id;
+      // Prefer looking up by the stored auth_user_id to avoid scanning all auth users
+      if (user.auth_user_id) {
+        const { data: authUserResult, error: getUserError } = await supabase.auth.admin.getUserById(user.auth_user_id);
+
+        if (getUserError) {
+          console.error('Error fetching auth user by id:', getUserError);
         }
-      } else {
-        // Create new Supabase auth user with a new ID
+
+        if (authUserResult?.user) {
+          console.log('✅ Found existing Supabase auth user by id:', authUserResult.user.id);
+          authUser = authUserResult.user;
+        }
+      }
+
+      // Fallback to email lookup only if we still have not matched an auth user
+      if (!authUser) {
+        const { data: existingAuthUserByEmail } = await supabase.auth.admin.listUsers();
+        const existingUser = existingAuthUserByEmail.users.find(u => u.email?.toLowerCase() === email);
+
+        if (existingUser) {
+          console.log('✅ Found existing Supabase auth user via listUsers:', existingUser.id);
+          authUser = existingUser;
+
+          // Update the user record auth_user_id if it doesn't match
+          if (existingUser.id !== user.auth_user_id) {
+            console.log(`🔄 Updating user record auth_user_id from ${user.auth_user_id} to ${existingUser.id}`);
+            await supabase
+              .from('users')
+              .update({ auth_user_id: existingUser.id })
+              .eq('email', email)
+              .eq('organization_id', user.organization_id);
+
+            // Update our local user object for the session generation
+            user.auth_user_id = existingUser.id;
+          }
+        }
+      }
+
+      // If no auth user exists, create one now
+      if (!authUser) {
         const { data: newAuthUser, error: authError } = await supabase.auth.admin.createUser({
           email,
           email_confirm: true,
@@ -196,14 +216,14 @@ export async function POST(request: NextRequest) {
         } else {
           console.log('✅ Created new Supabase auth user:', newAuthUser.user.id);
           authUser = newAuthUser.user;
-          
+
           // Update our user record with the new auth user ID
           await supabase
             .from('users')
             .update({ auth_user_id: newAuthUser.user.id })
             .eq('email', email)
             .eq('organization_id', user.organization_id);
-          
+
           // Update our local user object for the session generation
           user.auth_user_id = newAuthUser.user.id;
         }
