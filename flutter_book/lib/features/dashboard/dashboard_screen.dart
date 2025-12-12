@@ -22,6 +22,19 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final userAsync = ref.watch(dashboardUserProvider);
 
+    // Set the current user in the provider when loaded
+    userAsync.whenData((user) {
+      if (user != null) {
+        // Only update if the user has changed
+        final currentUser = ref.read(currentUserProvider);
+        if (currentUser?.id != user.id) {
+          Future.microtask(() {
+            ref.read(currentUserProvider.notifier).setUser(user);
+          });
+        }
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(title: const Text("Dashboard")),
       body: userAsync.when(

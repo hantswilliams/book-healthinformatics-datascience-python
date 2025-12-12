@@ -4,6 +4,7 @@ import '../../data/database.dart';
 import '../../repositories/instructor_repository.dart';
 import '../../providers.dart';
 import 'student_details_screen.dart';
+import 'instructor_courses_screen.dart';
 
 // Provider for instructor repository
 final instructorRepositoryProvider = Provider<InstructorRepository>((ref) {
@@ -42,47 +43,91 @@ class InstructorDashboardScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Student Roster'),
+        title: const Text('Instructor Dashboard'),
         elevation: 2,
       ),
-      body: studentsAsync.when(
-        data: (students) {
-          if (students.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.people_outline, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'No students enrolled yet',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                ],
+      body: Column(
+        children: [
+          // Manage Courses Button
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Card(
+              child: ListTile(
+                leading: const Icon(Icons.book, color: Colors.blue),
+                title: const Text(
+                  'Manage Courses',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('Create and edit courses and chapters'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const InstructorCoursesScreen(),
+                    ),
+                  );
+                },
               ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: students.length,
-            itemBuilder: (context, index) {
-              final student = students[index];
-              return _StudentCard(student: student);
-            },
-          );
-        },
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text('Error: $error'),
-            ],
+            ),
           ),
-        ),
+          const Divider(),
+          // Student Roster Section
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.people, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Student Roster',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: studentsAsync.when(
+              data: (students) {
+                if (students.isEmpty) {
+                  return const Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.people_outline, size: 64, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          'No students enrolled yet',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: students.length,
+                  itemBuilder: (context, index) {
+                    final student = students[index];
+                    return _StudentCard(student: student);
+                  },
+                );
+              },
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text('Error: $error'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

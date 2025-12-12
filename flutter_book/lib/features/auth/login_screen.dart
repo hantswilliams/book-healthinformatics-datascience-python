@@ -22,6 +22,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         _emailController.text.trim(),
         _passwordController.text.trim(),
       );
+      
+      // Fetch and set the current user
+      final user = await authRepo.getCurrentUser();
+      if (user != null) {
+        ref.read(currentUserProvider.notifier).setUser(user);
+      }
+      
       // Router will handle redirect based on authState changes
     } catch (e) {
       if (mounted) {

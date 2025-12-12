@@ -1279,6 +1279,44 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES users (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1290,6 +1328,9 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
     difficulty,
     displayOrder,
     isPublished,
+    createdBy,
+    createdAt,
+    updatedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1376,6 +1417,26 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         ),
       );
     }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdByMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
     return context;
   }
 
@@ -1421,6 +1482,18 @@ class $BooksTable extends Books with TableInfo<$BooksTable, Book> {
         DriftSqlType.bool,
         data['${effectivePrefix}is_published'],
       )!,
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
     );
   }
 
@@ -1440,6 +1513,9 @@ class Book extends DataClass implements Insertable<Book> {
   final String difficulty;
   final int displayOrder;
   final bool isPublished;
+  final String createdBy;
+  final DateTime createdAt;
+  final DateTime updatedAt;
   const Book({
     required this.id,
     required this.organizationId,
@@ -1450,6 +1526,9 @@ class Book extends DataClass implements Insertable<Book> {
     required this.difficulty,
     required this.displayOrder,
     required this.isPublished,
+    required this.createdBy,
+    required this.createdAt,
+    required this.updatedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1467,6 +1546,9 @@ class Book extends DataClass implements Insertable<Book> {
     map['difficulty'] = Variable<String>(difficulty);
     map['display_order'] = Variable<int>(displayOrder);
     map['is_published'] = Variable<bool>(isPublished);
+    map['created_by'] = Variable<String>(createdBy);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
 
@@ -1485,6 +1567,9 @@ class Book extends DataClass implements Insertable<Book> {
       difficulty: Value(difficulty),
       displayOrder: Value(displayOrder),
       isPublished: Value(isPublished),
+      createdBy: Value(createdBy),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
     );
   }
 
@@ -1503,6 +1588,9 @@ class Book extends DataClass implements Insertable<Book> {
       difficulty: serializer.fromJson<String>(json['difficulty']),
       displayOrder: serializer.fromJson<int>(json['displayOrder']),
       isPublished: serializer.fromJson<bool>(json['isPublished']),
+      createdBy: serializer.fromJson<String>(json['createdBy']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
   @override
@@ -1518,6 +1606,9 @@ class Book extends DataClass implements Insertable<Book> {
       'difficulty': serializer.toJson<String>(difficulty),
       'displayOrder': serializer.toJson<int>(displayOrder),
       'isPublished': serializer.toJson<bool>(isPublished),
+      'createdBy': serializer.toJson<String>(createdBy),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
 
@@ -1531,6 +1622,9 @@ class Book extends DataClass implements Insertable<Book> {
     String? difficulty,
     int? displayOrder,
     bool? isPublished,
+    String? createdBy,
+    DateTime? createdAt,
+    DateTime? updatedAt,
   }) => Book(
     id: id ?? this.id,
     organizationId: organizationId ?? this.organizationId,
@@ -1541,6 +1635,9 @@ class Book extends DataClass implements Insertable<Book> {
     difficulty: difficulty ?? this.difficulty,
     displayOrder: displayOrder ?? this.displayOrder,
     isPublished: isPublished ?? this.isPublished,
+    createdBy: createdBy ?? this.createdBy,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
   );
   Book copyWithCompanion(BooksCompanion data) {
     return Book(
@@ -1565,6 +1662,9 @@ class Book extends DataClass implements Insertable<Book> {
       isPublished: data.isPublished.present
           ? data.isPublished.value
           : this.isPublished,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
 
@@ -1579,7 +1679,10 @@ class Book extends DataClass implements Insertable<Book> {
           ..write('coverImage: $coverImage, ')
           ..write('difficulty: $difficulty, ')
           ..write('displayOrder: $displayOrder, ')
-          ..write('isPublished: $isPublished')
+          ..write('isPublished: $isPublished, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
   }
@@ -1595,6 +1698,9 @@ class Book extends DataClass implements Insertable<Book> {
     difficulty,
     displayOrder,
     isPublished,
+    createdBy,
+    createdAt,
+    updatedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -1608,7 +1714,10 @@ class Book extends DataClass implements Insertable<Book> {
           other.coverImage == this.coverImage &&
           other.difficulty == this.difficulty &&
           other.displayOrder == this.displayOrder &&
-          other.isPublished == this.isPublished);
+          other.isPublished == this.isPublished &&
+          other.createdBy == this.createdBy &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
 }
 
 class BooksCompanion extends UpdateCompanion<Book> {
@@ -1621,6 +1730,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
   final Value<String> difficulty;
   final Value<int> displayOrder;
   final Value<bool> isPublished;
+  final Value<String> createdBy;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
   final Value<int> rowid;
   const BooksCompanion({
     this.id = const Value.absent(),
@@ -1632,6 +1744,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.difficulty = const Value.absent(),
     this.displayOrder = const Value.absent(),
     this.isPublished = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   BooksCompanion.insert({
@@ -1644,12 +1759,16 @@ class BooksCompanion extends UpdateCompanion<Book> {
     this.difficulty = const Value.absent(),
     required int displayOrder,
     this.isPublished = const Value.absent(),
+    required String createdBy,
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        organizationId = Value(organizationId),
        slug = Value(slug),
        title = Value(title),
-       displayOrder = Value(displayOrder);
+       displayOrder = Value(displayOrder),
+       createdBy = Value(createdBy);
   static Insertable<Book> custom({
     Expression<String>? id,
     Expression<String>? organizationId,
@@ -1660,6 +1779,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Expression<String>? difficulty,
     Expression<int>? displayOrder,
     Expression<bool>? isPublished,
+    Expression<String>? createdBy,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -1672,6 +1794,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
       if (difficulty != null) 'difficulty': difficulty,
       if (displayOrder != null) 'display_order': displayOrder,
       if (isPublished != null) 'is_published': isPublished,
+      if (createdBy != null) 'created_by': createdBy,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -1686,6 +1811,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
     Value<String>? difficulty,
     Value<int>? displayOrder,
     Value<bool>? isPublished,
+    Value<String>? createdBy,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
     Value<int>? rowid,
   }) {
     return BooksCompanion(
@@ -1698,6 +1826,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
       difficulty: difficulty ?? this.difficulty,
       displayOrder: displayOrder ?? this.displayOrder,
       isPublished: isPublished ?? this.isPublished,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -1732,6 +1863,15 @@ class BooksCompanion extends UpdateCompanion<Book> {
     if (isPublished.present) {
       map['is_published'] = Variable<bool>(isPublished.value);
     }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -1750,6 +1890,9 @@ class BooksCompanion extends UpdateCompanion<Book> {
           ..write('difficulty: $difficulty, ')
           ..write('displayOrder: $displayOrder, ')
           ..write('isPublished: $isPublished, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -1844,6 +1987,71 @@ class $ChaptersTable extends Chapters with TableInfo<$ChaptersTable, Chapter> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _createdByMeta = const VerificationMeta(
+    'createdBy',
+  );
+  @override
+  late final GeneratedColumn<String> createdBy = GeneratedColumn<String>(
+    'created_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES users (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _pythonPackagesMeta = const VerificationMeta(
+    'pythonPackages',
+  );
+  @override
+  late final GeneratedColumn<String> pythonPackages = GeneratedColumn<String>(
+    'python_packages',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('["numpy", "pandas", "matplotlib"]'),
+  );
+  static const VerificationMeta _isolatedCellsMeta = const VerificationMeta(
+    'isolatedCells',
+  );
+  @override
+  late final GeneratedColumn<bool> isolatedCells = GeneratedColumn<bool>(
+    'isolated_cells',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("isolated_cells" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1854,6 +2062,11 @@ class $ChaptersTable extends Chapters with TableInfo<$ChaptersTable, Chapter> {
     markdownUrl,
     pythonUrl,
     estimatedMinutes,
+    createdBy,
+    createdAt,
+    updatedAt,
+    pythonPackages,
+    isolatedCells,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1935,6 +2148,44 @@ class $ChaptersTable extends Chapters with TableInfo<$ChaptersTable, Chapter> {
         ),
       );
     }
+    if (data.containsKey('created_by')) {
+      context.handle(
+        _createdByMeta,
+        createdBy.isAcceptableOrUnknown(data['created_by']!, _createdByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_createdByMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    if (data.containsKey('python_packages')) {
+      context.handle(
+        _pythonPackagesMeta,
+        pythonPackages.isAcceptableOrUnknown(
+          data['python_packages']!,
+          _pythonPackagesMeta,
+        ),
+      );
+    }
+    if (data.containsKey('isolated_cells')) {
+      context.handle(
+        _isolatedCellsMeta,
+        isolatedCells.isAcceptableOrUnknown(
+          data['isolated_cells']!,
+          _isolatedCellsMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1976,6 +2227,26 @@ class $ChaptersTable extends Chapters with TableInfo<$ChaptersTable, Chapter> {
         DriftSqlType.int,
         data['${effectivePrefix}estimated_minutes'],
       ),
+      createdBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}created_by'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      pythonPackages: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}python_packages'],
+      )!,
+      isolatedCells: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}isolated_cells'],
+      )!,
     );
   }
 
@@ -1994,6 +2265,11 @@ class Chapter extends DataClass implements Insertable<Chapter> {
   final String markdownUrl;
   final String pythonUrl;
   final int? estimatedMinutes;
+  final String createdBy;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  final String pythonPackages;
+  final bool isolatedCells;
   const Chapter({
     required this.id,
     required this.bookId,
@@ -2003,6 +2279,11 @@ class Chapter extends DataClass implements Insertable<Chapter> {
     required this.markdownUrl,
     required this.pythonUrl,
     this.estimatedMinutes,
+    required this.createdBy,
+    required this.createdAt,
+    required this.updatedAt,
+    required this.pythonPackages,
+    required this.isolatedCells,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -2017,6 +2298,11 @@ class Chapter extends DataClass implements Insertable<Chapter> {
     if (!nullToAbsent || estimatedMinutes != null) {
       map['estimated_minutes'] = Variable<int>(estimatedMinutes);
     }
+    map['created_by'] = Variable<String>(createdBy);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['python_packages'] = Variable<String>(pythonPackages);
+    map['isolated_cells'] = Variable<bool>(isolatedCells);
     return map;
   }
 
@@ -2032,6 +2318,11 @@ class Chapter extends DataClass implements Insertable<Chapter> {
       estimatedMinutes: estimatedMinutes == null && nullToAbsent
           ? const Value.absent()
           : Value(estimatedMinutes),
+      createdBy: Value(createdBy),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+      pythonPackages: Value(pythonPackages),
+      isolatedCells: Value(isolatedCells),
     );
   }
 
@@ -2049,6 +2340,11 @@ class Chapter extends DataClass implements Insertable<Chapter> {
       markdownUrl: serializer.fromJson<String>(json['markdownUrl']),
       pythonUrl: serializer.fromJson<String>(json['pythonUrl']),
       estimatedMinutes: serializer.fromJson<int?>(json['estimatedMinutes']),
+      createdBy: serializer.fromJson<String>(json['createdBy']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      pythonPackages: serializer.fromJson<String>(json['pythonPackages']),
+      isolatedCells: serializer.fromJson<bool>(json['isolatedCells']),
     );
   }
   @override
@@ -2063,6 +2359,11 @@ class Chapter extends DataClass implements Insertable<Chapter> {
       'markdownUrl': serializer.toJson<String>(markdownUrl),
       'pythonUrl': serializer.toJson<String>(pythonUrl),
       'estimatedMinutes': serializer.toJson<int?>(estimatedMinutes),
+      'createdBy': serializer.toJson<String>(createdBy),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'pythonPackages': serializer.toJson<String>(pythonPackages),
+      'isolatedCells': serializer.toJson<bool>(isolatedCells),
     };
   }
 
@@ -2075,6 +2376,11 @@ class Chapter extends DataClass implements Insertable<Chapter> {
     String? markdownUrl,
     String? pythonUrl,
     Value<int?> estimatedMinutes = const Value.absent(),
+    String? createdBy,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? pythonPackages,
+    bool? isolatedCells,
   }) => Chapter(
     id: id ?? this.id,
     bookId: bookId ?? this.bookId,
@@ -2086,6 +2392,11 @@ class Chapter extends DataClass implements Insertable<Chapter> {
     estimatedMinutes: estimatedMinutes.present
         ? estimatedMinutes.value
         : this.estimatedMinutes,
+    createdBy: createdBy ?? this.createdBy,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    pythonPackages: pythonPackages ?? this.pythonPackages,
+    isolatedCells: isolatedCells ?? this.isolatedCells,
   );
   Chapter copyWithCompanion(ChaptersCompanion data) {
     return Chapter(
@@ -2103,6 +2414,15 @@ class Chapter extends DataClass implements Insertable<Chapter> {
       estimatedMinutes: data.estimatedMinutes.present
           ? data.estimatedMinutes.value
           : this.estimatedMinutes,
+      createdBy: data.createdBy.present ? data.createdBy.value : this.createdBy,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      pythonPackages: data.pythonPackages.present
+          ? data.pythonPackages.value
+          : this.pythonPackages,
+      isolatedCells: data.isolatedCells.present
+          ? data.isolatedCells.value
+          : this.isolatedCells,
     );
   }
 
@@ -2116,7 +2436,12 @@ class Chapter extends DataClass implements Insertable<Chapter> {
           ..write('displayOrder: $displayOrder, ')
           ..write('markdownUrl: $markdownUrl, ')
           ..write('pythonUrl: $pythonUrl, ')
-          ..write('estimatedMinutes: $estimatedMinutes')
+          ..write('estimatedMinutes: $estimatedMinutes, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pythonPackages: $pythonPackages, ')
+          ..write('isolatedCells: $isolatedCells')
           ..write(')'))
         .toString();
   }
@@ -2131,6 +2456,11 @@ class Chapter extends DataClass implements Insertable<Chapter> {
     markdownUrl,
     pythonUrl,
     estimatedMinutes,
+    createdBy,
+    createdAt,
+    updatedAt,
+    pythonPackages,
+    isolatedCells,
   );
   @override
   bool operator ==(Object other) =>
@@ -2143,7 +2473,12 @@ class Chapter extends DataClass implements Insertable<Chapter> {
           other.displayOrder == this.displayOrder &&
           other.markdownUrl == this.markdownUrl &&
           other.pythonUrl == this.pythonUrl &&
-          other.estimatedMinutes == this.estimatedMinutes);
+          other.estimatedMinutes == this.estimatedMinutes &&
+          other.createdBy == this.createdBy &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt &&
+          other.pythonPackages == this.pythonPackages &&
+          other.isolatedCells == this.isolatedCells);
 }
 
 class ChaptersCompanion extends UpdateCompanion<Chapter> {
@@ -2155,6 +2490,11 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
   final Value<String> markdownUrl;
   final Value<String> pythonUrl;
   final Value<int?> estimatedMinutes;
+  final Value<String> createdBy;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  final Value<String> pythonPackages;
+  final Value<bool> isolatedCells;
   final Value<int> rowid;
   const ChaptersCompanion({
     this.id = const Value.absent(),
@@ -2165,6 +2505,11 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
     this.markdownUrl = const Value.absent(),
     this.pythonUrl = const Value.absent(),
     this.estimatedMinutes = const Value.absent(),
+    this.createdBy = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pythonPackages = const Value.absent(),
+    this.isolatedCells = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ChaptersCompanion.insert({
@@ -2176,6 +2521,11 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
     required String markdownUrl,
     required String pythonUrl,
     this.estimatedMinutes = const Value.absent(),
+    required String createdBy,
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.pythonPackages = const Value.absent(),
+    this.isolatedCells = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        bookId = Value(bookId),
@@ -2183,7 +2533,8 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
        emoji = Value(emoji),
        displayOrder = Value(displayOrder),
        markdownUrl = Value(markdownUrl),
-       pythonUrl = Value(pythonUrl);
+       pythonUrl = Value(pythonUrl),
+       createdBy = Value(createdBy);
   static Insertable<Chapter> custom({
     Expression<String>? id,
     Expression<String>? bookId,
@@ -2193,6 +2544,11 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
     Expression<String>? markdownUrl,
     Expression<String>? pythonUrl,
     Expression<int>? estimatedMinutes,
+    Expression<String>? createdBy,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+    Expression<String>? pythonPackages,
+    Expression<bool>? isolatedCells,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -2204,6 +2560,11 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
       if (markdownUrl != null) 'markdown_url': markdownUrl,
       if (pythonUrl != null) 'python_url': pythonUrl,
       if (estimatedMinutes != null) 'estimated_minutes': estimatedMinutes,
+      if (createdBy != null) 'created_by': createdBy,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (pythonPackages != null) 'python_packages': pythonPackages,
+      if (isolatedCells != null) 'isolated_cells': isolatedCells,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -2217,6 +2578,11 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
     Value<String>? markdownUrl,
     Value<String>? pythonUrl,
     Value<int?>? estimatedMinutes,
+    Value<String>? createdBy,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+    Value<String>? pythonPackages,
+    Value<bool>? isolatedCells,
     Value<int>? rowid,
   }) {
     return ChaptersCompanion(
@@ -2228,6 +2594,11 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
       markdownUrl: markdownUrl ?? this.markdownUrl,
       pythonUrl: pythonUrl ?? this.pythonUrl,
       estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
+      createdBy: createdBy ?? this.createdBy,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      pythonPackages: pythonPackages ?? this.pythonPackages,
+      isolatedCells: isolatedCells ?? this.isolatedCells,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -2259,6 +2630,21 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
     if (estimatedMinutes.present) {
       map['estimated_minutes'] = Variable<int>(estimatedMinutes.value);
     }
+    if (createdBy.present) {
+      map['created_by'] = Variable<String>(createdBy.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (pythonPackages.present) {
+      map['python_packages'] = Variable<String>(pythonPackages.value);
+    }
+    if (isolatedCells.present) {
+      map['isolated_cells'] = Variable<bool>(isolatedCells.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -2276,6 +2662,11 @@ class ChaptersCompanion extends UpdateCompanion<Chapter> {
           ..write('markdownUrl: $markdownUrl, ')
           ..write('pythonUrl: $pythonUrl, ')
           ..write('estimatedMinutes: $estimatedMinutes, ')
+          ..write('createdBy: $createdBy, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('pythonPackages: $pythonPackages, ')
+          ..write('isolatedCells: $isolatedCells, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3765,7 +4156,21 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     ),
     WritePropagation(
       on: TableUpdateQuery.onTableName(
+        'users',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('books', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
         'books',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('chapters', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'users',
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('chapters', kind: UpdateKind.delete)],
@@ -4366,6 +4771,44 @@ final class $$UsersTableReferences
     );
   }
 
+  static MultiTypedResultKey<$BooksTable, List<Book>> _booksRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.books,
+    aliasName: $_aliasNameGenerator(db.users.id, db.books.createdBy),
+  );
+
+  $$BooksTableProcessedTableManager get booksRefs {
+    final manager = $$BooksTableTableManager(
+      $_db,
+      $_db.books,
+    ).filter((f) => f.createdBy.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_booksRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ChaptersTable, List<Chapter>> _chaptersRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.chapters,
+    aliasName: $_aliasNameGenerator(db.users.id, db.chapters.createdBy),
+  );
+
+  $$ChaptersTableProcessedTableManager get chaptersRefs {
+    final manager = $$ChaptersTableTableManager(
+      $_db,
+      $_db.chapters,
+    ).filter((f) => f.createdBy.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_chaptersRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
   static MultiTypedResultKey<$ProgressTable, List<ProgressData>>
   _progressRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
     db.progress,
@@ -4472,6 +4915,56 @@ class $$UsersTableFilterComposer extends Composer<_$AppDatabase, $UsersTable> {
           ),
     );
     return composer;
+  }
+
+  Expression<bool> booksRefs(
+    Expression<bool> Function($$BooksTableFilterComposer f) f,
+  ) {
+    final $$BooksTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.createdBy,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableFilterComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> chaptersRefs(
+    Expression<bool> Function($$ChaptersTableFilterComposer f) f,
+  ) {
+    final $$ChaptersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.createdBy,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableFilterComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
   }
 
   Expression<bool> progressRefs(
@@ -4654,6 +5147,56 @@ class $$UsersTableAnnotationComposer
     return composer;
   }
 
+  Expression<T> booksRefs<T extends Object>(
+    Expression<T> Function($$BooksTableAnnotationComposer a) f,
+  ) {
+    final $$BooksTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.books,
+      getReferencedColumn: (t) => t.createdBy,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$BooksTableAnnotationComposer(
+            $db: $db,
+            $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> chaptersRefs<T extends Object>(
+    Expression<T> Function($$ChaptersTableAnnotationComposer a) f,
+  ) {
+    final $$ChaptersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.chapters,
+      getReferencedColumn: (t) => t.createdBy,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChaptersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.chapters,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
   Expression<T> progressRefs<T extends Object>(
     Expression<T> Function($$ProgressTableAnnotationComposer a) f,
   ) {
@@ -4720,6 +5263,8 @@ class $$UsersTableTableManager
           User,
           PrefetchHooks Function({
             bool organizationId,
+            bool booksRefs,
+            bool chaptersRefs,
             bool progressRefs,
             bool codeSnippetsRefs,
           })
@@ -4792,12 +5337,16 @@ class $$UsersTableTableManager
           prefetchHooksCallback:
               ({
                 organizationId = false,
+                booksRefs = false,
+                chaptersRefs = false,
                 progressRefs = false,
                 codeSnippetsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
+                    if (booksRefs) db.books,
+                    if (chaptersRefs) db.chapters,
                     if (progressRefs) db.progress,
                     if (codeSnippetsRefs) db.codeSnippets,
                   ],
@@ -4835,6 +5384,36 @@ class $$UsersTableTableManager
                       },
                   getPrefetchedDataCallback: (items) async {
                     return [
+                      if (booksRefs)
+                        await $_getPrefetchedData<User, $UsersTable, Book>(
+                          currentTable: table,
+                          referencedTable: $$UsersTableReferences
+                              ._booksRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$UsersTableReferences(db, table, p0).booksRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.createdBy == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (chaptersRefs)
+                        await $_getPrefetchedData<User, $UsersTable, Chapter>(
+                          currentTable: table,
+                          referencedTable: $$UsersTableReferences
+                              ._chaptersRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$UsersTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).chaptersRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.createdBy == item.id,
+                              ),
+                          typedResults: items,
+                        ),
                       if (progressRefs)
                         await $_getPrefetchedData<
                           User,
@@ -4899,6 +5478,8 @@ typedef $$UsersTableProcessedTableManager =
       User,
       PrefetchHooks Function({
         bool organizationId,
+        bool booksRefs,
+        bool chaptersRefs,
         bool progressRefs,
         bool codeSnippetsRefs,
       })
@@ -4914,6 +5495,9 @@ typedef $$BooksTableCreateCompanionBuilder =
       Value<String> difficulty,
       required int displayOrder,
       Value<bool> isPublished,
+      required String createdBy,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
       Value<int> rowid,
     });
 typedef $$BooksTableUpdateCompanionBuilder =
@@ -4927,6 +5511,9 @@ typedef $$BooksTableUpdateCompanionBuilder =
       Value<String> difficulty,
       Value<int> displayOrder,
       Value<bool> isPublished,
+      Value<String> createdBy,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
       Value<int> rowid,
     });
 
@@ -4947,6 +5534,24 @@ final class $$BooksTableReferences
       $_db.organizations,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_organizationIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $UsersTable _createdByTable(_$AppDatabase db) => db.users.createAlias(
+    $_aliasNameGenerator(db.books.createdBy, db.users.id),
+  );
+
+  $$UsersTableProcessedTableManager get createdBy {
+    final $_column = $_itemColumn<String>('created_by')!;
+
+    final manager = $$UsersTableTableManager(
+      $_db,
+      $_db.users,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_createdByTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -5021,6 +5626,16 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$OrganizationsTableFilterComposer get organizationId {
     final $$OrganizationsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -5035,6 +5650,29 @@ class $$BooksTableFilterComposer extends Composer<_$AppDatabase, $BooksTable> {
           }) => $$OrganizationsTableFilterComposer(
             $db: $db,
             $table: $db.organizations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UsersTableFilterComposer get createdBy {
+    final $$UsersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.createdBy,
+      referencedTable: $db.users,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UsersTableFilterComposer(
+            $db: $db,
+            $table: $db.users,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5119,6 +5757,16 @@ class $$BooksTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$OrganizationsTableOrderingComposer get organizationId {
     final $$OrganizationsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -5133,6 +5781,29 @@ class $$BooksTableOrderingComposer
           }) => $$OrganizationsTableOrderingComposer(
             $db: $db,
             $table: $db.organizations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UsersTableOrderingComposer get createdBy {
+    final $$UsersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.createdBy,
+      referencedTable: $db.users,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UsersTableOrderingComposer(
+            $db: $db,
+            $table: $db.users,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5186,6 +5857,12 @@ class $$BooksTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
   $$OrganizationsTableAnnotationComposer get organizationId {
     final $$OrganizationsTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -5200,6 +5877,29 @@ class $$BooksTableAnnotationComposer
           }) => $$OrganizationsTableAnnotationComposer(
             $db: $db,
             $table: $db.organizations,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UsersTableAnnotationComposer get createdBy {
+    final $$UsersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.createdBy,
+      referencedTable: $db.users,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UsersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.users,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5248,7 +5948,11 @@ class $$BooksTableTableManager
           $$BooksTableUpdateCompanionBuilder,
           (Book, $$BooksTableReferences),
           Book,
-          PrefetchHooks Function({bool organizationId, bool chaptersRefs})
+          PrefetchHooks Function({
+            bool organizationId,
+            bool createdBy,
+            bool chaptersRefs,
+          })
         > {
   $$BooksTableTableManager(_$AppDatabase db, $BooksTable table)
     : super(
@@ -5272,6 +5976,9 @@ class $$BooksTableTableManager
                 Value<String> difficulty = const Value.absent(),
                 Value<int> displayOrder = const Value.absent(),
                 Value<bool> isPublished = const Value.absent(),
+                Value<String> createdBy = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => BooksCompanion(
                 id: id,
@@ -5283,6 +5990,9 @@ class $$BooksTableTableManager
                 difficulty: difficulty,
                 displayOrder: displayOrder,
                 isPublished: isPublished,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5296,6 +6006,9 @@ class $$BooksTableTableManager
                 Value<String> difficulty = const Value.absent(),
                 required int displayOrder,
                 Value<bool> isPublished = const Value.absent(),
+                required String createdBy,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => BooksCompanion.insert(
                 id: id,
@@ -5307,6 +6020,9 @@ class $$BooksTableTableManager
                 difficulty: difficulty,
                 displayOrder: displayOrder,
                 isPublished: isPublished,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -5316,7 +6032,11 @@ class $$BooksTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({organizationId = false, chaptersRefs = false}) {
+              ({
+                organizationId = false,
+                createdBy = false,
+                chaptersRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [if (chaptersRefs) db.chapters],
@@ -5345,6 +6065,19 @@ class $$BooksTableTableManager
                                         ._organizationIdTable(db),
                                     referencedColumn: $$BooksTableReferences
                                         ._organizationIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+                        if (createdBy) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.createdBy,
+                                    referencedTable: $$BooksTableReferences
+                                        ._createdByTable(db),
+                                    referencedColumn: $$BooksTableReferences
+                                        ._createdByTable(db)
                                         .id,
                                   )
                                   as T;
@@ -5391,7 +6124,11 @@ typedef $$BooksTableProcessedTableManager =
       $$BooksTableUpdateCompanionBuilder,
       (Book, $$BooksTableReferences),
       Book,
-      PrefetchHooks Function({bool organizationId, bool chaptersRefs})
+      PrefetchHooks Function({
+        bool organizationId,
+        bool createdBy,
+        bool chaptersRefs,
+      })
     >;
 typedef $$ChaptersTableCreateCompanionBuilder =
     ChaptersCompanion Function({
@@ -5403,6 +6140,11 @@ typedef $$ChaptersTableCreateCompanionBuilder =
       required String markdownUrl,
       required String pythonUrl,
       Value<int?> estimatedMinutes,
+      required String createdBy,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<String> pythonPackages,
+      Value<bool> isolatedCells,
       Value<int> rowid,
     });
 typedef $$ChaptersTableUpdateCompanionBuilder =
@@ -5415,6 +6157,11 @@ typedef $$ChaptersTableUpdateCompanionBuilder =
       Value<String> markdownUrl,
       Value<String> pythonUrl,
       Value<int?> estimatedMinutes,
+      Value<String> createdBy,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+      Value<String> pythonPackages,
+      Value<bool> isolatedCells,
       Value<int> rowid,
     });
 
@@ -5434,6 +6181,24 @@ final class $$ChaptersTableReferences
       $_db.books,
     ).filter((f) => f.id.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_bookIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+
+  static $UsersTable _createdByTable(_$AppDatabase db) => db.users.createAlias(
+    $_aliasNameGenerator(db.chapters.createdBy, db.users.id),
+  );
+
+  $$UsersTableProcessedTableManager get createdBy {
+    final $_column = $_itemColumn<String>('created_by')!;
+
+    final manager = $$UsersTableTableManager(
+      $_db,
+      $_db.users,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_createdByTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: [item]),
@@ -5522,6 +6287,26 @@ class $$ChaptersTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get pythonPackages => $composableBuilder(
+    column: $table.pythonPackages,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isolatedCells => $composableBuilder(
+    column: $table.isolatedCells,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$BooksTableFilterComposer get bookId {
     final $$BooksTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -5536,6 +6321,29 @@ class $$ChaptersTableFilterComposer
           }) => $$BooksTableFilterComposer(
             $db: $db,
             $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UsersTableFilterComposer get createdBy {
+    final $$UsersTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.createdBy,
+      referencedTable: $db.users,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UsersTableFilterComposer(
+            $db: $db,
+            $table: $db.users,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5640,6 +6448,26 @@ class $$ChaptersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get pythonPackages => $composableBuilder(
+    column: $table.pythonPackages,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isolatedCells => $composableBuilder(
+    column: $table.isolatedCells,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$BooksTableOrderingComposer get bookId {
     final $$BooksTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -5654,6 +6482,29 @@ class $$ChaptersTableOrderingComposer
           }) => $$BooksTableOrderingComposer(
             $db: $db,
             $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UsersTableOrderingComposer get createdBy {
+    final $$UsersTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.createdBy,
+      referencedTable: $db.users,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UsersTableOrderingComposer(
+            $db: $db,
+            $table: $db.users,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5700,6 +6551,22 @@ class $$ChaptersTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get pythonPackages => $composableBuilder(
+    column: $table.pythonPackages,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isolatedCells => $composableBuilder(
+    column: $table.isolatedCells,
+    builder: (column) => column,
+  );
+
   $$BooksTableAnnotationComposer get bookId {
     final $$BooksTableAnnotationComposer composer = $composerBuilder(
       composer: this,
@@ -5714,6 +6581,29 @@ class $$ChaptersTableAnnotationComposer
           }) => $$BooksTableAnnotationComposer(
             $db: $db,
             $table: $db.books,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+
+  $$UsersTableAnnotationComposer get createdBy {
+    final $$UsersTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.createdBy,
+      referencedTable: $db.users,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$UsersTableAnnotationComposer(
+            $db: $db,
+            $table: $db.users,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -5789,6 +6679,7 @@ class $$ChaptersTableTableManager
           Chapter,
           PrefetchHooks Function({
             bool bookId,
+            bool createdBy,
             bool sectionsRefs,
             bool progressRefs,
           })
@@ -5814,6 +6705,11 @@ class $$ChaptersTableTableManager
                 Value<String> markdownUrl = const Value.absent(),
                 Value<String> pythonUrl = const Value.absent(),
                 Value<int?> estimatedMinutes = const Value.absent(),
+                Value<String> createdBy = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> pythonPackages = const Value.absent(),
+                Value<bool> isolatedCells = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChaptersCompanion(
                 id: id,
@@ -5824,6 +6720,11 @@ class $$ChaptersTableTableManager
                 markdownUrl: markdownUrl,
                 pythonUrl: pythonUrl,
                 estimatedMinutes: estimatedMinutes,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                pythonPackages: pythonPackages,
+                isolatedCells: isolatedCells,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -5836,6 +6737,11 @@ class $$ChaptersTableTableManager
                 required String markdownUrl,
                 required String pythonUrl,
                 Value<int?> estimatedMinutes = const Value.absent(),
+                required String createdBy,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> pythonPackages = const Value.absent(),
+                Value<bool> isolatedCells = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ChaptersCompanion.insert(
                 id: id,
@@ -5846,6 +6752,11 @@ class $$ChaptersTableTableManager
                 markdownUrl: markdownUrl,
                 pythonUrl: pythonUrl,
                 estimatedMinutes: estimatedMinutes,
+                createdBy: createdBy,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+                pythonPackages: pythonPackages,
+                isolatedCells: isolatedCells,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -5857,7 +6768,12 @@ class $$ChaptersTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({bookId = false, sectionsRefs = false, progressRefs = false}) {
+              ({
+                bookId = false,
+                createdBy = false,
+                sectionsRefs = false,
+                progressRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
@@ -5889,6 +6805,19 @@ class $$ChaptersTableTableManager
                                         ._bookIdTable(db),
                                     referencedColumn: $$ChaptersTableReferences
                                         ._bookIdTable(db)
+                                        .id,
+                                  )
+                                  as T;
+                        }
+                        if (createdBy) {
+                          state =
+                              state.withJoin(
+                                    currentTable: table,
+                                    currentColumn: table.createdBy,
+                                    referencedTable: $$ChaptersTableReferences
+                                        ._createdByTable(db),
+                                    referencedColumn: $$ChaptersTableReferences
+                                        ._createdByTable(db)
                                         .id,
                                   )
                                   as T;
@@ -5962,6 +6891,7 @@ typedef $$ChaptersTableProcessedTableManager =
       Chapter,
       PrefetchHooks Function({
         bool bookId,
+        bool createdBy,
         bool sectionsRefs,
         bool progressRefs,
       })

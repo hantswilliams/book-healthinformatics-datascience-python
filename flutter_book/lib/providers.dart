@@ -1,5 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide User;
 
 import 'data/database.dart';
 import 'repositories/auth_repository.dart';
@@ -32,4 +32,22 @@ final authStateProvider = StreamProvider<String?>((ref) {
 final courseRepositoryProvider = Provider<CourseRepository>((ref) {
   final db = ref.watch(databaseProvider);
   return LocalCourseRepository(db);
+});
+
+// Current User Provider (holds logged-in user state)
+class CurrentUserNotifier extends Notifier<User?> {
+  @override
+  User? build() => null;
+
+  void setUser(User? user) {
+    state = user;
+  }
+
+  void clearUser() {
+    state = null;
+  }
+}
+
+final currentUserProvider = NotifierProvider<CurrentUserNotifier, User?>(() {
+  return CurrentUserNotifier();
 });

@@ -90,6 +90,9 @@ class DatabaseSeeder {
             description: Value('Learn Python interactively.'),
             displayOrder: Value(1),
             isPublished: Value(true),
+            createdBy: Value('user-instructor'),
+            createdAt: Value(DateTime.now()),
+            updatedAt: Value(DateTime.now()),
           ),
         );
 
@@ -106,6 +109,11 @@ class DatabaseSeeder {
             displayOrder: Value(1),
             markdownUrl: Value('assets/content/intro.md'),
             pythonUrl: Value('assets/content/intro.py'),
+            createdBy: Value('user-instructor'),
+            createdAt: Value(DateTime.now()),
+            updatedAt: Value(DateTime.now()),
+            pythonPackages: Value('["numpy", "pandas", "matplotlib"]'),
+            isolatedCells: Value(false),
           ),
         );
 
