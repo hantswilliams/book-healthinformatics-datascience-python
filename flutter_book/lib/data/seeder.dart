@@ -8,9 +8,9 @@ class DatabaseSeeder {
 
   Future<void> seed() async {
     // Check if data exists
-    final user = await db.select(db.users).getSingleOrNull();
-    if (user != null) {
-      print('Database already seeded. User found: ${user.email}');
+    final users = await db.select(db.users).get();
+    if (users.isNotEmpty) {
+      print('Database already seeded. Found ${users.length} users.');
       return;
     }
 

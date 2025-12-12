@@ -26,6 +26,11 @@ class ScaffoldWithNavBar extends ConsumerWidget {
             destinations: isInstructor
                 ? const [
                     NavigationDestination(
+                      icon: Icon(Icons.dashboard_outlined),
+                      selectedIcon: Icon(Icons.dashboard),
+                      label: 'Dashboard',
+                    ),
+                    NavigationDestination(
                       icon: Icon(Icons.people_outlined),
                       selectedIcon: Icon(Icons.people),
                       label: 'Students',
@@ -63,11 +68,14 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     final String location = GoRouterState.of(context).uri.path;
     
     if (isInstructor) {
-      if (location.startsWith('/instructor')) {
+      if (location.startsWith('/dashboard')) {
         return 0;
       }
-      if (location.startsWith('/profile')) {
+      if (location.startsWith('/instructor')) {
         return 1;
+      }
+      if (location.startsWith('/profile')) {
+        return 2;
       }
       return 0;
     } else {
@@ -88,9 +96,12 @@ class ScaffoldWithNavBar extends ConsumerWidget {
     if (isInstructor) {
       switch (index) {
         case 0:
-          context.go('/instructor');
+          context.go('/dashboard');
           break;
         case 1:
+          context.go('/instructor');
+          break;
+        case 2:
           context.go('/profile');
           break;
       }
