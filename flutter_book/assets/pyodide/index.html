@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+    <script>
+        let pyodide = null;
+
+        async function initPyodide() {
+            try {
+                console.log("Initializing Pyodide...");
+                pyodide = await loadPyodide();
+                await pyodide.loadPackage("micropip");
+                
+                // standard startup
+                await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+
+class OutputCapture:
+    def __init__(self):
+        self.output = StringIO()
+        self.original_stdout = sys.stdout
+    
+    def capture(self):
+        sys.stdout = self.output
+        
+    def release(self):
+        sys.stdout = self.original_stdout
+        contents = self.output.getvalue()
+        self.output = StringIO()
+        return contents
+
+_output_capture = OutputCapture()
+`);
+                
+                console.log("Pyodide Ready");
+                if (window.flutter_inappwebview) {
+                    window.flutter_inappwebview.callHandler('onReady');
+                }
+            } catch (e) {
+                console.error("Pyodide Init Error", e);
+                if (window.flutter_inappwebview) {
+                    window.flutter_inappwebview.callHandler('onError', e.toString());
+                }
+            }
+        }
+
+        async function runPythonCode(code) {
+            if (!pyodide) return JSON.stringify({ output: "", error: "Pyodide not loaded" });
+            
+            try {
+                pyodide.runPython("_output_capture.capture()");
+                let result = await pyodide.runPythonAsync(code);
+                let stdout = pyodide.runPython("_output_capture.release()");
+                
+                let finalOutput = (stdout || "");
+                if (result !== undefined && result !== null) {
+                    finalOutput += (finalOutput ? "\n" : "") + String(result);
+                }
+                
+                return JSON.stringify({ output: finalOutput, error: null });
+            } catch (e) {
+                pyodide.runPython("_output_capture.release()");
+                return JSON.stringify({ output: "", error: e.toString() });
+            }
+        }
+        
+        async function loadPackages(packagesList) {
+             if (!pyodide) return;
+             try {
+                 await pyodide.loadPackage(packagesList);
+                 return "success";
+             } catch (e) {
+                 // Try micropip
+                 try {
+                     const micropip = pyodide.pyimport("micropip");
+                     for (const pkg of packagesList) {
+                         await micropip.install(pkg);
+                     }
+                     return "success";
+                 } catch (e2) {
+                     return e2.toString();
+                 }
+             }
+        }
+
+        initPyodide();
+    </script>
+</head>
+<body>
+    <h1>Pyodide Headless Runner</h1>
+</body>
+</html>
